@@ -74,7 +74,8 @@ export const AuthPage: React.FC<AuthPageProps> = ({ onLoginSuccess, currentUser 
     try {
       if (isLogin) {
         // --- REAL BACKEND LOGIN ---
-        const data = await authApi.login(email.trim(), password);
+        const normalizedEmail = email.trim().toLowerCase();
+        const data = await authApi.login(normalizedEmail, password);
         authApi.saveAuth(data);
         setSuccessMsg('Authentication successful! Redirecting...');
         setTimeout(() => {
@@ -94,8 +95,9 @@ export const AuthPage: React.FC<AuthPageProps> = ({ onLoginSuccess, currentUser 
           throw new Error('Password must be at least 8 characters');
         }
 
+        const normalizedEmail = email.trim().toLowerCase();
         const data = await authApi.register({
-          email: email.trim(),
+          email: normalizedEmail,
           password,
           fullName: fullName.trim(),
           phone: phone.trim() || undefined,
