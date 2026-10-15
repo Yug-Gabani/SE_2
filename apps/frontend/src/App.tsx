@@ -56,6 +56,16 @@ export const App: React.FC = () => {
 
   const handleBookSuccess = (newAssessment: TriageAssessment) => {
     setCases(prev => [newAssessment, ...prev]);
+    if (currentUser?.id) {
+      const key = `pulsecare_appts_${currentUser.id}`;
+      try {
+        const saved = localStorage.getItem(key);
+        const list = saved ? JSON.parse(saved) : [];
+        localStorage.setItem(key, JSON.stringify([newAssessment, ...list]));
+      } catch {
+        /* ignore */
+      }
+    }
     setIsBookingModalOpen(false);
   };
 
@@ -116,6 +126,7 @@ export const App: React.FC = () => {
               ) : currentUser?.role === 'PATIENT' ? (
                 <PatientDashboard
                   currentUser={currentUser}
+                  cases={cases}
                   onBookVideo={() => setIsBookingModalOpen(true)}
                   onHospitalSearch={() => setIsBookingModalOpen(true)}
                   onOpenRecords={() => setIsExplainModalOpen(true)}
@@ -169,6 +180,7 @@ export const App: React.FC = () => {
                     fullName: 'Sarah Jenkins',
                     role: 'PATIENT',
                   }}
+                  cases={cases}
                   onBookVideo={() => setIsBookingModalOpen(true)}
                   onHospitalSearch={() => setIsBookingModalOpen(true)}
                   onOpenRecords={() => setIsExplainModalOpen(true)}
