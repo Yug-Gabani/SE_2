@@ -1,22 +1,28 @@
 import React, { useState, useEffect } from 'react';
+import { Routes, Route, useNavigate, useLocation, Navigate } from 'react-router-dom';
 import { Header } from './components/Header';
 import { LandingPage } from './components/LandingPage';
 import { PatientDashboard } from './components/PatientDashboard';
 import { DoctorDashboard } from './components/DoctorDashboard';
 import { PatientTriageBooking } from './components/PatientTriageBooking';
 import { ExplainTriage } from './components/ExplainTriage';
-import { AuthModal } from './components/AuthModal';
+import { AuthPage } from './components/AuthPage';
 import { INITIAL_DOCTORS, INITIAL_TRIAGE_CASES } from './services/triageMock';
+import { authApi } from './services/api';
 import type { Doctor, TriageAssessment, User } from './types';
 import { X } from 'lucide-react';
 
 export const App: React.FC = () => {
-  const [currentUser, setCurrentUser] = useState<User | null>(null);
+  const navigate = useNavigate();
+  const location = useLocation();
+
+  const [currentUser, setCurrentUser] = useState<User | null>(() => {
+    return authApi.getSavedAuth().user;
+  });
   const [doctors] = useState<Doctor[]>(INITIAL_DOCTORS);
   const [cases, setCases] = useState<TriageAssessment[]>(INITIAL_TRIAGE_CASES);
 
-  // Modals
-  const [isAuthOpen, setIsAuthOpen] = useState<boolean>(false);
+  // Modals for Triage and Record explanation
   const [isBookingModalOpen, setIsBookingModalOpen] = useState<boolean>(false);
   const [isExplainModalOpen, setIsExplainModalOpen] = useState<boolean>(false);
 
@@ -31,11 +37,21 @@ export const App: React.FC = () => {
     localStorage.setItem('pulsecare_theme', next ? 'dark' : 'light');
   };
 
-  // Check Spring Boot backend health on mount
+  // On mount: Validate saved token against backend /api/auth/me
   useEffect(() => {
-    fetch('http://localhost:8080/actuator/health')
-      .then(res => res.json())
-      .catch(() => {});
+    const { token, user } = authApi.getSavedAuth();
+    if (token) {
+      if (user) setCurrentUser(user);
+      authApi.getMe(token)
+        .then(validatedUser => {
+          setCurrentUser(validatedUser);
+        })
+        .catch(() => {
+          // Token expired or invalid
+          authApi.logout();
+          setCurrentUser(null);
+        });
+    }
   }, []);
 
   const handleBookSuccess = (newAssessment: TriageAssessment) => {
@@ -49,13 +65,17 @@ export const App: React.FC = () => {
 
   const handleLoginSuccess = (user: User, _token: string) => {
     setCurrentUser(user);
-    setIsAuthOpen(false);
   };
 
   const handleLogout = () => {
+    const { token } = authApi.getSavedAuth();
+    authApi.logout(token || undefined);
     setCurrentUser(null);
-    localStorage.removeItem('accessToken');
+    navigate('/');
   };
+
+  // Whether we are on a dedicated auth route (/login or /signup)
+  const isAuthRoute = location.pathname === '/login' || location.pathname === '/signup';
 
   return (
     <div
@@ -70,49 +90,109 @@ export const App: React.FC = () => {
         transition: 'background-color 0.2s ease',
       }}
     >
-      {/* Header conforming directly to the wireframe states */}
-      <Header
-        currentUser={currentUser}
-        onOpenAuth={() => setIsAuthOpen(true)}
-        onLogout={handleLogout}
-        onGetCare={() => setIsBookingModalOpen(true)}
-        onGoHome={() => setCurrentUser(null)}
-        darkMode={darkMode}
-        onToggleTheme={toggleTheme}
-      />
+      {/* Hide global header on dedicated /login and /signup pages */}
+      {!isAuthRoute && (
+        <Header
+          currentUser={currentUser}
+          onOpenAuth={() => navigate('/login')}
+          onOpenRegister={() => navigate('/signup')}
+          onLogout={handleLogout}
+          onGetCare={() => setIsBookingModalOpen(true)}
+          onGoHome={() => navigate('/')}
+          darkMode={darkMode}
+          onToggleTheme={toggleTheme}
+        />
+      )}
 
-      {/* Main View:
-          1) If not logged in -> Landing Page
-          2) If logged in as Patient -> Patient Dashboard for that particular patient
-          3) If logged in as Doctor -> Doctor Dashboard with warm brown/cream background
-      */}
+      {/* Main Routed Content */}
       <main style={{ flex: 1 }}>
-        {!currentUser && (
-          <LandingPage
-            onGetCare={() => setIsBookingModalOpen(true)}
-            onSelectDoctor={(_name) => setIsBookingModalOpen(true)}
-            onBookSpecialty={(_spec) => setIsBookingModalOpen(true)}
-            onSignIn={() => setIsAuthOpen(true)}
+        <Routes>
+          {/* Root Route: Shows Landing Page if unauthenticated, or dashboard if authenticated */}
+          <Route
+            path="/"
+            element={
+              currentUser?.role === 'DOCTOR' ? (
+                <DoctorDashboard cases={cases} onUpdateCase={handleUpdateCase} />
+              ) : currentUser?.role === 'PATIENT' ? (
+                <PatientDashboard
+                  currentUser={currentUser}
+                  onBookVideo={() => setIsBookingModalOpen(true)}
+                  onHospitalSearch={() => setIsBookingModalOpen(true)}
+                  onOpenRecords={() => setIsExplainModalOpen(true)}
+                  onOrderMeds={() => alert('Order medicine request received. Connecting to partner pharmacy (MedPlus).')}
+                  onJoinCall={() => alert('Launching encrypted WebRTC teleconsultation room with Dr. Kavita Shah...')}
+                />
+              ) : (
+                <LandingPage
+                  onGetCare={() => setIsBookingModalOpen(true)}
+                  onSelectDoctor={(_name) => setIsBookingModalOpen(true)}
+                  onBookSpecialty={(_spec) => setIsBookingModalOpen(true)}
+                  onSignIn={() => navigate('/login')}
+                />
+              )
+            }
           />
-        )}
 
-        {currentUser?.role === 'PATIENT' && (
-          <PatientDashboard
-            currentUser={currentUser}
-            onBookVideo={() => setIsBookingModalOpen(true)}
-            onHospitalSearch={() => setIsBookingModalOpen(true)}
-            onOpenRecords={() => setIsExplainModalOpen(true)}
-            onOrderMeds={() => alert('Order medicine request received. Connecting to partner pharmacy (MedPlus).')}
-            onJoinCall={() => alert('Launching encrypted WebRTC teleconsultation room with Dr. Kavita Shah...')}
+          {/* Dedicated Login Route */}
+          <Route
+            path="/login"
+            element={
+              <AuthPage
+                onLoginSuccess={handleLoginSuccess}
+                currentUser={currentUser}
+              />
+            }
           />
-        )}
 
-        {currentUser?.role === 'DOCTOR' && (
-          <DoctorDashboard
-            cases={cases}
-            onUpdateCase={handleUpdateCase}
+          {/* Dedicated Signup Route */}
+          <Route
+            path="/signup"
+            element={
+              <AuthPage
+                onLoginSuccess={handleLoginSuccess}
+                currentUser={currentUser}
+              />
+            }
           />
-        )}
+
+          {/* Patient Dashboard Route */}
+          <Route
+            path="/patient"
+            element={
+              currentUser?.role === 'DOCTOR' ? (
+                <Navigate to="/doctor" replace />
+              ) : (
+                <PatientDashboard
+                  currentUser={currentUser || {
+                    id: 'guest-patient-id',
+                    email: 'guest.patient@pulsecare.com',
+                    fullName: 'Sarah Jenkins',
+                    role: 'PATIENT',
+                  }}
+                  onBookVideo={() => setIsBookingModalOpen(true)}
+                  onHospitalSearch={() => setIsBookingModalOpen(true)}
+                  onOpenRecords={() => setIsExplainModalOpen(true)}
+                  onOrderMeds={() => alert('Order medicine request received. Connecting to partner pharmacy (MedPlus).')}
+                  onJoinCall={() => alert('Launching encrypted WebRTC teleconsultation room with Dr. Kavita Shah...')}
+                />
+              )
+            }
+          />
+
+          {/* Doctor Dashboard Route */}
+          <Route
+            path="/doctor"
+            element={
+              <DoctorDashboard
+                cases={cases}
+                onUpdateCase={handleUpdateCase}
+              />
+            }
+          />
+
+          {/* Fallback redirect to home */}
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </Routes>
       </main>
 
       {/* Interactive Booking & Triage Modal */}
@@ -239,13 +319,6 @@ export const App: React.FC = () => {
           </div>
         </div>
       )}
-
-      {/* Authentication Modal */}
-      <AuthModal
-        isOpen={isAuthOpen}
-        onClose={() => setIsAuthOpen(false)}
-        onLoginSuccess={handleLoginSuccess}
-      />
     </div>
   );
 };
