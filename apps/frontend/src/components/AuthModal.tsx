@@ -33,7 +33,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onLoginSu
         onLoginSuccess(me, tokens.accessToken);
         onClose();
       } else {
-        const tokens = await authApi.register({ email, password, fullName, phone });
+        const tokens = await authApi.register({ email, password, fullName, phone, role: 'PATIENT' });
         localStorage.setItem('accessToken', tokens.accessToken);
         const me = await authApi.getMe(tokens.accessToken);
         onLoginSuccess(me, tokens.accessToken);

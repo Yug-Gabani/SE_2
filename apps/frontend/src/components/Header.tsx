@@ -10,6 +10,7 @@ import type { User } from '../types';
 interface HeaderProps {
   currentUser: User | null;
   onOpenAuth: () => void;
+  onOpenRegister?: () => void;
   onLogout: () => void;
   onGetCare: () => void;
   onGoHome: () => void;
@@ -20,6 +21,7 @@ interface HeaderProps {
 export const Header: React.FC<HeaderProps> = ({
   currentUser,
   onOpenAuth,
+  onOpenRegister,
   onLogout,
   onGetCare,
   onGoHome,
@@ -222,6 +224,30 @@ export const Header: React.FC<HeaderProps> = ({
                 }}
               >
                 Sign in
+              </button>
+              <button
+                onClick={onOpenRegister || onOpenAuth}
+                style={{
+                  backgroundColor: '#f5efe6',
+                  color: '#785b47',
+                  border: '1px solid #eae3d8',
+                  borderRadius: '9999px',
+                  padding: '8px 18px',
+                  fontSize: '14px',
+                  fontWeight: 600,
+                  cursor: 'pointer',
+                  transition: 'all 0.15s ease',
+                }}
+                onMouseEnter={e => {
+                  e.currentTarget.style.backgroundColor = '#eae3d8';
+                  e.currentTarget.style.color = '#543b2a';
+                }}
+                onMouseLeave={e => {
+                  e.currentTarget.style.backgroundColor = '#f5efe6';
+                  e.currentTarget.style.color = '#785b47';
+                }}
+              >
+                Sign up
               </button>
               <button
                 onClick={onGetCare}
