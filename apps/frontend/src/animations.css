@@ -1,0 +1,112 @@
+/* =========================================================
+   Animation kit — recreated from the motion patterns on monday.com's homepage
+   (keyframes/timings matched, original code + your own visuals).
+   Drop in, then add the class names to your elements.
+   ========================================================= */
+
+:root {
+  --anim-accent-1: #ff3d9a;
+  --anim-accent-2: #8b5cf6;
+  --anim-accent-3: #ffa600;
+  --anim-ease-out: cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* 1. Animated gradient (their SVG icon gradient that cycles pink → purple → orange) */
+@keyframes gradientCycle {
+  0%, 100% { background-position: 0% 50%; }
+  50%      { background-position: 100% 50%; }
+}
+.gradient-text {
+  background: linear-gradient(90deg, var(--anim-accent-1), var(--anim-accent-2), var(--anim-accent-3), var(--anim-accent-1));
+  background-size: 300% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  animation: gradientCycle 4s ease infinite;
+  display: inline-block;
+}
+
+/* For SVG icons: put class="grad-stop-a" / "grad-stop-b" on the <stop> elements */
+@keyframes stopA { 0%,100% { stop-color: var(--anim-accent-1); } 50% { stop-color: var(--anim-accent-2); } }
+@keyframes stopB { 0%,100% { stop-color: var(--anim-accent-3); } 50% { stop-color: var(--anim-accent-1); } }
+.grad-stop-a { animation: stopA 3s ease infinite; }
+.grad-stop-b { animation: stopB 3s ease infinite; }
+
+/* 2. Infinite marquee (logo / card strip). Duplicate the content once inside .marquee */
+@keyframes marquee {
+  from { transform: translateX(0); }
+  to   { transform: translateX(calc(-100% - var(--marquee-gap, 0.75rem))); }
+}
+.marquee { display: flex; gap: var(--marquee-gap, 0.75rem); overflow: hidden; }
+.marquee__track {
+  display: flex; gap: var(--marquee-gap, 0.75rem); flex-shrink: 0;
+  animation: marquee var(--marquee-speed, 25s) linear infinite;
+}
+.marquee:hover .marquee__track { animation-play-state: paused; }
+
+/* 3. CTA "light sweep" — a shine passes across the button every 6s */
+@keyframes swoosh {
+  0%      { background-position: -350px center; }
+  25%     { background-position: calc(100% + 350px) center; }
+  25.001%, 100% { background-position: -350px center; }
+}
+.btn-swoosh {
+  background-color: var(--color-monday-violet, #6161ff) !important;
+  background-image: linear-gradient(110deg, transparent 0, rgba(255,255,255,.45) 50%, transparent 100%) !important;
+  background-size: 140px 100% !important;
+  background-repeat: no-repeat !important;
+  animation: swoosh 6s ease-in-out 1.5s infinite both !important;
+}
+
+/* 4. Click feedback — add the class via JS (see animations.js) */
+@keyframes shake {
+  0%    { transform: scale(1); }
+  15%   { transform: scale(1.05); }
+  35%   { transform: scale(0.989); }
+  67.5% { transform: scale(1.005); }
+  100%  { transform: scale(1); }
+}
+.is-shaking { animation: shake 0.5s ease-in-out; }
+
+@keyframes bounceSoft {
+  0% { transform: scale(1); } 40% { transform: scale(1.02); } 100% { transform: scale(1); }
+}
+.is-bouncing { animation: bounceSoft 0.5s var(--anim-ease-out); }
+
+@keyframes breathe {
+  0%, 100% { transform: scale(1); } 50% { transform: scale(1.05); }
+}
+.is-breathing { animation: breathe 0.3s linear; }
+
+/* 5. Pop-up tag/badge that hops up then settles (uses ::before) */
+@keyframes tagPop {
+  0%   { transform: translate(-50%, 0) rotate(24deg) scale(.2); animation-timing-function: linear; }
+  25%  { transform: translate(-50%, -18px) rotate(24deg) scale(1); animation-timing-function: ease-out; }
+  50%  { transform: translate(-50%, -36px) rotate(24deg) scale(1); animation-timing-function: ease-in; }
+  100% { transform: translate(-50%, 0) rotate(0) scale(1); }
+}
+.tag-pop { position: relative; }
+.tag-pop::before {
+  content: attr(data-tag);
+  position: absolute; left: 50%; bottom: 100%;
+  padding: 2px 10px; border-radius: 999px;
+  font-size: 12px; font-weight: 600; white-space: nowrap;
+  background: var(--anim-accent-3); color: #1a1a1a;
+  animation: tagPop 0.5s ease both;
+}
+
+/* 6. Menu / dropdown entrance */
+@keyframes slideFade { from { opacity: 0; transform: translateY(-8px); } to { opacity: 1; transform: none; } }
+@keyframes fade      { from { opacity: 0; } to { opacity: 1; } }
+.enter-slide { animation: slideFade 0.3s ease-out forwards; }
+.enter-fade  { animation: fade 0.2s ease-out forwards; }
+
+/* 7. Scroll reveal (driven by animations.js) */
+[data-reveal] { opacity: 0; transform: translateY(24px); transition: opacity .6s var(--anim-ease-out), transform .6s var(--anim-ease-out); }
+[data-reveal].is-visible { opacity: 1; transform: none; }
+
+/* Respect users who turn motion off */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; transition-duration: 0.01ms !important; }
+  [data-reveal] { opacity: 1; transform: none; }
+}
