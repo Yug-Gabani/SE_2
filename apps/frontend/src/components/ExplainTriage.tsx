@@ -8,7 +8,7 @@ interface ExplainTriageProps {
 }
 
 export const ExplainTriage: React.FC<ExplainTriageProps> = ({ currentAssessment, onBookOrChange }) => {
-  const urgency = currentAssessment?.doctorConfirmedScore || currentAssessment?.aiAdvisoryScore || 'URGENT';
+  const urgency = currentAssessment?.urgency || 'URGENT';
   const confidence = 0.88;
 
   return (
@@ -79,29 +79,10 @@ export const ExplainTriage: React.FC<ExplainTriageProps> = ({ currentAssessment,
               <strong>Symptom cluster:</strong> {currentAssessment?.symptoms?.join(', ') || 'Fever, cough, body ache'}
             </li>
             <li>
-              <strong>Clinical urgency rationale:</strong> {currentAssessment?.aiAdvisoryReason || 'Symptom duration exceeds 72 hours with ongoing systemic indicators, recommending same-day clinician assessment.'}
+              <strong>Clinical urgency rationale:</strong> {currentAssessment?.rationale || 'Symptom duration exceeds 72 hours with ongoing systemic indicators, recommending same-day clinician assessment.'}
             </li>
           </ul>
         </div>
-
-        {/* Doctor override status if present */}
-        {currentAssessment?.isOverridden && (
-          <div style={{
-            backgroundColor: 'var(--canvas)',
-            border: '1px solid var(--border)',
-            borderRadius: '14px',
-            padding: '16px 20px',
-            marginBottom: '28px',
-            fontSize: '14px',
-          }}>
-            <div style={{ fontWeight: 600, color: 'var(--ink)', marginBottom: '4px' }}>
-              Attending Doctor Override Recorded (DR-16)
-            </div>
-            <p style={{ color: 'var(--muted)', fontSize: '13px' }}>
-              Reason: <em>"{currentAssessment.overrideReason}"</em>
-            </p>
-          </div>
-        )}
 
         {/* Challenge or Contact Doctor CTA */}
         <div style={{

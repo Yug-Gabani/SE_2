@@ -12,6 +12,7 @@ import org.springframework.security.access.AccessDeniedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.servlet.resource.NoResourceFoundException;
 
 import java.time.Instant;
 import java.util.List;
@@ -52,6 +53,12 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ErrorResponse> handleForbidden(AccessDeniedException ex,
                                                         HttpServletRequest req) {
         return build(HttpStatus.FORBIDDEN, "Access denied", req, null);
+    }
+
+    @ExceptionHandler(NoResourceFoundException.class)
+    public ResponseEntity<ErrorResponse> handleNoRoute(NoResourceFoundException ex,
+                                                      HttpServletRequest req) {
+        return build(HttpStatus.NOT_FOUND, "No endpoint at " + req.getRequestURI(), req, null);
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
