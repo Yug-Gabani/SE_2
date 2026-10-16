@@ -1,4 +1,12 @@
-import type { Role, User } from '../types';
+import type {
+  Appointment,
+  ConsultationType,
+  Doctor,
+  Role,
+  Slot,
+  TriageAssessment,
+  User,
+} from '../types';
 
 export interface TokenResponseData {
   accessToken: string;
@@ -15,20 +23,42 @@ export interface TokenResponseData {
 
 const API_BASE = '/api';
 
+function getToken(): string | null {
+  return localStorage.getItem('pulsecare_token');
+}
+
+async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
+  const token = getToken();
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/json',
+    ...(init.headers as Record<string, string> | undefined),
+  };
+  if (token) headers.Authorization = `Bearer ${token}`;
+
+  const res = await fetch(`${API_BASE}${path}`, { ...init, headers });
+  const text = await res.text();
+  const json = text ? JSON.parse(text) : {};
+
+  if (!res.ok) {
+    let message = json.message || json.error || res.statusText || 'Request failed';
+    if (json.fieldErrors && Array.isArray(json.fieldErrors) && json.fieldErrors.length > 0) {
+      const first = json.fieldErrors[0];
+      message = `${first.field}: ${first.message}`;
+    }
+    const err = new Error(message) as Error & { status?: number };
+    err.status = res.status;
+    throw err;
+  }
+  // Backend wraps everything in ApiResponse { success, data, message, timestamp }
+  return (json?.data ?? json) as T;
+}
+
 export const authApi = {
   async login(email: string, password: string): Promise<TokenResponseData> {
-    const res = await fetch(`${API_BASE}/auth/login`, {
+    return request<TokenResponseData>('/auth/login', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ email, password }),
     });
-
-    const json = await res.json().catch(() => ({}));
-    if (!res.ok) {
-      const message = json.message || json.error || (res.status === 401 ? 'Invalid email or password' : 'Login failed');
-      throw new Error(message);
-    }
-    return json.data;
   },
 
   async register(data: {
@@ -38,49 +68,26 @@ export const authApi = {
     phone?: string;
     role: Role;
   }): Promise<TokenResponseData> {
-    const res = await fetch(`${API_BASE}/auth/register`, {
+    return request<TokenResponseData>('/auth/register', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(data),
     });
-
-    const json = await res.json().catch(() => ({}));
-    if (!res.ok) {
-      let message = json.message || json.error || 'Registration failed';
-      if (json.fieldErrors) {
-        const firstField = Object.keys(json.fieldErrors)[0];
-        message = `${firstField}: ${json.fieldErrors[firstField]}`;
-      }
-      throw new Error(message);
-    }
-    return json.data;
   },
 
-  async getMe(accessToken: string): Promise<User> {
-    const res = await fetch(`${API_BASE}/auth/me`, {
-      headers: {
-        Authorization: `Bearer ${accessToken}`,
-      },
-    });
-
-    const json = await res.json().catch(() => ({}));
-    if (!res.ok) {
-      throw new Error(json.message || 'Failed to fetch user session');
-    }
-    return json.data;
+  async getMe(_accessToken?: string): Promise<User> {
+    return request<User>('/auth/me');
   },
 
-  async logout(accessToken?: string): Promise<void> {
-    if (accessToken) {
+  async logout(_accessToken?: string): Promise<void> {
+    const token = getToken();
+    if (token) {
       try {
         await fetch(`${API_BASE}/auth/logout`, {
           method: 'POST',
-          headers: {
-            Authorization: `Bearer ${accessToken}`,
-          },
+          headers: { Authorization: `Bearer ${token}` },
         });
       } catch {
-        // silent catch
+        /* silent */
       }
     }
     localStorage.removeItem('pulsecare_token');
@@ -115,10 +122,56 @@ export const authApi = {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email: 'probe@probe.com', password: 'probe' }),
       });
-      // A 401 response confirms Spring Boot and DB are active and responding
       return res.status === 401 || res.status === 200;
     } catch {
       return false;
     }
-  }
+  },
+};
+
+export const doctorsApi = {
+  list: (specialty?: string): Promise<Doctor[]> =>
+    request<Doctor[]>(
+      `/v1/doctors${specialty ? `?specialty=${encodeURIComponent(specialty)}` : ''}`
+    ),
+  get: (id: string): Promise<Doctor> => request<Doctor>(`/v1/doctors/${id}`),
+  slots: (id: string): Promise<Slot[]> => request<Slot[]>(`/v1/doctors/${id}/slots`),
+};
+
+export interface TriageRequestBody {
+  chiefComplaint: string;
+  symptoms: string[];
+  durationDays: number;
+  painLevel: number;
+  fever: boolean;
+  chestPain: boolean;
+  shortnessOfBreath: boolean;
+}
+
+export const triageApi = {
+  assess: (body: TriageRequestBody): Promise<TriageAssessment> =>
+    request<TriageAssessment>('/v1/triage/assess', {
+      method: 'POST',
+      body: JSON.stringify(body),
+    }),
+};
+
+export interface BookAppointmentBody {
+  doctorId: string;
+  slotId: string;
+  assessmentId?: string;
+  consultationType: ConsultationType;
+}
+
+export const appointmentsApi = {
+  book: (body: BookAppointmentBody): Promise<Appointment> =>
+    request<Appointment>('/v1/appointments', {
+      method: 'POST',
+      body: JSON.stringify(body),
+    }),
+  mine: (): Promise<Appointment[]> => request<Appointment[]>('/v1/appointments/me'),
+  get: (id: string): Promise<Appointment> => request<Appointment>(`/v1/appointments/${id}`),
+  cancel: (id: string): Promise<Appointment> =>
+    request<Appointment>(`/v1/appointments/${id}/cancel`, { method: 'PATCH' }),
+  doctorQueue: (): Promise<Appointment[]> => request<Appointment[]>('/v1/appointments/queue'),
 };

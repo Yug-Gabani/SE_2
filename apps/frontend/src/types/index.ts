@@ -1,8 +1,15 @@
-export type Role = 'PATIENT' | 'DOCTOR' | 'ADMIN';
+export type Role = 'PATIENT' | 'DOCTOR' | 'ADMIN' | 'PHARMACIST' | 'STAFF';
 
 export type UrgencyLevel = 'EMERGENCY' | 'URGENT' | 'ROUTINE';
 
 export type ConsultationType = 'VIDEO' | 'IN_PERSON';
+
+export type AppointmentStatus =
+  | 'BOOKED'
+  | 'CONFIRMED'
+  | 'COMPLETED'
+  | 'CANCELLED'
+  | 'NO_SHOW';
 
 export interface User {
   id: string;
@@ -12,42 +19,70 @@ export interface User {
   role: Role;
 }
 
+export interface SlotSummary {
+  id: string;
+  slotAt: string;
+}
+
 export interface Doctor {
   id: string;
-  name: string;
+  fullName: string;
   specialty: string;
-  avatar: string;
-  rating: number;
-  availableDays: string[];
-  slots: string[];
   hospital: string;
+  avatarUrl?: string;
+  rating: number;
+  bio?: string;
+  nextSlots: SlotSummary[];
+  openSlotCount: number;
+  /** Legacy field retained so the old booking modal still compiles until it is retired. */
+  name?: string;
+  avatar?: string;
+  availableDays?: string[];
+  slots?: string[];
+}
+
+export interface Slot {
+  id: string;
+  doctorId: string;
+  slotAt: string;
+  booked: boolean;
 }
 
 export interface TriageAssessment {
   id: string;
   patientId: string;
-  patientName: string;
-  patientAge: number;
   chiefComplaint: string;
   symptoms: string[];
   durationDays: number;
-  painLevel: number; // 1-10
-  vitals?: {
-    temperature?: number;
-    heartRate?: number;
-    bloodPressure?: string;
-  };
-  aiAdvisoryScore: UrgencyLevel;
-  aiAdvisoryReason: string;
-  doctorConfirmedScore?: UrgencyLevel;
-  doctorNotes?: string;
-  isOverridden?: boolean;
-  overrideReason?: string;
-  status: 'PENDING_REVIEW' | 'REVIEWED' | 'DISCHARGED';
-  consultationType: ConsultationType;
-  selectedDoctorId: string;
-  appointmentTime: string;
+  painLevel: number;
+  fever: boolean;
+  chestPain: boolean;
+  shortnessOfBreath: boolean;
+  urgency: UrgencyLevel;
+  rationale: string;
+  suggestedSpecialty: string;
   createdAt: string;
+}
+
+export interface Appointment {
+  id: string;
+  patientId: string;
+  patientName?: string;
+  doctorId: string;
+  doctorName?: string;
+  doctorSpecialty?: string;
+  doctorHospital?: string;
+  doctorAvatarUrl?: string;
+  slotId: string;
+  slotAt?: string;
+  assessmentId?: string;
+  consultationType: ConsultationType;
+  urgency: UrgencyLevel;
+  status: AppointmentStatus;
+  chiefComplaint?: string;
+  notes?: string;
+  createdAt: string;
+  updatedAt: string;
 }
 
 export interface AuthState {

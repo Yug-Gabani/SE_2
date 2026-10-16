@@ -1,164 +1,297 @@
-import React from 'react';
-import { Calendar, Clock, MapPin, Video, FileText } from 'lucide-react';
-import type { Doctor, TriageAssessment } from '../types';
+import React, { useCallback, useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { Calendar, Clock, Loader2, MapPin, Video, FileText, XCircle } from 'lucide-react';
+import type { Appointment, AppointmentStatus } from '../types';
+import { appointmentsApi } from '../services/api';
 
-interface MyAppointmentsProps {
-  cases: TriageAssessment[];
-  doctors: Doctor[];
-  onBookNew: () => void;
-  onExplainTriage: () => void;
+type Tab = 'upcoming' | 'past' | 'cancelled';
+
+function isUpcoming(a: Appointment): boolean {
+  if (a.status === 'CANCELLED' || a.status === 'NO_SHOW') return false;
+  if (a.status === 'COMPLETED') return false;
+  return true;
 }
 
-export const MyAppointments: React.FC<MyAppointmentsProps> = ({
-  cases,
-  doctors,
-  onBookNew,
-  onExplainTriage,
-}) => {
+function tabFor(a: Appointment): Tab {
+  if (a.status === 'CANCELLED' || a.status === 'NO_SHOW') return 'cancelled';
+  if (a.status === 'COMPLETED') return 'past';
+  return 'upcoming';
+}
+
+function formatSlot(iso?: string): string {
+  if (!iso) return 'TBA';
+  const d = new Date(iso);
+  return d.toLocaleString(undefined, {
+    weekday: 'short', month: 'short', day: 'numeric',
+    hour: '2-digit', minute: '2-digit',
+  });
+}
+
+function urgencyColor(u: Appointment['urgency']): string {
+  if (u === 'EMERGENCY') return '#dc2626';
+  if (u === 'URGENT') return '#d97706';
+  return '#059669';
+}
+
+function urgencyBg(u: Appointment['urgency']): string {
+  if (u === 'EMERGENCY') return 'rgba(220, 38, 38, 0.08)';
+  if (u === 'URGENT') return 'rgba(217, 119, 6, 0.1)';
+  return 'rgba(5, 150, 105, 0.08)';
+}
+
+function statusLabel(s: AppointmentStatus): string {
+  if (s === 'BOOKED') return 'Booked';
+  if (s === 'CONFIRMED') return 'Confirmed';
+  if (s === 'COMPLETED') return 'Completed';
+  if (s === 'CANCELLED') return 'Cancelled';
+  return 'No show';
+}
+
+export const MyAppointments: React.FC = () => {
+  const navigate = useNavigate();
+  const [tab, setTab] = useState<Tab>('upcoming');
+  const [appointments, setAppointments] = useState<Appointment[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [cancellingId, setCancellingId] = useState<string | null>(null);
+
+  const reload = useCallback(() => {
+    setLoading(true);
+    setError(null);
+    appointmentsApi
+      .mine()
+      .then(setAppointments)
+      .catch(err => setError(err.message || 'Failed to load appointments'))
+      .finally(() => setLoading(false));
+  }, []);
+
+  useEffect(() => {
+    reload();
+  }, [reload]);
+
+  const handleCancel = async (id: string) => {
+    if (!confirm('Cancel this appointment? The slot will be released.')) return;
+    setCancellingId(id);
+    try {
+      const updated = await appointmentsApi.cancel(id);
+      setAppointments(prev => prev.map(a => (a.id === id ? updated : a)));
+    } catch (err: any) {
+      alert(err.message || 'Could not cancel this appointment.');
+    } finally {
+      setCancellingId(null);
+    }
+  };
+
+  const filtered = appointments.filter(a => tabFor(a) === tab);
+  const counts = {
+    upcoming: appointments.filter(a => tabFor(a) === 'upcoming').length,
+    past: appointments.filter(a => tabFor(a) === 'past').length,
+    cancelled: appointments.filter(a => tabFor(a) === 'cancelled').length,
+  };
+
   return (
     <div style={{ maxWidth: '1000px', margin: '48px auto', padding: '0 24px' }}>
       <div style={{
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        flexWrap: 'wrap',
-        gap: '20px',
-        marginBottom: '36px',
+        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+        flexWrap: 'wrap', gap: '20px', marginBottom: '28px',
       }}>
         <div>
-          <h1 style={{ fontSize: '30px', fontWeight: 600, color: 'var(--ink)', letterSpacing: '-0.02em', marginBottom: '6px' }}>
-            My Consultations & Care Plan
+          <h1 style={{ fontSize: '30px', fontWeight: 700, color: '#1a110a', letterSpacing: '-0.02em', margin: 0 }}>
+            My Consultations
           </h1>
-          <p className="text-body" style={{ color: 'var(--muted)' }}>
-            Track your appointment details, clinical triage categories, and attending physician notes.
+          <p style={{ color: '#706b63', margin: '6px 0 0 0' }}>
+            Track your booked, past, and cancelled visits.
           </p>
         </div>
-        <button
-          onClick={onBookNew}
-          className="btn btn-primary"
-        >
-          <Calendar size={16} />
-          Book New Consultation
+        <button onClick={() => navigate('/book')} className="btn btn-primary">
+          <Calendar size={16} /> Book New Consultation
         </button>
       </div>
 
-      {cases.length === 0 ? (
-        <div className="card" style={{ padding: '64px', textAlign: 'center' }}>
-          <div style={{
-            width: '64px',
-            height: '64px',
-            borderRadius: '50%',
-            backgroundColor: 'var(--info)',
-            color: 'var(--primary)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            margin: '0 auto 20px',
-          }}>
-            <Calendar size={32} />
-          </div>
-          <h2 style={{ fontSize: '20px', fontWeight: 600, marginBottom: '8px' }}>No Consultations Scheduled</h2>
-          <p style={{ color: 'var(--muted)', marginBottom: '24px' }}>
-            Complete an intake to book an appointment with our specialist physicians.
-          </p>
-          <button
-            onClick={onBookNew}
-            className="btn btn-primary"
-          >
-            Start Triage Intake
-          </button>
-        </div>
-      ) : (
-        <div style={{ display: 'grid', gap: '20px' }}>
-          {cases.map(c => {
-            const doc = doctors.find(d => d.id === c.selectedDoctorId) || doctors[0];
-            const finalScore = c.doctorConfirmedScore || c.aiAdvisoryScore;
+      <div style={{
+        display: 'flex', gap: '8px', marginBottom: '24px',
+        borderBottom: '1px solid #eae3d8', paddingBottom: '2px',
+      }}>
+        {([
+          { k: 'upcoming', label: `Upcoming (${counts.upcoming})` },
+          { k: 'past', label: `Past (${counts.past})` },
+          { k: 'cancelled', label: `Cancelled (${counts.cancelled})` },
+        ] as const).map(t => {
+          const active = tab === t.k;
+          return (
+            <button
+              key={t.k}
+              onClick={() => setTab(t.k)}
+              style={{
+                padding: '10px 18px', fontSize: '14px',
+                fontWeight: active ? 700 : 500,
+                color: active ? '#1a110a' : '#706b63',
+                background: 'transparent', border: 'none',
+                borderBottom: active ? '2px solid #785b47' : '2px solid transparent',
+                cursor: 'pointer', marginBottom: '-2px',
+              }}
+            >
+              {t.label}
+            </button>
+          );
+        })}
+      </div>
 
+      {loading && (
+        <div style={{ padding: '48px', textAlign: 'center', color: '#706b63' }}>
+          <Loader2 size={24} className="animate-spin" style={{ display: 'inline', marginRight: 8 }} />
+          Loading…
+        </div>
+      )}
+
+      {error && (
+        <div style={{
+          padding: '14px 18px', borderRadius: '12px',
+          backgroundColor: 'rgba(220, 38, 38, 0.08)',
+          border: '1px solid rgba(220, 38, 38, 0.25)',
+          color: '#dc2626', fontSize: '14px',
+        }}>
+          {error}
+        </div>
+      )}
+
+      {!loading && !error && filtered.length === 0 && (
+        <div className="card" style={{ padding: '48px', textAlign: 'center' }}>
+          <div style={{
+            width: '56px', height: '56px', borderRadius: '50%',
+            backgroundColor: '#f5efe6', color: '#785b47',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            margin: '0 auto 16px',
+          }}>
+            <Calendar size={26} />
+          </div>
+          <h2 style={{ fontSize: '18px', fontWeight: 700, marginBottom: '8px' }}>
+            Nothing in {tab}
+          </h2>
+          <p style={{ color: '#706b63', marginBottom: '24px' }}>
+            {tab === 'upcoming'
+              ? 'Book a consultation to populate this list.'
+              : 'Your history will appear here as you use PulseCare.'}
+          </p>
+          {tab === 'upcoming' && (
+            <button onClick={() => navigate('/book')} className="btn btn-primary">
+              Start Triage & Booking
+            </button>
+          )}
+        </div>
+      )}
+
+      {!loading && !error && filtered.length > 0 && (
+        <div style={{ display: 'grid', gap: '16px' }}>
+          {filtered.map(appt => {
+            const canCancel = isUpcoming(appt);
             return (
-              <div key={c.id} className="card" style={{ padding: '28px' }}>
+              <div key={appt.id} className="card" style={{ padding: '24px' }}>
                 <div style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  flexWrap: 'wrap',
-                  gap: '16px',
-                  borderBottom: '1px solid var(--border)',
-                  paddingBottom: '20px',
-                  marginBottom: '20px',
+                  display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                  flexWrap: 'wrap', gap: '12px',
+                  borderBottom: '1px solid #eae3d8',
+                  paddingBottom: '16px', marginBottom: '16px',
                 }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-                    <img
-                      src={doc.avatar}
-                      alt={doc.name}
-                      style={{ width: '54px', height: '54px', borderRadius: '50%', objectFit: 'cover' }}
-                    />
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
+                    {appt.doctorAvatarUrl ? (
+                      <img
+                        src={appt.doctorAvatarUrl}
+                        alt={appt.doctorName ?? ''}
+                        style={{ width: '48px', height: '48px', borderRadius: '50%', objectFit: 'cover' }}
+                      />
+                    ) : (
+                      <div style={{
+                        width: '48px', height: '48px', borderRadius: '50%',
+                        backgroundColor: '#f5efe6', color: '#785b47',
+                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        fontWeight: 700,
+                      }}>
+                        {(appt.doctorName ?? 'Dr').split(' ').map(s => s[0]).join('').slice(0, 2)}
+                      </div>
+                    )}
                     <div>
-                      <h2 style={{ fontSize: '18px', fontWeight: 600, color: 'var(--ink)' }}>{doc.name}</h2>
-                      <div style={{ fontSize: '13px', color: 'var(--muted)' }}>
-                        {doc.specialty} · {doc.hospital}
+                      <h2 style={{ fontSize: '17px', fontWeight: 700, color: '#1a110a', margin: 0 }}>
+                        {appt.doctorName ?? 'Attending physician'}
+                      </h2>
+                      <div style={{ fontSize: '13px', color: '#706b63' }}>
+                        {appt.doctorSpecialty}{appt.doctorHospital ? ` · ${appt.doctorHospital}` : ''}
                       </div>
                     </div>
                   </div>
-
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                    <button
-                      onClick={onExplainTriage}
-                      className="btn btn-secondary"
-                      style={{ padding: '6px 14px', fontSize: '12px', minHeight: '34px' }}
-                    >
-                      Explain Triage ↗
-                    </button>
-                    <span className={`badge-urgency-${finalScore.toLowerCase()}-warm`}>
-                      {finalScore}
-                    </span>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                    <span style={{
+                      padding: '3px 10px', borderRadius: '9999px',
+                      fontSize: '12px', fontWeight: 700,
+                      color: urgencyColor(appt.urgency), backgroundColor: urgencyBg(appt.urgency),
+                    }}>{appt.urgency}</span>
+                    <span style={{
+                      padding: '3px 10px', borderRadius: '9999px',
+                      fontSize: '12px', fontWeight: 600,
+                      color: '#1a110a', backgroundColor: '#f5efe6',
+                    }}>{statusLabel(appt.status)}</span>
                   </div>
                 </div>
 
                 <div style={{
                   display: 'grid',
                   gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
-                  gap: '16px',
-                  backgroundColor: 'var(--canvas)',
-                  padding: '16px 20px',
-                  borderRadius: '14px',
-                  marginBottom: '18px',
-                  fontSize: '13px',
-                  border: '1px solid var(--border)',
+                  gap: '14px',
+                  backgroundColor: '#faf7f1',
+                  padding: '14px 18px', borderRadius: '12px',
+                  marginBottom: '14px', fontSize: '13px',
+                  border: '1px solid #eae3d8',
                 }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <Clock size={16} color="var(--primary)" />
-                    <span><strong>Slot:</strong> {c.appointmentTime}</span>
+                    <Clock size={16} color="#785b47" />
+                    <span><strong>Slot:</strong> {formatSlot(appt.slotAt)}</span>
                   </div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    {c.consultationType === 'VIDEO' ? (
-                      <Video size={16} color="var(--primary)" />
+                    {appt.consultationType === 'VIDEO' ? (
+                      <Video size={16} color="#785b47" />
                     ) : (
-                      <MapPin size={16} color="var(--primary)" />
+                      <MapPin size={16} color="#785b47" />
                     )}
-                    <span><strong>Mode:</strong> {c.consultationType === 'VIDEO' ? 'Telehealth Video Call' : 'In-Person Hospital Visit'}</span>
+                    <span><strong>Mode:</strong> {appt.consultationType === 'VIDEO' ? 'Telehealth' : 'In-Person'}</span>
                   </div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <FileText size={16} color="var(--primary)" />
-                    <span><strong>Case Reference:</strong> {c.id}</span>
+                    <FileText size={16} color="#785b47" />
+                    <span><strong>Ref:</strong> {appt.id.slice(0, 8)}</span>
                   </div>
                 </div>
 
-                <div style={{ fontSize: '14px', marginBottom: '14px', color: 'var(--ink)' }}>
-                  <strong>Reported Concern:</strong> {c.chiefComplaint}
-                </div>
-
-                {c.doctorNotes && (
-                  <div style={{
-                    backgroundColor: 'rgba(50, 138, 59, 0.08)',
-                    border: '1px solid rgba(50, 138, 59, 0.2)',
-                    borderRadius: '12px',
-                    padding: '14px 18px',
-                    fontSize: '14px',
-                    color: 'var(--success)',
-                  }}>
-                    <strong>Attending Doctor's Notes:</strong> {c.doctorNotes}
+                {appt.chiefComplaint && (
+                  <div style={{ fontSize: '14px', marginBottom: '12px', color: '#1a110a' }}>
+                    <strong>Reported concern:</strong> {appt.chiefComplaint}
                   </div>
                 )}
+
+                <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
+                  <button
+                    onClick={() => navigate(`/appointments/${appt.id}`)}
+                    className="btn btn-secondary"
+                  >
+                    View details
+                  </button>
+                  {canCancel && (
+                    <button
+                      onClick={() => handleCancel(appt.id)}
+                      disabled={cancellingId === appt.id}
+                      className="btn btn-secondary"
+                      style={{ color: '#dc2626', borderColor: 'rgba(220,38,38,0.3)' }}
+                    >
+                      {cancellingId === appt.id ? (
+                        <>
+                          <Loader2 size={14} className="animate-spin" /> Cancelling…
+                        </>
+                      ) : (
+                        <>
+                          <XCircle size={14} /> Cancel
+                        </>
+                      )}
+                    </button>
+                  )}
+                </div>
               </div>
             );
           })}

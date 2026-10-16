@@ -1,9 +1,8 @@
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   Bell,
   ChevronDown,
-  Moon,
-  Sun,
 } from 'lucide-react';
 import type { User } from '../types';
 
@@ -14,8 +13,6 @@ interface HeaderProps {
   onLogout: () => void;
   onGetCare: () => void;
   onGoHome: () => void;
-  darkMode: boolean;
-  onToggleTheme: () => void;
 }
 
 export const Header: React.FC<HeaderProps> = ({
@@ -25,9 +22,8 @@ export const Header: React.FC<HeaderProps> = ({
   onLogout,
   onGetCare,
   onGoHome,
-  darkMode,
-  onToggleTheme,
 }) => {
+  const navigate = useNavigate();
   const isDoctor = currentUser?.role === 'DOCTOR';
   const isPatient = currentUser?.role === 'PATIENT';
 
@@ -125,27 +121,29 @@ export const Header: React.FC<HeaderProps> = ({
           {isPatient && (
             <>
               <a
-                href="#find-doctors"
-                onClick={e => { e.preventDefault(); onGetCare(); }}
+                href="/patient"
+                onClick={e => { e.preventDefault(); navigate('/patient'); }}
                 style={{ color: '#443e37', textDecoration: 'none', cursor: 'pointer' }}
                 onMouseEnter={e => (e.currentTarget.style.color = '#1a110a')}
                 onMouseLeave={e => (e.currentTarget.style.color = '#443e37')}
               >
-                Find Doctors
+                Dashboard
               </a>
               <a
-                href="#my-appts"
+                href="/book"
+                onClick={e => { e.preventDefault(); navigate('/book'); }}
+                style={{ color: '#443e37', textDecoration: 'none', cursor: 'pointer' }}
+                onMouseEnter={e => (e.currentTarget.style.color = '#1a110a')}
+                onMouseLeave={e => (e.currentTarget.style.color = '#443e37')}
+              >
+                Book Visit
+              </a>
+              <a
+                href="/appointments"
+                onClick={e => { e.preventDefault(); navigate('/appointments'); }}
                 style={{ color: '#1a110a', fontWeight: 600, textDecoration: 'none', cursor: 'pointer' }}
               >
-                My Appts
-              </a>
-              <a
-                href="#my-records"
-                style={{ color: '#443e37', textDecoration: 'none', cursor: 'pointer' }}
-                onMouseEnter={e => (e.currentTarget.style.color = '#1a110a')}
-                onMouseLeave={e => (e.currentTarget.style.color = '#443e37')}
-              >
-                My Records
+                My Appointments
               </a>
             </>
           )}
@@ -192,22 +190,6 @@ export const Header: React.FC<HeaderProps> = ({
           alignItems: 'center',
           gap: '18px',
         }}>
-          {/* Subtle theme toggle */}
-          <button
-            onClick={onToggleTheme}
-            style={{
-              background: 'transparent',
-              border: 'none',
-              cursor: 'pointer',
-              color: '#785b47',
-              padding: '4px',
-              display: 'flex',
-              alignItems: 'center',
-            }}
-            title={darkMode ? 'Switch to Light Theme' : 'Switch to Dark Theme'}
-          >
-            {darkMode ? <Sun size={15} color="#f59e0b" /> : <Moon size={15} />}
-          </button>
 
           {!currentUser && (
             <>
