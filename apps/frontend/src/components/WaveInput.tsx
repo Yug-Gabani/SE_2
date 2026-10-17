@@ -55,15 +55,7 @@ export const WaveInput: React.FC<WaveInputProps> = ({
       />
 
       <label className={`label ${icon ? 'has-icon' : ''}`} htmlFor={inputId}>
-        {label.split('').map((char, index) => (
-          <span
-            key={index}
-            className="label-char"
-            style={{ '--index': index } as React.CSSProperties}
-          >
-            {char === ' ' ? '\u00A0' : char}
-          </span>
-        ))}
+        {label}
       </label>
 
       <span className="bar"></span>
