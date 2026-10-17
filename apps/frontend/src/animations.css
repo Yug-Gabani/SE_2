@@ -203,6 +203,133 @@
 [data-reveal] { opacity: 0; transform: translateY(24px); transition: opacity .6s var(--anim-ease-out), transform .6s var(--anim-ease-out); }
 [data-reveal].is-visible { opacity: 1; transform: none; }
 
+/* =========================================================
+   8. PulseCare Animated Input System (Adapted from Uiverse)
+   Expanding center-out underline bar + focus highlight pulse
+   ========================================================= */
+
+.form-group,
+.field-group,
+.input-group-uiverse,
+.group {
+  position: relative;
+}
+
+.form-group .form-label,
+.field-group label,
+.group label {
+  transition: color 0.2s var(--enter);
+}
+
+.form-group:focus-within .form-label,
+.field-group:focus-within label,
+.group:focus-within label {
+  color: #785b47 !important;
+}
+
+/* Universal input focus animation with expanding underline and highlight ripple */
+input[type="text"],
+input[type="email"],
+input[type="password"],
+input[type="number"],
+input[type="date"],
+textarea,
+.form-input,
+.form-textarea {
+  position: relative;
+  background-image: linear-gradient(#785b47, #785b47);
+  background-position: bottom center;
+  background-size: 0% 2.5px;
+  background-repeat: no-repeat;
+  transition: border-color 0.22s var(--enter),
+              box-shadow 0.22s var(--enter),
+              background-size 0.32s var(--enter);
+}
+
+input[type="text"]:focus,
+input[type="email"]:focus,
+input[type="password"]:focus,
+input[type="number"]:focus,
+input[type="date"]:focus,
+textarea:focus,
+.form-input:focus,
+.form-textarea:focus {
+  border-color: #785b47 !important;
+  background-size: 100% 2.5px;
+  animation: inputHighlighter 0.35s var(--enter) forwards;
+  outline: none;
+}
+
+@keyframes inputHighlighter {
+  0% {
+    box-shadow: 0 0 0 0 rgba(120, 91, 71, 0.3), 0 0 0 0 rgba(120, 91, 71, 0.15);
+  }
+  50% {
+    box-shadow: 0 0 0 4px rgba(120, 91, 71, 0.18), 0 2px 8px rgba(120, 91, 71, 0.08);
+  }
+  100% {
+    box-shadow: 0 0 0 3px rgba(120, 91, 71, 0.14), 0 1px 4px rgba(120, 91, 71, 0.05);
+  }
+}
+
+/* Direct Uiverse classes (.group, .input, .bar, .highlight) support */
+.bar {
+  position: relative;
+  display: block;
+  width: 100%;
+}
+
+.bar:before,
+.bar:after {
+  content: '';
+  height: 2px;
+  width: 0;
+  bottom: 0px;
+  position: absolute;
+  background: #785b47;
+  transition: width 0.3s var(--enter);
+}
+
+.bar:before {
+  left: 50%;
+}
+
+.bar:after {
+  right: 50%;
+}
+
+input:focus ~ .bar:before,
+input:focus ~ .bar:after,
+.input:focus ~ .bar:before,
+.input:focus ~ .bar:after {
+  width: 50%;
+}
+
+.highlight {
+  position: absolute;
+  height: 60%;
+  width: 100px;
+  top: 25%;
+  left: 0;
+  pointer-events: none;
+  opacity: 0.5;
+}
+
+input:focus ~ .highlight,
+.input:focus ~ .highlight {
+  animation: inputHighlighterSweep 0.3s ease;
+}
+
+@keyframes inputHighlighterSweep {
+  from {
+    background: #785b47;
+  }
+  to {
+    width: 0;
+    background: transparent;
+  }
+}
+
 /* Global Reduced Motion Override */
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {

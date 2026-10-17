@@ -256,7 +256,7 @@ html, body {
 
 .form-input:focus, .form-textarea:focus, .form-select:focus {
   border-color: var(--primary);
-  box-shadow: 0 0 0 3px rgba(72, 101, 255, 0.15);
+  box-shadow: 0 0 0 3px rgba(120, 91, 71, 0.15);
   outline: none;
 }
 
