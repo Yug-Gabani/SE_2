@@ -22,14 +22,72 @@
   box-shadow: 0 6px 20px rgba(75, 68, 57, 0.12);
 }
 
+/* Card Corner Expansion Effect (Adapted from Uiverse with PulseCare tokens) */
+.card,
 .card-hover {
+  position: relative;
+  overflow: hidden;
   transition: transform 180ms var(--enter), border-color 180ms var(--enter), box-shadow 180ms var(--enter);
 }
 
+.card:hover,
 .card-hover:hover {
   transform: translateY(-2px);
   border-color: #785b47;
   box-shadow: 0 8px 24px rgba(75, 68, 57, 0.08);
+}
+
+.card > *,
+.card-hover > * {
+  position: relative;
+  z-index: 1;
+}
+
+.card::before,
+.card::after,
+.card-hover::before,
+.card-hover::after {
+  position: absolute;
+  content: "";
+  width: 28px;
+  height: 28px;
+  background-color: var(--card-corner-bg, rgba(120, 91, 71, 0.08));
+  pointer-events: none;
+  z-index: 0;
+  transition: width 0.38s var(--enter),
+              height 0.38s var(--enter),
+              border-radius 0.38s var(--enter),
+              background-color 0.38s var(--enter);
+}
+
+.card::before,
+.card-hover::before {
+  top: 0;
+  right: 0;
+  border-radius: 0 16px 0 100%;
+}
+
+.card::after,
+.card-hover::after {
+  bottom: 0;
+  left: 0;
+  border-radius: 0 100% 0 16px;
+}
+
+.card:hover::before,
+.card:hover::after,
+.card-hover:hover::before,
+.card-hover:hover::after {
+  width: 100%;
+  height: 100%;
+  border-radius: inherit;
+  background-color: var(--card-corner-hover-bg, rgba(120, 91, 71, 0.04));
+}
+
+/* Dark card variant (e.g. Next Appointment brown hero card) */
+.card-dark {
+  --card-corner-bg: rgba(255, 255, 255, 0.16);
+  --card-corner-hover-bg: rgba(255, 255, 255, 0.08);
 }
 
 .chip {
@@ -158,6 +216,12 @@
   .card-hover:hover,
   .icon-pop:hover {
     transform: none !important;
+  }
+  .card::before,
+  .card::after,
+  .card-hover::before,
+  .card-hover::after {
+    display: none !important;
   }
   [data-reveal] { opacity: 1; transform: none; }
 }

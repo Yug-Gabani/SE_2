@@ -144,7 +144,7 @@ export const PatientDashboard: React.FC<PatientDashboardProps> = ({ currentUser 
         ) : next ? (
           <motion.div
             variants={listItem}
-            className="card-hover"
+            className="card-hover card-dark"
             style={{
               backgroundColor: '#785b47', color: '#ffffff', borderRadius: '20px',
               padding: '28px 26px', boxShadow: '0 8px 24px rgba(120, 91, 71, 0.22)',
