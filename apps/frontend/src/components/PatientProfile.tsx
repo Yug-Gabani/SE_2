@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { AnimatePresence, motion } from 'framer-motion';
 import { PageTransition } from '../motion/PageTransition';
 import { fadeInUp } from '../motion/presets';
+import { CustomSelect } from './CustomSelect';
 import { ArrowLeft, Loader2, Save, UserCircle2 } from 'lucide-react';
 import type { Gender, PatientProfile as PatientProfileT } from '../types';
 import { profileApi } from '../services/api';
@@ -137,10 +138,12 @@ export const PatientProfile: React.FC = () => {
           </Row>
           <Row>
             <Field label="Gender">
-              <select style={inputStyle()} value={profile.gender ?? ''} onChange={e => set('gender', (e.target.value || undefined) as Gender | undefined)}>
-                <option value="">—</option>
-                {GENDERS.map(g => <option key={g.value} value={g.value}>{g.label}</option>)}
-              </select>
+              <CustomSelect
+                value={profile.gender ?? ''}
+                options={[{ value: '', label: 'Select gender' }, ...GENDERS]}
+                onChange={val => set('gender', (val || undefined) as Gender | undefined)}
+                variant="input"
+              />
             </Field>
             <div />
           </Row>

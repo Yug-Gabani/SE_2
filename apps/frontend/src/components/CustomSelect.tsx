@@ -1,0 +1,240 @@
+import React, { useState, useRef, useEffect } from 'react';
+import { AnimatePresence, motion } from 'framer-motion';
+import { ChevronDown, Check } from 'lucide-react';
+import { EASE_ENTER } from '../motion/presets';
+
+export interface SelectOption {
+  value: string;
+  label: string;
+}
+
+interface CustomSelectProps {
+  value: string;
+  options: (SelectOption | string)[];
+  onChange: (value: string) => void;
+  placeholder?: string;
+  disabled?: boolean;
+  variant?: 'pill' | 'input' | 'borderless';
+  style?: React.CSSProperties;
+  minWidth?: string | number;
+}
+
+export const CustomSelect: React.FC<CustomSelectProps> = ({
+  value,
+  options,
+  onChange,
+  placeholder = 'Select...',
+  disabled = false,
+  variant = 'pill',
+  style,
+  minWidth,
+}) => {
+  const [isOpen, setIsOpen] = useState(false);
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  // Normalize options
+  const normalizedOptions: SelectOption[] = options.map(opt =>
+    typeof opt === 'string' ? { value: opt, label: opt } : opt
+  );
+
+  const selectedOption = normalizedOptions.find(opt => opt.value === value);
+
+  // Close on outside click
+  useEffect(() => {
+    if (!isOpen) return;
+    const handleClickOutside = (e: MouseEvent) => {
+      if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
+        setIsOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [isOpen]);
+
+  // Close on Escape key
+  useEffect(() => {
+    if (!isOpen) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setIsOpen(false);
+    };
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [isOpen]);
+
+  const getVariantStyles = (): React.CSSProperties => {
+    switch (variant) {
+      case 'borderless':
+        return {
+          backgroundColor: 'transparent',
+          border: 'none',
+          padding: '6px 20px 6px 0',
+          fontSize: '14px',
+          fontWeight: 600,
+          color: '#2a231b',
+        };
+      case 'input':
+        return {
+          backgroundColor: '#ffffff',
+          border: '1px solid #eae3d8',
+          borderRadius: '10px',
+          padding: '10px 32px 10px 14px',
+          fontSize: '14px',
+          fontWeight: 500,
+          color: '#2a231b',
+          boxShadow: '0 1px 3px rgba(75, 68, 57, 0.04)',
+        };
+      case 'pill':
+      default:
+        return {
+          backgroundColor: '#ffffff',
+          border: '1px solid #eae3d8',
+          borderRadius: '9999px',
+          padding: '7px 28px 7px 14px',
+          fontSize: '13px',
+          fontWeight: 500,
+          color: '#2b251f',
+          boxShadow: '0 2px 6px rgba(75, 68, 57, 0.03)',
+        };
+    }
+  };
+
+  return (
+    <div
+      ref={containerRef}
+      style={{
+        position: 'relative',
+        display: 'inline-block',
+        minWidth: minWidth ?? (variant === 'input' ? '140px' : undefined),
+        ...style,
+      }}
+    >
+      <button
+        type="button"
+        disabled={disabled}
+        onClick={() => setIsOpen(!isOpen)}
+        style={{
+          ...getVariantStyles(),
+          width: '100%',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          gap: '8px',
+          cursor: disabled ? 'not-allowed' : 'pointer',
+          opacity: disabled ? 0.6 : 1,
+          fontFamily: 'inherit',
+          outline: 'none',
+          position: 'relative',
+          transition: 'border-color 150ms ease, box-shadow 150ms ease',
+        }}
+        onMouseEnter={e => {
+          if (!disabled && variant !== 'borderless') {
+            e.currentTarget.style.borderColor = '#785b47';
+          }
+        }}
+        onMouseLeave={e => {
+          if (!disabled && variant !== 'borderless' && !isOpen) {
+            e.currentTarget.style.borderColor = '#eae3d8';
+          }
+        }}
+      >
+        <span
+          style={{
+            whiteSpace: 'nowrap',
+            overflow: 'hidden',
+            textOverflow: 'ellipsis',
+          }}
+        >
+          {selectedOption ? selectedOption.label : placeholder}
+        </span>
+        <motion.div
+          animate={{ rotate: isOpen ? 180 : 0 }}
+          transition={{ duration: 0.18, ease: EASE_ENTER }}
+          style={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            color: '#785b47',
+            flexShrink: 0,
+            position: variant === 'borderless' ? 'absolute' : undefined,
+            right: variant === 'borderless' ? 0 : undefined,
+          }}
+        >
+          <ChevronDown size={14} />
+        </motion.div>
+      </button>
+
+      <AnimatePresence>
+        {isOpen && (
+          <motion.div
+            initial={{ opacity: 0, y: 4, scale: 0.98 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 4, scale: 0.98 }}
+            transition={{ duration: 0.18, ease: EASE_ENTER }}
+            style={{
+              position: 'absolute',
+              top: 'calc(100% + 6px)',
+              left: 0,
+              minWidth: '100%',
+              width: 'max-content',
+              maxWidth: '300px',
+              backgroundColor: '#ffffff',
+              border: '1px solid #eae3d8',
+              borderRadius: '14px',
+              padding: '6px',
+              boxShadow: '0 10px 28px rgba(75, 68, 57, 0.12)',
+              zIndex: 100,
+              maxHeight: '260px',
+              overflowY: 'auto',
+            }}
+          >
+            {normalizedOptions.map(opt => {
+              const isSelected = opt.value === value;
+              return (
+                <button
+                  key={opt.value}
+                  type="button"
+                  onClick={() => {
+                    onChange(opt.value);
+                    setIsOpen(false);
+                  }}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    width: '100%',
+                    padding: '8px 12px',
+                    borderRadius: '8px',
+                    border: 'none',
+                    backgroundColor: isSelected ? '#faf7f1' : 'transparent',
+                    color: isSelected ? '#785b47' : '#1a110a',
+                    fontWeight: isSelected ? 600 : 400,
+                    fontSize: '13px',
+                    textAlign: 'left',
+                    cursor: 'pointer',
+                    fontFamily: 'inherit',
+                    gap: '12px',
+                    transition: 'background-color 120ms ease, color 120ms ease',
+                  }}
+                  onMouseEnter={e => {
+                    if (!isSelected) {
+                      e.currentTarget.style.backgroundColor = '#faf7f1';
+                      e.currentTarget.style.color = '#785b47';
+                    }
+                  }}
+                  onMouseLeave={e => {
+                    if (!isSelected) {
+                      e.currentTarget.style.backgroundColor = 'transparent';
+                      e.currentTarget.style.color = '#1a110a';
+                    }
+                  }}
+                >
+                  <span style={{ whiteSpace: 'nowrap' }}>{opt.label}</span>
+                  {isSelected && <Check size={14} color="#785b47" style={{ flexShrink: 0 }} />}
+                </button>
+              );
+            })}
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+};

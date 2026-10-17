@@ -2,7 +2,6 @@ import React, { useEffect, useRef, useState } from 'react';
 import {
   Search,
   MapPin,
-  ChevronDown,
   ArrowRight,
   Star,
   Check,
@@ -18,6 +17,7 @@ import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import type { Hospital } from '../types';
 import { publicHospitalsApi } from '../services/api';
+import { CustomSelect } from './CustomSelect';
 import { PageTransition } from '../motion/PageTransition';
 import { listItem, staggerContainer, EASE_ENTER } from '../motion/presets';
 
@@ -203,35 +203,21 @@ export const LandingPage: React.FC<LandingPageProps> = ({
             cursor: 'pointer',
           }}>
             <MapPin size={16} color="#785b47" />
-            <div style={{ position: 'relative', display: 'inline-flex', alignItems: 'center' }}>
-              <select
-                value={city}
-                onChange={e => setCity(e.target.value)}
-                style={{
-                  border: 'none',
-                  background: 'transparent',
-                  fontSize: '14px',
-                  fontWeight: 600,
-                  color: '#2a231b',
-                  cursor: 'pointer',
-                  outline: 'none',
-                  appearance: 'none',
-                  WebkitAppearance: 'none',
-                  MozAppearance: 'none',
-                  paddingRight: '18px',
-                }}
-              >
-                <option value="All India">All India</option>
-                <option value="Ahmedabad">Ahmedabad</option>
-                <option value="Gandhinagar">Gandhinagar</option>
-                <option value="Mumbai">Mumbai</option>
-                <option value="Delhi">Delhi</option>
-                <option value="Bengaluru">Bengaluru Urban</option>
-                <option value="Pune">Pune</option>
-                <option value="Chennai">Chennai</option>
-              </select>
-              <ChevronDown size={14} color="#785b47" style={{ position: 'absolute', right: 0, pointerEvents: 'none' }} />
-            </div>
+            <CustomSelect
+              value={city}
+              options={[
+                'All India',
+                'Ahmedabad',
+                'Gandhinagar',
+                'Mumbai',
+                'Delhi',
+                'Bengaluru Urban',
+                'Pune',
+                'Chennai',
+              ]}
+              onChange={setCity}
+              variant="borderless"
+            />
           </div>
 
           {/* Search Input */}

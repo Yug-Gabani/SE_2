@@ -3,9 +3,9 @@ import { useLocation } from 'react-router-dom';
 import { AnimatePresence, motion } from 'framer-motion';
 import { PageTransition } from '../motion/PageTransition';
 import { listItem, slideInRight, EASE_ENTER, EASE_EXIT } from '../motion/presets';
+import { CustomSelect } from './CustomSelect';
 import {
   Search,
-  ChevronDown,
   Download,
   X,
   Loader2,
@@ -546,87 +546,42 @@ export const DoctorDashboard: React.FC = () => {
           <span style={{ fontWeight: 600, marginRight: '4px' }}>Filter:</span>
 
           {/* All Urgency Filter */}
-          <div style={{ position: 'relative' }}>
-            <select
-              value={filterUrgency}
-              onChange={e => setFilterUrgency(e.target.value)}
-              style={{
-                backgroundColor: '#ffffff',
-                border: '1px solid #eae3d8',
-                borderRadius: '9999px',
-                padding: '7px 28px 7px 14px',
-                fontSize: '13px',
-                color: '#2b251f',
-                cursor: 'pointer',
-                appearance: 'none',
-                WebkitAppearance: 'none',
-                MozAppearance: 'none',
-                outline: 'none',
-                boxShadow: '0 2px 6px rgba(75, 68, 57, 0.03)',
-              }}
-            >
-              <option value="ALL">All</option>
-              <option value="EMG">Emergency</option>
-              <option value="URG">Urgent</option>
-              <option value="RTN">Routine</option>
-            </select>
-            <ChevronDown size={13} style={{ position: 'absolute', right: '10px', top: '11px', pointerEvents: 'none', color: '#785b47' }} />
-          </div>
+          <CustomSelect
+            value={filterUrgency}
+            onChange={setFilterUrgency}
+            options={[
+              { value: 'ALL', label: 'All Urgencies' },
+              { value: 'EMG', label: 'Emergency' },
+              { value: 'URG', label: 'Urgent' },
+              { value: 'RTN', label: 'Routine' },
+            ]}
+            variant="pill"
+          />
 
           {/* Mode Filter */}
-          <div style={{ position: 'relative' }}>
-            <select
-              value={filterMode}
-              onChange={e => setFilterMode(e.target.value)}
-              style={{
-                backgroundColor: '#ffffff',
-                border: '1px solid #eae3d8',
-                borderRadius: '9999px',
-                padding: '7px 28px 7px 14px',
-                fontSize: '13px',
-                color: '#2b251f',
-                cursor: 'pointer',
-                appearance: 'none',
-                WebkitAppearance: 'none',
-                MozAppearance: 'none',
-                outline: 'none',
-                boxShadow: '0 2px 6px rgba(75, 68, 57, 0.03)',
-              }}
-            >
-              <option value="ALL">All Modes</option>
-              <option value="VID">Video</option>
-              <option value="IPS">In-person</option>
-            </select>
-            <ChevronDown size={13} style={{ position: 'absolute', right: '10px', top: '11px', pointerEvents: 'none', color: '#785b47' }} />
-          </div>
+          <CustomSelect
+            value={filterMode}
+            onChange={setFilterMode}
+            options={[
+              { value: 'ALL', label: 'All Modes' },
+              { value: 'VID', label: 'Video' },
+              { value: 'IPS', label: 'In-person' },
+            ]}
+            variant="pill"
+          />
 
           {/* Status Filter */}
-          <div style={{ position: 'relative' }}>
-            <select
-              value={filterStatus}
-              onChange={e => setFilterStatus(e.target.value)}
-              style={{
-                backgroundColor: '#ffffff',
-                border: '1px solid #eae3d8',
-                borderRadius: '9999px',
-                padding: '7px 28px 7px 14px',
-                fontSize: '13px',
-                color: '#2b251f',
-                cursor: 'pointer',
-                appearance: 'none',
-                WebkitAppearance: 'none',
-                MozAppearance: 'none',
-                outline: 'none',
-                boxShadow: '0 2px 6px rgba(75, 68, 57, 0.03)',
-              }}
-            >
-              <option value="ALL">All Statuses</option>
-              <option value="WAITING">Waiting</option>
-              <option value="IN_PROGRESS">In Progress</option>
-              <option value="DONE">Done</option>
-            </select>
-            <ChevronDown size={13} style={{ position: 'absolute', right: '10px', top: '11px', pointerEvents: 'none', color: '#785b47' }} />
-          </div>
+          <CustomSelect
+            value={filterStatus}
+            onChange={setFilterStatus}
+            options={[
+              { value: 'ALL', label: 'All Statuses' },
+              { value: 'WAITING', label: 'Waiting' },
+              { value: 'IN_PROGRESS', label: 'In Progress' },
+              { value: 'DONE', label: 'Done' },
+            ]}
+            variant="pill"
+          />
         </div>
 
         {/* Right Search Patient ID */}

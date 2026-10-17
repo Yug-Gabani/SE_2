@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { PageTransition } from '../motion/PageTransition';
 import { fadeInUp, listItem, staggerContainer } from '../motion/presets';
+import { CustomSelect } from './CustomSelect';
 import { Building2, Loader2, MapPin, Search } from 'lucide-react';
 import type { Hospital } from '../types';
 import { hospitalsApi } from '../services/api';
@@ -95,23 +96,19 @@ export const Hospitals: React.FC = () => {
             }}
           />
         </div>
-        <select
+        <CustomSelect
           value={state}
-          onChange={e => setState(e.target.value)}
-          style={selectStyle()}
-        >
-          <option value="">All states</option>
-          {states.map(s => <option key={s} value={s}>{s}</option>)}
-        </select>
-        <select
+          options={[{ value: '', label: 'All states' }, ...states.map(s => ({ value: s, label: s }))]}
+          onChange={setState}
+          variant="input"
+        />
+        <CustomSelect
           value={city}
-          onChange={e => setCity(e.target.value)}
-          style={selectStyle()}
+          options={[{ value: '', label: 'All cities' }, ...cities.map(c => ({ value: c, label: c }))]}
+          onChange={setCity}
           disabled={!cities.length}
-        >
-          <option value="">All cities</option>
-          {cities.map(c => <option key={c} value={c}>{c}</option>)}
-        </select>
+          variant="input"
+        />
         <input
           type="text"
           value={specialty}
@@ -275,11 +272,3 @@ export const Hospitals: React.FC = () => {
     </PageTransition>
   );
 };
-
-function selectStyle(): React.CSSProperties {
-  return {
-    padding: '10px 12px', borderRadius: '10px',
-    border: '1px solid #eae3d8', fontSize: '14px', outline: 'none',
-    boxSizing: 'border-box', backgroundColor: '#ffffff', color: '#1a110a',
-  };
-}
