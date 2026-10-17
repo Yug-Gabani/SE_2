@@ -16,6 +16,7 @@ import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { authApi } from '../services/api';
 import type { Role, User } from '../types';
 import { PageTransition } from '../motion/PageTransition';
+import { WaveInput } from './WaveInput';
 
 interface AuthPageProps {
   onLoginSuccess: (user: User, token: string) => void;
@@ -430,168 +431,44 @@ export const AuthPage: React.FC<AuthPageProps> = ({ onLoginSuccess, currentUser 
 
             {/* Full Name Field (Registration only) */}
             {!isLogin && (
-              <div style={{ marginBottom: '16px' }}>
-                <label
-                  htmlFor="fullName"
-                  style={{
-                    display: 'block',
-                    fontSize: '13px',
-                    fontWeight: 600,
-                    color: '#443e37',
-                    marginBottom: '6px',
-                  }}
-                >
-                  Full Name
-                </label>
-                <div style={{ position: 'relative' }}>
-                  <div
-                    style={{
-                      position: 'absolute',
-                      left: '14px',
-                      top: '50%',
-                      transform: 'translateY(-50%)',
-                      color: '#9ca3af',
-                    }}
-                  >
-                    <UserIcon size={17} />
-                  </div>
-                  <input
-                    id="fullName"
-                    type="text"
-                    required
-                    placeholder={role === 'DOCTOR' ? 'Dr. Jane Smith' : 'Sarah Jenkins'}
-                    value={fullName}
-                    onChange={e => setFullName(e.target.value)}
-                    style={{
-                      width: '100%',
-                      padding: '11px 14px 11px 42px',
-                      borderRadius: '12px',
-                      border: '1px solid #d5cec4',
-                      fontSize: '14px',
-                      outline: 'none',
-                      boxSizing: 'border-box',
-                      transition: 'border-color 0.15s ease',
-                    }}
-                    onFocus={e => (e.target.style.borderColor = '#785b47')}
-                    onBlur={e => (e.target.style.borderColor = '#d5cec4')}
-                  />
-                </div>
-              </div>
+              <WaveInput
+                id="fullName"
+                label="Full Legal Name"
+                type="text"
+                required
+                value={fullName}
+                onChange={setFullName}
+                icon={<UserIcon size={17} />}
+              />
             )}
 
             {/* Email Field */}
-            <div style={{ marginBottom: '16px' }}>
-              <label
-                htmlFor="email"
-                style={{
-                  display: 'block',
-                  fontSize: '13px',
-                  fontWeight: 600,
-                  color: '#443e37',
-                  marginBottom: '6px',
-                }}
-              >
-                Email Address
-              </label>
-              <div style={{ position: 'relative' }}>
-                <div
-                  style={{
-                    position: 'absolute',
-                    left: '14px',
-                    top: '50%',
-                    transform: 'translateY(-50%)',
-                    color: '#9ca3af',
-                  }}
-                >
-                  <Mail size={17} />
-                </div>
-                <input
-                  id="email"
-                  type="email"
-                  required
-                  placeholder="name@example.com"
-                  value={email}
-                  onChange={e => setEmail(e.target.value)}
-                  style={{
-                    width: '100%',
-                    padding: '11px 14px 11px 42px',
-                    borderRadius: '12px',
-                    border: '1px solid #d5cec4',
-                    fontSize: '14px',
-                    outline: 'none',
-                    boxSizing: 'border-box',
-                    transition: 'border-color 0.15s ease',
-                  }}
-                  onFocus={e => (e.target.style.borderColor = '#785b47')}
-                  onBlur={e => (e.target.style.borderColor = '#d5cec4')}
-                />
-              </div>
-            </div>
+            <WaveInput
+              id="email"
+              label="Email Address"
+              type="email"
+              required
+              value={email}
+              onChange={setEmail}
+              icon={<Mail size={17} />}
+            />
 
             {/* Phone Field (Optional, Registration only) */}
             {!isLogin && (
-              <div style={{ marginBottom: '16px' }}>
-                <label
-                  htmlFor="phone"
-                  style={{
-                    display: 'block',
-                    fontSize: '13px',
-                    fontWeight: 600,
-                    color: '#443e37',
-                    marginBottom: '6px',
-                  }}
-                >
-                  Phone Number <span style={{ fontWeight: 400, color: '#9ca3af' }}>(Optional)</span>
-                </label>
-                <div style={{ position: 'relative' }}>
-                  <div
-                    style={{
-                      position: 'absolute',
-                      left: '14px',
-                      top: '50%',
-                      transform: 'translateY(-50%)',
-                      color: '#9ca3af',
-                    }}
-                  >
-                    <Phone size={17} />
-                  </div>
-                  <input
-                    id="phone"
-                    type="tel"
-                    placeholder="+1 (555) 000-0000"
-                    value={phone}
-                    onChange={e => setPhone(e.target.value)}
-                    style={{
-                      width: '100%',
-                      padding: '11px 14px 11px 42px',
-                      borderRadius: '12px',
-                      border: '1px solid #d5cec4',
-                      fontSize: '14px',
-                      outline: 'none',
-                      boxSizing: 'border-box',
-                      transition: 'border-color 0.15s ease',
-                    }}
-                    onFocus={e => (e.target.style.borderColor = '#785b47')}
-                    onBlur={e => (e.target.style.borderColor = '#d5cec4')}
-                  />
-                </div>
-              </div>
+              <WaveInput
+                id="phone"
+                label="Phone Number (Optional)"
+                type="tel"
+                value={phone}
+                onChange={setPhone}
+                icon={<Phone size={17} />}
+              />
             )}
 
             {/* Password Field */}
-            <div style={{ marginBottom: '22px' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px' }}>
-                <label
-                  htmlFor="password"
-                  style={{
-                    fontSize: '13px',
-                    fontWeight: 600,
-                    color: '#443e37',
-                  }}
-                >
-                  Password
-                </label>
-                {isLogin && (
+            <div style={{ marginBottom: '8px' }}>
+              {isLogin && (
+                <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '-6px' }}>
                   <a
                     href="#forgot"
                     onClick={e => {
@@ -602,58 +479,34 @@ export const AuthPage: React.FC<AuthPageProps> = ({ onLoginSuccess, currentUser 
                   >
                     Forgot password?
                   </a>
-                )}
-              </div>
-              <div style={{ position: 'relative' }}>
-                <div
-                  style={{
-                    position: 'absolute',
-                    left: '14px',
-                    top: '50%',
-                    transform: 'translateY(-50%)',
-                    color: '#9ca3af',
-                  }}
-                >
-                  <Lock size={17} />
                 </div>
-                <input
-                  id="password"
-                  type={showPassword ? 'text' : 'password'}
-                  required
-                  placeholder={isLogin ? 'Enter your password' : 'At least 8 characters'}
-                  value={password}
-                  onChange={e => setPassword(e.target.value)}
-                  style={{
-                    width: '100%',
-                    padding: '11px 42px 11px 42px',
-                    borderRadius: '12px',
-                    border: '1px solid #d5cec4',
-                    fontSize: '14px',
-                    outline: 'none',
-                    boxSizing: 'border-box',
-                    transition: 'border-color 0.15s ease',
-                  }}
-                  onFocus={e => (e.target.style.borderColor = '#785b47')}
-                  onBlur={e => (e.target.style.borderColor = '#d5cec4')}
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  style={{
-                    position: 'absolute',
-                    right: '12px',
-                    top: '50%',
-                    transform: 'translateY(-50%)',
-                    background: 'none',
-                    border: 'none',
-                    color: '#9ca3af',
-                    cursor: 'pointer',
-                    padding: '4px',
-                  }}
-                >
-                  {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
-                </button>
-              </div>
+              )}
+              <WaveInput
+                id="password"
+                label={isLogin ? 'Password' : 'Password (min 8 characters)'}
+                type={showPassword ? 'text' : 'password'}
+                required
+                value={password}
+                onChange={setPassword}
+                icon={<Lock size={17} />}
+                rightElement={
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    style={{
+                      background: 'none',
+                      border: 'none',
+                      color: '#9ca3af',
+                      cursor: 'pointer',
+                      padding: '4px',
+                      display: 'flex',
+                      alignItems: 'center',
+                    }}
+                  >
+                    {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                  </button>
+                }
+              />
             </div>
 
             {/* Submit Button */}

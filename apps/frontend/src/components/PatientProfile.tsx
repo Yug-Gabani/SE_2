@@ -4,6 +4,7 @@ import { AnimatePresence, motion } from 'framer-motion';
 import { PageTransition } from '../motion/PageTransition';
 import { fadeInUp } from '../motion/presets';
 import { CustomSelect } from './CustomSelect';
+import { WaveInput } from './WaveInput';
 import { ArrowLeft, Loader2, Save, UserCircle2 } from 'lucide-react';
 import type { Gender, PatientProfile as PatientProfileT } from '../types';
 import { profileApi } from '../services/api';
@@ -121,20 +122,30 @@ export const PatientProfile: React.FC = () => {
           {/* Identity */}
           <SectionHeading icon={<UserCircle2 size={18} />} label="Identity" />
           <Row>
-            <Field label="Full name">
-              <input style={inputStyle()} value={profile.fullName ?? ''} onChange={e => set('fullName', e.target.value)} />
-            </Field>
-            <Field label="Email (read-only)">
-              <input style={{ ...inputStyle(), backgroundColor: '#faf7f1' }} value={profile.email} disabled />
-            </Field>
+            <WaveInput
+              label="Full name"
+              value={profile.fullName ?? ''}
+              onChange={v => set('fullName', v)}
+            />
+            <WaveInput
+              label="Email (read-only)"
+              value={profile.email}
+              onChange={() => {}}
+              disabled
+            />
           </Row>
           <Row>
-            <Field label="Phone">
-              <input style={inputStyle()} value={profile.phone ?? ''} onChange={e => set('phone', e.target.value)} placeholder="+91 9876543210" />
-            </Field>
-            <Field label="Date of birth">
-              <input type="date" style={inputStyle()} value={profile.dateOfBirth ?? ''} onChange={e => set('dateOfBirth', e.target.value || undefined)} />
-            </Field>
+            <WaveInput
+              label="Phone number"
+              value={profile.phone ?? ''}
+              onChange={v => set('phone', v)}
+            />
+            <WaveInput
+              label="Date of birth"
+              type="date"
+              value={profile.dateOfBirth ?? ''}
+              onChange={v => set('dateOfBirth', v || undefined)}
+            />
           </Row>
           <Row>
             <Field label="Gender">
@@ -150,33 +161,45 @@ export const PatientProfile: React.FC = () => {
 
           {/* Address */}
           <SectionHeading label="Address" />
-          <Field label="Street">
-            <input style={inputStyle()} value={profile.addressStreet ?? ''} onChange={e => set('addressStreet', e.target.value)} placeholder="House / flat / street" />
-          </Field>
+          <WaveInput
+            label="Street Address"
+            value={profile.addressStreet ?? ''}
+            onChange={v => set('addressStreet', v)}
+          />
           <Row>
-            <Field label="City">
-              <input style={inputStyle()} value={profile.addressCity ?? ''} onChange={e => set('addressCity', e.target.value)} />
-            </Field>
-            <Field label="State">
-              <input style={inputStyle()} value={profile.addressState ?? ''} onChange={e => set('addressState', e.target.value)} />
-            </Field>
+            <WaveInput
+              label="City"
+              value={profile.addressCity ?? ''}
+              onChange={v => set('addressCity', v)}
+            />
+            <WaveInput
+              label="State"
+              value={profile.addressState ?? ''}
+              onChange={v => set('addressState', v)}
+            />
           </Row>
           <Row>
-            <Field label="Pincode">
-              <input style={inputStyle()} value={profile.addressPincode ?? ''} onChange={e => set('addressPincode', e.target.value)} />
-            </Field>
+            <WaveInput
+              label="Pincode"
+              value={profile.addressPincode ?? ''}
+              onChange={v => set('addressPincode', v)}
+            />
             <div />
           </Row>
 
           {/* Emergency contact */}
           <SectionHeading label="Emergency contact" />
           <Row>
-            <Field label="Name">
-              <input style={inputStyle()} value={profile.emergencyContactName ?? ''} onChange={e => set('emergencyContactName', e.target.value)} placeholder="e.g. Priya Patel" />
-            </Field>
-            <Field label="Phone">
-              <input style={inputStyle()} value={profile.emergencyContactPhone ?? ''} onChange={e => set('emergencyContactPhone', e.target.value)} placeholder="+91 ..." />
-            </Field>
+            <WaveInput
+              label="Emergency Contact Name"
+              value={profile.emergencyContactName ?? ''}
+              onChange={v => set('emergencyContactName', v)}
+            />
+            <WaveInput
+              label="Emergency Contact Phone"
+              value={profile.emergencyContactPhone ?? ''}
+              onChange={v => set('emergencyContactPhone', v)}
+            />
           </Row>
 
           <div style={{ marginTop: '20px', display: 'flex', justifyContent: 'flex-end' }}>
@@ -225,12 +248,3 @@ const Field: React.FC<{ label: string; children: React.ReactNode }> = ({ label, 
     {children}
   </div>
 );
-
-function inputStyle(): React.CSSProperties {
-  return {
-    width: '100%', padding: '10px 12px', borderRadius: '10px',
-    border: '1px solid #eae3d8', fontSize: '14px', color: '#1a110a',
-    backgroundColor: '#ffffff', outline: 'none', boxSizing: 'border-box',
-    fontFamily: 'inherit',
-  };
-}

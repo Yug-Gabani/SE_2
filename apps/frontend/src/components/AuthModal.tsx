@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { X, AlertCircle } from 'lucide-react';
 import { authApi } from '../services/api';
 import type { User as UserType } from '../types';
+import { WaveInput } from './WaveInput';
 
 interface AuthModalProps {
   isOpen: boolean;
@@ -135,53 +136,41 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onLoginSu
         <form onSubmit={handleSubmit}>
           {!isLogin && (
             <>
-              <div className="form-group">
-                <label className="form-label">Full Name</label>
-                <input
-                  type="text"
-                  className="form-input"
-                  value={fullName}
-                  onChange={e => setFullName(e.target.value)}
-                  placeholder="Eleanor Davis"
-                  required
-                />
-              </div>
-              <div className="form-group">
-                <label className="form-label">Phone Number</label>
-                <input
-                  type="tel"
-                  className="form-input"
-                  value={phone}
-                  onChange={e => setPhone(e.target.value)}
-                  placeholder="+1 (555) 234-5678"
-                />
-              </div>
+              <WaveInput
+                id="modalFullName"
+                label="Full Name"
+                type="text"
+                value={fullName}
+                onChange={setFullName}
+                required
+              />
+              <WaveInput
+                id="modalPhone"
+                label="Phone Number"
+                type="tel"
+                value={phone}
+                onChange={setPhone}
+              />
             </>
           )}
 
-          <div className="form-group">
-            <label className="form-label">Email Address</label>
-            <input
-              type="email"
-              className="form-input"
-              value={email}
-              onChange={e => setEmail(e.target.value)}
-              placeholder="eleanor@example.com"
-              required
-            />
-          </div>
+          <WaveInput
+            id="modalEmail"
+            label="Email Address"
+            type="email"
+            value={email}
+            onChange={setEmail}
+            required
+          />
 
-          <div className="form-group">
-            <label className="form-label">Password</label>
-            <input
-              type="password"
-              className="form-input"
-              value={password}
-              onChange={e => setPassword(e.target.value)}
-              placeholder="••••••••"
-              required
-            />
-          </div>
+          <WaveInput
+            id="modalPassword"
+            label="Password"
+            type="password"
+            value={password}
+            onChange={setPassword}
+            required
+          />
 
           <button
             type="submit"
