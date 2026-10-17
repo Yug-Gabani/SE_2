@@ -330,6 +330,78 @@ input:focus ~ .highlight,
   }
 }
 
+/* =========================================================
+   9. Animated SVG Checkbox (Adapted from Uiverse by PriyanshuGupta28)
+   ========================================================= */
+
+.checkbox-wrapper {
+  display: inline-flex;
+  align-items: center;
+  position: relative;
+  user-select: none;
+}
+
+.checkbox-wrapper input[type="checkbox"] {
+  display: none;
+}
+
+.checkbox-wrapper .terms-label {
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+}
+
+.checkbox-wrapper .terms-label .label-text {
+  margin-left: 10px;
+  font-size: 13px;
+  color: var(--ink, #1a110a);
+  transition: color 0.2s var(--enter);
+}
+
+.checkbox-wrapper:hover .terms-label .label-text {
+  color: #785b47;
+}
+
+.checkbox-wrapper .checkbox-svg {
+  width: 22px;
+  height: 22px;
+  display: block;
+  overflow: visible;
+  flex-shrink: 0;
+}
+
+.checkbox-wrapper .checkbox-box-bg {
+  transition: stroke 0.25s var(--enter), fill 0.25s var(--enter);
+}
+
+.checkbox-wrapper:hover .checkbox-box-bg {
+  stroke: #785b47;
+}
+
+.checkbox-wrapper .checkbox-box {
+  stroke: #785b47;
+  stroke-dasharray: 800;
+  stroke-dashoffset: 800;
+  transition: stroke-dashoffset 0.45s var(--enter);
+}
+
+.checkbox-wrapper .checkbox-tick {
+  stroke: #785b47;
+  stroke-dasharray: 172;
+  stroke-dashoffset: 172;
+  transition: stroke-dashoffset 0.45s var(--enter);
+}
+
+.checkbox-wrapper input[type="checkbox"]:checked + .terms-label .checkbox-box,
+.checkbox-wrapper input[type="checkbox"]:checked + .terms-label .checkbox-tick {
+  stroke-dashoffset: 0;
+}
+
+.checkbox-wrapper input[type="checkbox"]:checked + .terms-label .checkbox-box-bg {
+  fill: rgba(120, 91, 71, 0.08);
+  stroke: #785b47;
+}
+
 /* Global Reduced Motion Override */
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {

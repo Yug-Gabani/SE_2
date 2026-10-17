@@ -24,6 +24,7 @@ import type {
 } from '../types';
 import { appointmentsApi, doctorsApi, triageApi } from '../services/api';
 import { PageTransition } from '../motion/PageTransition';
+import { CustomCheckbox } from './CustomCheckbox';
 
 interface PatientTriageBookingProps {
   currentUser: User | null;
@@ -363,31 +364,25 @@ export const PatientTriageBooking: React.FC<PatientTriageBookingProps> = ({ curr
                   <AlertTriangle size={18} />
                   <span>Critical Safety Markers</span>
                 </div>
-                <div style={{ display: 'grid', gap: '10px', fontSize: '13px' }}>
-                  <label style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer' }}>
-                    <input
-                      type="checkbox" checked={chestPain}
-                      onChange={e => setChestPain(e.target.checked)}
-                      style={{ width: '16px', height: '16px', accentColor: 'var(--primary)' }}
-                    />
-                    <span>Acute chest pain, pressure, or tightness radiating to arm</span>
-                  </label>
-                  <label style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer' }}>
-                    <input
-                      type="checkbox" checked={shortnessOfBreath}
-                      onChange={e => setShortnessOfBreath(e.target.checked)}
-                      style={{ width: '16px', height: '16px', accentColor: 'var(--primary)' }}
-                    />
-                    <span>Severe difficulty breathing or resting breathlessness</span>
-                  </label>
-                  <label style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer' }}>
-                    <input
-                      type="checkbox" checked={fever}
-                      onChange={e => setFever(e.target.checked)}
-                      style={{ width: '16px', height: '16px', accentColor: 'var(--primary)' }}
-                    />
-                    <span>Body temperature elevated above 101.5°F</span>
-                  </label>
+                <div style={{ display: 'grid', gap: '12px', fontSize: '13px' }}>
+                  <CustomCheckbox
+                    checked={chestPain}
+                    onChange={setChestPain}
+                    label="Acute chest pain, pressure, or tightness radiating to arm"
+                    color="#dc2626"
+                  />
+                  <CustomCheckbox
+                    checked={shortnessOfBreath}
+                    onChange={setShortnessOfBreath}
+                    label="Severe difficulty breathing or resting breathlessness"
+                    color="#dc2626"
+                  />
+                  <CustomCheckbox
+                    checked={fever}
+                    onChange={setFever}
+                    label="Body temperature elevated above 101.5°F"
+                    color="#dc2626"
+                  />
                 </div>
               </div>
 
