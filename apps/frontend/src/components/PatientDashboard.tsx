@@ -1,5 +1,8 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { motion } from 'framer-motion';
+import { PageTransition } from '../motion/PageTransition';
+import { listItem, staggerContainer } from '../motion/presets';
 import {
   Video,
   MapPin,
@@ -12,8 +15,8 @@ import {
   Package,
   Loader2,
 } from 'lucide-react';
-import type { Appointment, User } from '../types';
-import { appointmentsApi } from '../services/api';
+import type { Appointment, Prescription, User } from '../types';
+import { appointmentsApi, prescriptionsApi } from '../services/api';
 
 interface PatientDashboardProps {
   currentUser: User;
@@ -52,18 +55,26 @@ export const PatientDashboard: React.FC<PatientDashboardProps> = ({ currentUser 
   const greetingTime = hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening';
 
   const [appointments, setAppointments] = useState<Appointment[]>([]);
+  const [prescriptions, setPrescriptions] = useState<Prescription[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     setLoading(true);
     setError(null);
-    appointmentsApi
-      .mine()
-      .then(setAppointments)
-      .catch(err => setError(err.message || 'Failed to load appointments'))
+    Promise.all([appointmentsApi.mine(), prescriptionsApi.mine()])
+      .then(([appts, rx]) => {
+        setAppointments(appts);
+        setPrescriptions(rx);
+      })
+      .catch(err => setError(err.message || 'Failed to load dashboard'))
       .finally(() => setLoading(false));
   }, []);
+
+  const signedPrescriptions = useMemo(
+    () => prescriptions.filter(r => r.status === 'SIGNED'),
+    [prescriptions]
+  );
 
   const upcoming = useMemo(
     () =>
@@ -85,7 +96,7 @@ export const PatientDashboard: React.FC<PatientDashboardProps> = ({ currentUser 
   }, [currentUser?.phone, appointments.length]);
 
   return (
-    <div style={{
+    <PageTransition style={{
       maxWidth: '1200px', margin: '0 auto',
       padding: '40px 24px 64px 24px', color: '#1a110a',
       fontFamily: "'Inter', ui-sans-serif, system-ui, sans-serif",
@@ -110,11 +121,16 @@ export const PatientDashboard: React.FC<PatientDashboardProps> = ({ currentUser 
         </div>
       )}
 
-      <section style={{
-        display: 'grid',
-        gridTemplateColumns: 'repeat(auto-fit, minmax(340px, 1fr))',
-        gap: '24px', marginBottom: '48px',
-      }}>
+      <motion.section
+        variants={staggerContainer}
+        initial="initial"
+        animate="animate"
+        style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(340px, 1fr))',
+          gap: '24px', marginBottom: '48px',
+        }}
+      >
         {loading ? (
           <div style={{
             backgroundColor: '#ffffff', borderRadius: '20px', padding: '28px 26px',
@@ -126,12 +142,16 @@ export const PatientDashboard: React.FC<PatientDashboardProps> = ({ currentUser 
             Loading your next appointment…
           </div>
         ) : next ? (
-          <div style={{
-            backgroundColor: '#785b47', color: '#ffffff', borderRadius: '20px',
-            padding: '28px 26px', boxShadow: '0 8px 24px rgba(120, 91, 71, 0.22)',
-            display: 'flex', flexDirection: 'column', justifyContent: 'space-between',
-            minHeight: '210px', position: 'relative',
-          }}>
+          <motion.div
+            variants={listItem}
+            className="card-hover"
+            style={{
+              backgroundColor: '#785b47', color: '#ffffff', borderRadius: '20px',
+              padding: '28px 26px', boxShadow: '0 8px 24px rgba(120, 91, 71, 0.22)',
+              display: 'flex', flexDirection: 'column', justifyContent: 'space-between',
+              minHeight: '210px', position: 'relative',
+            }}
+          >
             <div>
               <div style={{
                 fontSize: '11px', fontWeight: 700, letterSpacing: '0.08em',
@@ -157,6 +177,7 @@ export const PatientDashboard: React.FC<PatientDashboardProps> = ({ currentUser 
             <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginTop: '20px' }}>
               <button
                 onClick={() => navigate(`/appointments/${next.id}`)}
+                className="hover-lift"
                 style={{
                   backgroundColor: '#ffffff', color: '#785b47', border: 'none',
                   borderRadius: '9999px', padding: '9px 24px', fontSize: '13px',
@@ -167,7 +188,7 @@ export const PatientDashboard: React.FC<PatientDashboardProps> = ({ currentUser 
                 {next.consultationType === 'VIDEO' ? <Video size={14} /> : <MapPin size={14} />}
                 View Details
               </button>
-              <span style={{
+              <span className="badge-morph" style={{
                 padding: '4px 10px', borderRadius: '9999px', fontSize: '11px', fontWeight: 700,
                 backgroundColor: next.urgency === 'EMERGENCY' ? '#ef4444' : 'rgba(255,255,255,0.15)',
                 color: '#ffffff',
@@ -175,14 +196,18 @@ export const PatientDashboard: React.FC<PatientDashboardProps> = ({ currentUser 
                 {next.urgency}
               </span>
             </div>
-          </div>
+          </motion.div>
         ) : (
-          <div style={{
-            backgroundColor: '#ffffff', borderRadius: '20px', padding: '28px 26px',
-            border: '1.5px dashed #d5cec4',
-            display: 'flex', flexDirection: 'column', justifyContent: 'space-between',
-            minHeight: '210px',
-          }}>
+          <motion.div
+            variants={listItem}
+            className="card-hover"
+            style={{
+              backgroundColor: '#ffffff', borderRadius: '20px', padding: '28px 26px',
+              border: '1.5px dashed #d5cec4',
+              display: 'flex', flexDirection: 'column', justifyContent: 'space-between',
+              minHeight: '210px',
+            }}
+          >
             <div>
               <div style={{
                 display: 'inline-flex', alignItems: 'center', gap: '6px',
@@ -212,15 +237,19 @@ export const PatientDashboard: React.FC<PatientDashboardProps> = ({ currentUser 
                 <PlusCircle size={14} /> Start Triage & Book
               </button>
             </div>
-          </div>
+          </motion.div>
         )}
 
         {/* To-Do Card */}
-        <div style={{
-          backgroundColor: '#ffffff', borderRadius: '20px', padding: '26px',
-          border: '1px solid #eae3d8', boxShadow: '0 4px 16px rgba(75, 68, 57, 0.05)',
-          display: 'flex', flexDirection: 'column', justifyContent: 'space-between',
-        }}>
+        <motion.div
+          variants={listItem}
+          className="card-hover"
+          style={{
+            backgroundColor: '#ffffff', borderRadius: '20px', padding: '26px',
+            border: '1px solid #eae3d8', boxShadow: '0 4px 16px rgba(75, 68, 57, 0.05)',
+            display: 'flex', flexDirection: 'column', justifyContent: 'space-between',
+          }}
+        >
           <div>
             <div style={{
               fontSize: '11px', fontWeight: 700, letterSpacing: '0.08em',
@@ -249,14 +278,18 @@ export const PatientDashboard: React.FC<PatientDashboardProps> = ({ currentUser 
               ))}
             </div>
           </div>
-        </div>
+        </motion.div>
 
         {/* Quick Stats */}
-        <div style={{
-          backgroundColor: '#ffffff', borderRadius: '20px', padding: '26px',
-          border: '1px solid #eae3d8', boxShadow: '0 4px 16px rgba(75, 68, 57, 0.05)',
-          display: 'flex', flexDirection: 'column', justifyContent: 'space-between',
-        }}>
+        <motion.div
+          variants={listItem}
+          className="card-hover"
+          style={{
+            backgroundColor: '#ffffff', borderRadius: '20px', padding: '26px',
+            border: '1px solid #eae3d8', boxShadow: '0 4px 16px rgba(75, 68, 57, 0.05)',
+            display: 'flex', flexDirection: 'column', justifyContent: 'space-between',
+          }}
+        >
           <div>
             <div style={{
               fontSize: '11px', fontWeight: 700, letterSpacing: '0.08em',
@@ -279,54 +312,54 @@ export const PatientDashboard: React.FC<PatientDashboardProps> = ({ currentUser 
               </div>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <span style={{ fontSize: '14px', color: '#554f47' }}>Active prescriptions</span>
-                <span style={{ fontSize: '18px', fontWeight: 700, color: '#1a110a' }}>0</span>
+                <span style={{ fontSize: '18px', fontWeight: 700, color: '#1a110a' }}>
+                  {signedPrescriptions.length}
+                </span>
               </div>
             </div>
           </div>
-        </div>
-      </section>
+        </motion.div>
+      </motion.section>
 
       {/* Quick actions */}
       <section style={{ marginBottom: '48px' }}>
         <h2 style={{ fontSize: '22px', fontWeight: 700, color: '#1a110a', marginBottom: '20px', letterSpacing: '-0.02em' }}>
           Quick actions
         </h2>
-        <div style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(210px, 1fr))',
-          gap: '16px',
-        }}>
+        <motion.div
+          variants={staggerContainer}
+          initial="initial"
+          animate="animate"
+          style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(210px, 1fr))',
+            gap: '16px',
+          }}
+        >
           {[
             { label: 'Book consultation', icon: <PlusCircle size={18} />, action: () => navigate('/book') },
             { label: 'My appointments', icon: <Calendar size={18} />, action: () => navigate('/appointments') },
-            { label: 'My records', icon: <FileText size={18} />, action: () => alert('Medical records coming soon.') },
+            { label: 'My prescriptions', icon: <FileText size={18} />, action: () => navigate('/prescriptions') },
             { label: 'Order meds', icon: <Pill size={18} />, action: () => alert('Pharmacy ordering coming soon.') },
           ].map((item, idx) => (
-            <button
+            <motion.button
               key={idx}
+              variants={listItem}
               onClick={item.action}
+              className="card-hover hover-lift"
               style={{
                 backgroundColor: '#ffffff', border: '1px solid #eae3d8',
                 borderRadius: '9999px', padding: '14px 22px',
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
                 gap: '10px', fontSize: '14px', fontWeight: 600, color: '#3a342e',
                 cursor: 'pointer', boxShadow: '0 2px 6px rgba(75, 68, 57, 0.04)',
-                transition: 'all 0.15s ease',
-              }}
-              onMouseEnter={e => {
-                e.currentTarget.style.borderColor = '#785b47';
-                e.currentTarget.style.transform = 'translateY(-2px)';
-              }}
-              onMouseLeave={e => {
-                e.currentTarget.style.borderColor = '#eae3d8';
-                e.currentTarget.style.transform = 'translateY(0)';
               }}
             >
               <span style={{ color: '#785b47' }}>{item.icon}</span>
               <span>{item.label}</span>
-            </button>
+            </motion.button>
           ))}
-        </div>
+        </motion.div>
       </section>
 
       {/* Upcoming list */}
@@ -354,10 +387,13 @@ export const PatientDashboard: React.FC<PatientDashboardProps> = ({ currentUser 
             Loading…
           </div>
         ) : upcoming.length === 0 ? (
-          <div style={{
-            backgroundColor: '#ffffff', borderRadius: '20px', padding: '36px 28px',
-            border: '1px solid #eae3d8', textAlign: 'center',
-          }}>
+          <div
+            className="card-hover"
+            style={{
+              backgroundColor: '#ffffff', borderRadius: '20px', padding: '36px 28px',
+              border: '1px solid #eae3d8', textAlign: 'center',
+            }}
+          >
             <div style={{
               width: '48px', height: '48px', borderRadius: '50%',
               backgroundColor: '#f5efe6', color: '#785b47',
@@ -374,6 +410,7 @@ export const PatientDashboard: React.FC<PatientDashboardProps> = ({ currentUser 
             </p>
             <button
               onClick={() => navigate('/book')}
+              className="hover-lift"
               style={{
                 backgroundColor: '#785b47', color: '#ffffff', border: 'none',
                 borderRadius: '9999px', padding: '10px 24px',
@@ -384,14 +421,21 @@ export const PatientDashboard: React.FC<PatientDashboardProps> = ({ currentUser 
             </button>
           </div>
         ) : (
-          <div style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))',
-            gap: '20px',
-          }}>
+          <motion.div
+            variants={staggerContainer}
+            initial="initial"
+            animate="animate"
+            style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))',
+              gap: '20px',
+            }}
+          >
             {upcoming.slice(0, 6).map(appt => (
-              <div
+              <motion.div
                 key={appt.id}
+                variants={listItem}
+                className="card-hover"
                 style={{
                   backgroundColor: '#ffffff', borderRadius: '18px', padding: '22px',
                   border: '1px solid #eae3d8', boxShadow: '0 4px 12px rgba(75, 68, 57, 0.04)',
@@ -416,12 +460,15 @@ export const PatientDashboard: React.FC<PatientDashboardProps> = ({ currentUser 
                     </span>
                   </div>
                   <div style={{ marginTop: '10px' }}>
-                    <span style={{
-                      display: 'inline-block', fontSize: '11px', fontWeight: 700,
-                      padding: '3px 10px', borderRadius: '9999px',
-                      color: appt.urgency === 'EMERGENCY' ? '#dc2626' : appt.urgency === 'URGENT' ? '#d97706' : '#059669',
-                      backgroundColor: appt.urgency === 'EMERGENCY' ? 'rgba(220,38,38,0.08)' : appt.urgency === 'URGENT' ? 'rgba(217,119,6,0.1)' : 'rgba(5,150,105,0.08)',
-                    }}>
+                    <span
+                      className="badge-morph"
+                      style={{
+                        display: 'inline-block', fontSize: '11px', fontWeight: 700,
+                        padding: '3px 10px', borderRadius: '9999px',
+                        color: appt.urgency === 'EMERGENCY' ? '#dc2626' : appt.urgency === 'URGENT' ? '#d97706' : '#059669',
+                        backgroundColor: appt.urgency === 'EMERGENCY' ? 'rgba(220,38,38,0.08)' : appt.urgency === 'URGENT' ? 'rgba(217,119,6,0.1)' : 'rgba(5,150,105,0.08)',
+                      }}
+                    >
                       {appt.urgency}
                     </span>
                   </div>
@@ -429,6 +476,7 @@ export const PatientDashboard: React.FC<PatientDashboardProps> = ({ currentUser 
                 <div style={{ marginTop: '18px' }}>
                   <button
                     onClick={() => navigate(`/appointments/${appt.id}`)}
+                    className="hover-lift"
                     style={{
                       width: '100%', backgroundColor: 'transparent',
                       border: '1px solid #dcd4c7', borderRadius: '9999px',
@@ -439,9 +487,9 @@ export const PatientDashboard: React.FC<PatientDashboardProps> = ({ currentUser 
                     Open details
                   </button>
                 </div>
-              </div>
+              </motion.div>
             ))}
-          </div>
+          </motion.div>
         )}
       </section>
 
@@ -451,27 +499,82 @@ export const PatientDashboard: React.FC<PatientDashboardProps> = ({ currentUser 
         gridTemplateColumns: 'repeat(auto-fit, minmax(420px, 1fr))',
         gap: '24px', marginBottom: '48px',
       }}>
-        <div style={{
-          backgroundColor: '#ffffff', borderRadius: '20px', padding: '26px',
-          border: '1px solid #eae3d8',
-        }}>
-          <div style={{ fontSize: '16px', fontWeight: 700, color: '#1a110a', marginBottom: '14px' }}>
-            Active prescriptions
-          </div>
-          <div style={{ padding: '20px 0', textAlign: 'center' }}>
-            <Pill size={24} color="#b8b0a5" style={{ marginBottom: '8px' }} />
-            <div style={{ fontSize: '14px', fontWeight: 600, color: '#443f38' }}>
-              No active prescriptions
+        <div
+          className="card-hover"
+          style={{
+            backgroundColor: '#ffffff', borderRadius: '20px', padding: '26px',
+            border: '1px solid #eae3d8',
+          }}
+        >
+          <div style={{
+            display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px',
+          }}>
+            <div style={{ fontSize: '16px', fontWeight: 700, color: '#1a110a' }}>
+              Active prescriptions
             </div>
-            <div style={{ fontSize: '12px', color: '#7a736a', marginTop: '4px', lineHeight: 1.4 }}>
-              Prescriptions issued during a consult will appear here.
-            </div>
+            {signedPrescriptions.length > 0 && (
+              <button
+                onClick={() => navigate('/prescriptions')}
+                style={{
+                  background: 'none', border: 'none', color: '#0284c7',
+                  fontSize: '13px', fontWeight: 600, cursor: 'pointer',
+                }}
+              >
+                View all →
+              </button>
+            )}
           </div>
+          {signedPrescriptions.length === 0 ? (
+            <div style={{ padding: '20px 0', textAlign: 'center' }}>
+              <Pill size={24} color="#b8b0a5" style={{ marginBottom: '8px' }} />
+              <div style={{ fontSize: '14px', fontWeight: 600, color: '#443f38' }}>
+                No active prescriptions
+              </div>
+              <div style={{ fontSize: '12px', color: '#7a736a', marginTop: '4px', lineHeight: 1.4 }}>
+                Prescriptions issued during a consult will appear here.
+              </div>
+            </div>
+          ) : (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+              {signedPrescriptions.slice(0, 3).map(rx => (
+                <div key={rx.id} style={{
+                  padding: '10px 12px', borderRadius: '12px',
+                  backgroundColor: '#faf7f1', border: '1px solid #eae3d8',
+                  display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+                }}>
+                  <div>
+                    <div style={{ fontSize: '14px', fontWeight: 600, color: '#1a110a' }}>
+                      {rx.doctorName}
+                    </div>
+                    <div style={{ fontSize: '12px', color: '#7a736a' }}>
+                      {rx.items.length} medication{rx.items.length === 1 ? '' : 's'}
+                      {rx.signedAt ? ` · ${new Date(rx.signedAt).toLocaleDateString()}` : ''}
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => navigate('/prescriptions')}
+                    className="hover-lift"
+                    style={{
+                      background: 'transparent', border: '1px solid #dcd4c7',
+                      color: '#2b2520', borderRadius: '9999px',
+                      padding: '5px 14px', fontSize: '12px', fontWeight: 600,
+                      cursor: 'pointer',
+                    }}
+                  >
+                    Open
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
-        <div style={{
-          backgroundColor: '#ffffff', borderRadius: '20px', padding: '26px',
-          border: '1px solid #eae3d8',
-        }}>
+        <div
+          className="card-hover"
+          style={{
+            backgroundColor: '#ffffff', borderRadius: '20px', padding: '26px',
+            border: '1px solid #eae3d8',
+          }}
+        >
           <div style={{ fontSize: '16px', fontWeight: 700, color: '#1a110a', marginBottom: '14px' }}>
             Medication reminders
           </div>
@@ -491,10 +594,13 @@ export const PatientDashboard: React.FC<PatientDashboardProps> = ({ currentUser 
         <h2 style={{ fontSize: '22px', fontWeight: 700, color: '#1a110a', margin: '0 0 20px 0', letterSpacing: '-0.02em' }}>
           Active orders
         </h2>
-        <div style={{
-          backgroundColor: '#ffffff', borderRadius: '20px', padding: '28px',
-          border: '1px solid #eae3d8', textAlign: 'center',
-        }}>
+        <div
+          className="card-hover"
+          style={{
+            backgroundColor: '#ffffff', borderRadius: '20px', padding: '28px',
+            border: '1px solid #eae3d8', textAlign: 'center',
+          }}
+        >
           <Package size={24} color="#b8b0a5" style={{ marginBottom: '8px' }} />
           <div style={{ fontSize: '15px', fontWeight: 600, color: '#2c251f' }}>
             No active pharmacy orders
@@ -509,10 +615,13 @@ export const PatientDashboard: React.FC<PatientDashboardProps> = ({ currentUser 
         <h2 style={{ fontSize: '22px', fontWeight: 700, color: '#1a110a', margin: '0 0 20px 0', letterSpacing: '-0.02em' }}>
           Recent notifications
         </h2>
-        <div style={{
-          backgroundColor: '#ffffff', borderRadius: '20px',
-          border: '1px solid #eae3d8', overflow: 'hidden',
-        }}>
+        <div
+          className="card-hover"
+          style={{
+            backgroundColor: '#ffffff', borderRadius: '20px',
+            border: '1px solid #eae3d8', overflow: 'hidden',
+          }}
+        >
           {[
             { text: `Welcome to PulseCare, ${firstName}!`, time: 'Just now' },
             { text: 'Your account is secured with JWT + refresh token rotation.', time: 'Today' },
@@ -536,6 +645,6 @@ export const PatientDashboard: React.FC<PatientDashboardProps> = ({ currentUser 
           ))}
         </div>
       </section>
-    </div>
+    </PageTransition>
   );
 };

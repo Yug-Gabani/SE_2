@@ -85,6 +85,149 @@ export interface Appointment {
   updatedAt: string;
 }
 
+export type PrescriptionStatus = 'DRAFT' | 'SIGNED' | 'VOIDED';
+
+export type MealTiming =
+  | 'UNSPECIFIED'
+  | 'BEFORE_BREAKFAST'
+  | 'AFTER_BREAKFAST'
+  | 'BEFORE_LUNCH'
+  | 'AFTER_LUNCH'
+  | 'BEFORE_DINNER'
+  | 'AFTER_DINNER'
+  | 'WITH_MEAL'
+  | 'EMPTY_STOMACH'
+  | 'AT_BEDTIME'
+  | 'AS_NEEDED';
+
+export const MEAL_TIMING_LABELS: Record<MealTiming, string> = {
+  UNSPECIFIED: '',
+  BEFORE_BREAKFAST: 'before breakfast',
+  AFTER_BREAKFAST: 'after breakfast',
+  BEFORE_LUNCH: 'before lunch',
+  AFTER_LUNCH: 'after lunch',
+  BEFORE_DINNER: 'before dinner',
+  AFTER_DINNER: 'after dinner',
+  WITH_MEAL: 'with a meal',
+  EMPTY_STOMACH: 'on an empty stomach',
+  AT_BEDTIME: 'at bedtime',
+  AS_NEEDED: 'as needed',
+};
+
+export const MEAL_TIMING_OPTIONS: { value: MealTiming; label: string }[] = [
+  { value: 'UNSPECIFIED',      label: 'No specific timing' },
+  { value: 'BEFORE_BREAKFAST', label: 'Before breakfast' },
+  { value: 'AFTER_BREAKFAST',  label: 'After breakfast' },
+  { value: 'BEFORE_LUNCH',     label: 'Before lunch' },
+  { value: 'AFTER_LUNCH',      label: 'After lunch' },
+  { value: 'BEFORE_DINNER',    label: 'Before dinner' },
+  { value: 'AFTER_DINNER',     label: 'After dinner' },
+  { value: 'WITH_MEAL',        label: 'With a meal' },
+  { value: 'EMPTY_STOMACH',    label: 'On an empty stomach' },
+  { value: 'AT_BEDTIME',       label: 'At bedtime' },
+  { value: 'AS_NEEDED',        label: 'As needed' },
+];
+
+export interface PrescriptionItem {
+  id?: string;
+  drugName: string;
+  dose: string;
+  frequency: string;
+  duration: string;
+  instructions?: string;
+  /** One or more meal timings. UNSPECIFIED or empty means "no specific timing". */
+  mealTimings?: MealTiming[];
+}
+
+/** Join N meal-timing labels into one readable phrase with Oxford commas. */
+export function joinMealTimings(timings: MealTiming[] | undefined): string {
+  if (!timings || timings.length === 0) return '';
+  const labels = timings
+    .filter(t => t !== 'UNSPECIFIED')
+    .map(t => MEAL_TIMING_LABELS[t])
+    .filter(Boolean);
+  if (labels.length === 0) return '';
+  if (labels.length === 1) return labels[0];
+  if (labels.length === 2) return `${labels[0]} and ${labels[1]}`;
+  return `${labels.slice(0, -1).join(', ')}, and ${labels[labels.length - 1]}`;
+}
+
+/**
+ * Render a prescription line in plain language for patients:
+ *   "500 mg · 3 times a day · for 5 days · after breakfast and after dinner"
+ */
+export function describePrescriptionItem(it: PrescriptionItem): string {
+  const parts: string[] = [];
+  if (it.dose) parts.push(it.dose);
+  if (it.frequency) {
+    const f = it.frequency.trim();
+    const match = f.match(/^(\d+)\s*(?:x|times?)?\s*\/?\s*(day|daily|d)?/i);
+    if (match && match[1]) {
+      const n = parseInt(match[1], 10);
+      if (n === 1) parts.push('once a day');
+      else if (n === 2) parts.push('twice a day');
+      else parts.push(`${n} times a day`);
+    } else {
+      parts.push(f);
+    }
+  }
+  if (it.duration) {
+    const d = it.duration.trim();
+    parts.push(/^\d+$/.test(d) ? `for ${d} days` : (d.toLowerCase().startsWith('for ') ? d : `for ${d}`));
+  }
+  const timing = joinMealTimings(it.mealTimings);
+  if (timing) parts.push(timing);
+  return parts.join(' · ');
+}
+
+export interface Prescription {
+  id: string;
+  appointmentId: string;
+  patientId: string;
+  patientName?: string;
+  doctorId: string;
+  doctorName?: string;
+  doctorSpecialty?: string;
+  doctorHospital?: string;
+  status: PrescriptionStatus;
+  signedAt?: string;
+  voidOf?: string;
+  voidReason?: string;
+  notes?: string;
+  items: PrescriptionItem[];
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface Hospital {
+  id: string;
+  name: string;
+  address?: string;
+  city?: string;
+  state?: string;
+  pincode?: string;
+  phone?: string;
+  specialties: string[];
+  logoUrl?: string;
+}
+
+export type Gender = 'MALE' | 'FEMALE' | 'OTHER' | 'PREFER_NOT_TO_SAY';
+
+export interface PatientProfile {
+  id: string;
+  email: string;
+  fullName?: string;
+  phone?: string;
+  dateOfBirth?: string;
+  gender?: Gender;
+  addressStreet?: string;
+  addressCity?: string;
+  addressState?: string;
+  addressPincode?: string;
+  emergencyContactName?: string;
+  emergencyContactPhone?: string;
+}
+
 export interface AuthState {
   token: string | null;
   refreshToken: string | null;

@@ -28,29 +28,57 @@ export const Header: React.FC<HeaderProps> = ({
   const isDoctor = currentUser?.role === 'DOCTOR';
   const isPatient = currentUser?.role === 'PATIENT';
 
+  // Active tab detection for Guest
+  const isGuestHome = !currentUser && location.pathname === '/' && (!location.hash || location.hash === '' || location.hash === '#home');
+  const isGuestFindDoctors = !currentUser && location.hash === '#find-doctors';
+  const isGuestVideoConsult = !currentUser && location.hash === '#video-consult';
+  const isGuestHospitals = !currentUser && (location.pathname.startsWith('/hospitals') || location.hash === '#for-hospitals' || location.hash === '#hospitals');
+
   // Active tab detection for Patient
-  const isPatientDashboard = location.pathname === '/patient' || (location.pathname === '/' && isPatient);
-  const isBookVisit = location.pathname === '/book';
-  const isMyAppointments = location.pathname.startsWith('/appointments');
+  const isPatientDashboard = isPatient && (location.pathname === '/patient' || location.pathname === '/');
+  const isBookVisit = isPatient && location.pathname === '/book';
+  const isMyAppointments = isPatient && location.pathname.startsWith('/appointments');
+  const isPrescriptions  = isPatient && location.pathname.startsWith('/prescriptions');
+  const isHospitals      = isPatient && location.pathname.startsWith('/hospitals');
+  const isProfile        = isPatient && location.pathname === '/profile';
 
   // Active tab detection for Doctor
   const doctorHash = location.hash;
-  const isDoctorQueue = location.pathname.startsWith('/doctor') && (!doctorHash || doctorHash === '#my-queue' || doctorHash === '#queue');
-  const isDoctorAvailability = location.pathname.startsWith('/doctor') && doctorHash === '#availability';
-  const isDoctorPatients = location.pathname.startsWith('/doctor') && doctorHash === '#patients';
-  const isDoctorTranscripts = location.pathname.startsWith('/doctor') && doctorHash === '#transcripts';
+  const isDoctorQueue = isDoctor && location.pathname.startsWith('/doctor') && (!doctorHash || doctorHash === '#my-queue' || doctorHash === '#queue');
+  const isDoctorAvailability = isDoctor && location.pathname.startsWith('/doctor') && doctorHash === '#availability';
+  const isDoctorPatients = isDoctor && location.pathname.startsWith('/doctor') && doctorHash === '#patients';
+  const isDoctorPrescriptions = isDoctor && ((location.pathname.startsWith('/doctor') && doctorHash === '#prescriptions') || location.pathname.startsWith('/prescriptions'));
+  const isDoctorTranscripts = isDoctor && location.pathname.startsWith('/doctor') && doctorHash === '#transcripts';
 
-  const getNavLinkStyle = (isActive: boolean) => ({
-    color: isActive ? '#1a110a' : '#706b63',
+  const getNavLinkStyle = (isActive: boolean): React.CSSProperties => ({
+    color: isActive ? '#1a110a' : '#6b6359',
     fontWeight: isActive ? 600 : 500,
     textDecoration: 'none',
     cursor: 'pointer',
-    padding: '8px 2px',
-    borderBottom: isActive ? '2px solid #785b47' : '2px solid transparent',
-    transition: 'all 0.15s ease',
+    height: '72px',
     display: 'inline-flex',
     alignItems: 'center',
+    padding: '0 4px',
+    borderBottom: isActive ? '3px solid #785b47' : '3px solid transparent',
+    transition: 'color 0.15s ease, border-color 0.15s ease',
+    boxSizing: 'border-box',
+    userSelect: 'none',
+    whiteSpace: 'nowrap',
   });
+
+  const handleMouseEnter = (e: React.MouseEvent<HTMLAnchorElement>, isActive: boolean) => {
+    if (!isActive) {
+      e.currentTarget.style.color = '#1a110a';
+      e.currentTarget.style.borderBottom = '3px solid #dfd7cc';
+    }
+  };
+
+  const handleMouseLeave = (e: React.MouseEvent<HTMLAnchorElement>, isActive: boolean) => {
+    if (!isActive) {
+      e.currentTarget.style.color = '#6b6359';
+      e.currentTarget.style.borderBottom = '3px solid transparent';
+    }
+  };
 
   return (
     <header style={{
@@ -109,34 +137,67 @@ export const Header: React.FC<HeaderProps> = ({
           display: 'flex',
           alignItems: 'center',
           gap: '28px',
+          height: '100%',
           fontSize: '14px',
           fontWeight: 500,
         }}>
           {!currentUser && (
             <>
               <a
+                href="/"
+                onClick={e => {
+                  e.preventDefault();
+                  navigate('/');
+                  window.scrollTo({ top: 0, behavior: 'smooth' });
+                }}
+                style={getNavLinkStyle(isGuestHome)}
+                onMouseEnter={e => handleMouseEnter(e, isGuestHome)}
+                onMouseLeave={e => handleMouseLeave(e, isGuestHome)}
+              >
+                Home
+              </a>
+              <a
                 href="#find-doctors"
-                onClick={e => { e.preventDefault(); onGetCare(); }}
-                style={{ color: '#443e37', textDecoration: 'none', cursor: 'pointer' }}
-                onMouseEnter={e => (e.currentTarget.style.color = '#1a110a')}
-                onMouseLeave={e => (e.currentTarget.style.color = '#443e37')}
+                onClick={e => {
+                  e.preventDefault();
+                  navigate('/#find-doctors');
+                  const el = document.getElementById('find-doctors');
+                  if (el) el.scrollIntoView({ behavior: 'smooth' });
+                  else onGetCare();
+                }}
+                style={getNavLinkStyle(isGuestFindDoctors)}
+                onMouseEnter={e => handleMouseEnter(e, isGuestFindDoctors)}
+                onMouseLeave={e => handleMouseLeave(e, isGuestFindDoctors)}
               >
                 Find Doctors
               </a>
               <a
                 href="#video-consult"
-                onClick={e => { e.preventDefault(); onGetCare(); }}
-                style={{ color: '#443e37', textDecoration: 'none', cursor: 'pointer' }}
-                onMouseEnter={e => (e.currentTarget.style.color = '#1a110a')}
-                onMouseLeave={e => (e.currentTarget.style.color = '#443e37')}
+                onClick={e => {
+                  e.preventDefault();
+                  navigate('/#video-consult');
+                  const el = document.getElementById('video-consult');
+                  if (el) el.scrollIntoView({ behavior: 'smooth' });
+                  else onGetCare();
+                }}
+                style={getNavLinkStyle(isGuestVideoConsult)}
+                onMouseEnter={e => handleMouseEnter(e, isGuestVideoConsult)}
+                onMouseLeave={e => handleMouseLeave(e, isGuestVideoConsult)}
               >
                 Video Consult
               </a>
               <a
                 href="#for-hospitals"
-                style={{ color: '#443e37', textDecoration: 'none', cursor: 'pointer' }}
-                onMouseEnter={e => (e.currentTarget.style.color = '#1a110a')}
-                onMouseLeave={e => (e.currentTarget.style.color = '#443e37')}
+                onClick={e => {
+                  e.preventDefault();
+                  navigate('/#for-hospitals');
+                  const el = document.getElementById('for-hospitals');
+                  if (el) el.scrollIntoView({ behavior: 'smooth' });
+                  else onGetCare();
+                }}
+                style={getNavLinkStyle(isGuestHospitals)}
+                onMouseEnter={e => handleMouseEnter(e, isGuestHospitals)}
+                onMouseLeave={e => handleMouseLeave(e, isGuestHospitals)}
               >
                 For Hospitals
               </a>
@@ -149,8 +210,8 @@ export const Header: React.FC<HeaderProps> = ({
                 href="/patient"
                 onClick={e => { e.preventDefault(); navigate('/patient'); }}
                 style={getNavLinkStyle(isPatientDashboard)}
-                onMouseEnter={e => { if (!isPatientDashboard) e.currentTarget.style.color = '#1a110a'; }}
-                onMouseLeave={e => { if (!isPatientDashboard) e.currentTarget.style.color = '#706b63'; }}
+                onMouseEnter={e => handleMouseEnter(e, isPatientDashboard)}
+                onMouseLeave={e => handleMouseLeave(e, isPatientDashboard)}
               >
                 Dashboard
               </a>
@@ -158,8 +219,8 @@ export const Header: React.FC<HeaderProps> = ({
                 href="/book"
                 onClick={e => { e.preventDefault(); navigate('/book'); }}
                 style={getNavLinkStyle(isBookVisit)}
-                onMouseEnter={e => { if (!isBookVisit) e.currentTarget.style.color = '#1a110a'; }}
-                onMouseLeave={e => { if (!isBookVisit) e.currentTarget.style.color = '#706b63'; }}
+                onMouseEnter={e => handleMouseEnter(e, isBookVisit)}
+                onMouseLeave={e => handleMouseLeave(e, isBookVisit)}
               >
                 Book Visit
               </a>
@@ -167,10 +228,37 @@ export const Header: React.FC<HeaderProps> = ({
                 href="/appointments"
                 onClick={e => { e.preventDefault(); navigate('/appointments'); }}
                 style={getNavLinkStyle(isMyAppointments)}
-                onMouseEnter={e => { if (!isMyAppointments) e.currentTarget.style.color = '#1a110a'; }}
-                onMouseLeave={e => { if (!isMyAppointments) e.currentTarget.style.color = '#706b63'; }}
+                onMouseEnter={e => handleMouseEnter(e, isMyAppointments)}
+                onMouseLeave={e => handleMouseLeave(e, isMyAppointments)}
               >
                 My Appointments
+              </a>
+              <a
+                href="/prescriptions"
+                onClick={e => { e.preventDefault(); navigate('/prescriptions'); }}
+                style={getNavLinkStyle(isPrescriptions)}
+                onMouseEnter={e => handleMouseEnter(e, isPrescriptions)}
+                onMouseLeave={e => handleMouseLeave(e, isPrescriptions)}
+              >
+                Prescriptions
+              </a>
+              <a
+                href="/hospitals"
+                onClick={e => { e.preventDefault(); navigate('/hospitals'); }}
+                style={getNavLinkStyle(isHospitals)}
+                onMouseEnter={e => handleMouseEnter(e, isHospitals)}
+                onMouseLeave={e => handleMouseLeave(e, isHospitals)}
+              >
+                Hospitals
+              </a>
+              <a
+                href="/profile"
+                onClick={e => { e.preventDefault(); navigate('/profile'); }}
+                style={getNavLinkStyle(isProfile)}
+                onMouseEnter={e => handleMouseEnter(e, isProfile)}
+                onMouseLeave={e => handleMouseLeave(e, isProfile)}
+              >
+                Profile
               </a>
             </>
           )}
@@ -181,8 +269,8 @@ export const Header: React.FC<HeaderProps> = ({
                 href="/doctor#my-queue"
                 onClick={e => { e.preventDefault(); navigate('/doctor#my-queue'); }}
                 style={getNavLinkStyle(isDoctorQueue)}
-                onMouseEnter={e => { if (!isDoctorQueue) e.currentTarget.style.color = '#1a110a'; }}
-                onMouseLeave={e => { if (!isDoctorQueue) e.currentTarget.style.color = '#706b63'; }}
+                onMouseEnter={e => handleMouseEnter(e, isDoctorQueue)}
+                onMouseLeave={e => handleMouseLeave(e, isDoctorQueue)}
               >
                 My Queue
               </a>
@@ -190,8 +278,8 @@ export const Header: React.FC<HeaderProps> = ({
                 href="/doctor#availability"
                 onClick={e => { e.preventDefault(); navigate('/doctor#availability'); }}
                 style={getNavLinkStyle(isDoctorAvailability)}
-                onMouseEnter={e => { if (!isDoctorAvailability) e.currentTarget.style.color = '#1a110a'; }}
-                onMouseLeave={e => { if (!isDoctorAvailability) e.currentTarget.style.color = '#706b63'; }}
+                onMouseEnter={e => handleMouseEnter(e, isDoctorAvailability)}
+                onMouseLeave={e => handleMouseLeave(e, isDoctorAvailability)}
               >
                 Availability
               </a>
@@ -199,17 +287,26 @@ export const Header: React.FC<HeaderProps> = ({
                 href="/doctor#patients"
                 onClick={e => { e.preventDefault(); navigate('/doctor#patients'); }}
                 style={getNavLinkStyle(isDoctorPatients)}
-                onMouseEnter={e => { if (!isDoctorPatients) e.currentTarget.style.color = '#1a110a'; }}
-                onMouseLeave={e => { if (!isDoctorPatients) e.currentTarget.style.color = '#706b63'; }}
+                onMouseEnter={e => handleMouseEnter(e, isDoctorPatients)}
+                onMouseLeave={e => handleMouseLeave(e, isDoctorPatients)}
               >
                 Patients
+              </a>
+              <a
+                href="/doctor#prescriptions"
+                onClick={e => { e.preventDefault(); navigate('/doctor#prescriptions'); }}
+                style={getNavLinkStyle(isDoctorPrescriptions)}
+                onMouseEnter={e => handleMouseEnter(e, isDoctorPrescriptions)}
+                onMouseLeave={e => handleMouseLeave(e, isDoctorPrescriptions)}
+              >
+                Prescriptions
               </a>
               <a
                 href="/doctor#transcripts"
                 onClick={e => { e.preventDefault(); navigate('/doctor#transcripts'); }}
                 style={getNavLinkStyle(isDoctorTranscripts)}
-                onMouseEnter={e => { if (!isDoctorTranscripts) e.currentTarget.style.color = '#1a110a'; }}
-                onMouseLeave={e => { if (!isDoctorTranscripts) e.currentTarget.style.color = '#706b63'; }}
+                onMouseEnter={e => handleMouseEnter(e, isDoctorTranscripts)}
+                onMouseLeave={e => handleMouseLeave(e, isDoctorTranscripts)}
               >
                 Transcripts
               </a>
@@ -242,6 +339,7 @@ export const Header: React.FC<HeaderProps> = ({
               </button>
               <button
                 onClick={onOpenRegister || onOpenAuth}
+                className="hover-lift"
                 style={{
                   backgroundColor: '#f5efe6',
                   color: '#785b47',
@@ -266,6 +364,7 @@ export const Header: React.FC<HeaderProps> = ({
               </button>
               <button
                 onClick={onGetCare}
+                className="hover-lift"
                 style={{
                   backgroundColor: '#785b47',
                   color: '#ffffff',
@@ -288,7 +387,7 @@ export const Header: React.FC<HeaderProps> = ({
           {isPatient && (
             <>
               {/* Notification Bell with 2 badge */}
-              <div style={{ position: 'relative', cursor: 'pointer', display: 'flex', alignItems: 'center' }}>
+              <div className="icon-pop" style={{ position: 'relative', cursor: 'pointer', display: 'flex', alignItems: 'center' }}>
                 <Bell size={19} color="#443e37" />
                 <span style={{
                   position: 'absolute',
@@ -349,7 +448,7 @@ export const Header: React.FC<HeaderProps> = ({
           {isDoctor && (
             <>
               {/* Notification Bell with 1 badge */}
-              <div style={{ position: 'relative', cursor: 'pointer', display: 'flex', alignItems: 'center' }}>
+              <div className="icon-pop" style={{ position: 'relative', cursor: 'pointer', display: 'flex', alignItems: 'center' }}>
                 <Bell size={18} color="#1a110a" />
                 <span style={{
                   position: 'absolute',
@@ -385,7 +484,8 @@ export const Header: React.FC<HeaderProps> = ({
                   }}
                   title="Switch profile"
                 >
-                  <span>{currentUser.fullName || 'Dr. Kavita Shah'} ⌄</span>
+                  <span>{currentUser.fullName || 'Dr. Kavita Shah'}</span>
+                  <ChevronDown size={14} color="#785b47" />
                 </div>
                 <button
                   onClick={onLogout}

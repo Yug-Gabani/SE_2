@@ -7,6 +7,10 @@ import { DoctorDashboard } from './components/DoctorDashboard';
 import { PatientTriageBooking } from './components/PatientTriageBooking';
 import { MyAppointments } from './components/MyAppointments';
 import { AppointmentDetail } from './components/AppointmentDetail';
+import { MyPrescriptions } from './components/MyPrescriptions';
+import { Hospitals } from './components/Hospitals';
+import { HospitalDetail } from './components/HospitalDetail';
+import { PatientProfile } from './components/PatientProfile';
 import { AuthPage } from './components/AuthPage';
 import { ProtectedRoute } from './components/ProtectedRoute';
 import { authApi } from './services/api';
@@ -152,6 +156,46 @@ export const App: React.FC = () => {
               sessionReady ? (
                 <ProtectedRoute user={currentUser} roles={['PATIENT']}>
                   <AppointmentDetail />
+                </ProtectedRoute>
+              ) : null
+            }
+          />
+          <Route
+            path="/prescriptions"
+            element={
+              sessionReady ? (
+                <ProtectedRoute user={currentUser} roles={['PATIENT']}>
+                  <MyPrescriptions />
+                </ProtectedRoute>
+              ) : null
+            }
+          />
+          <Route
+            path="/hospitals"
+            element={
+              sessionReady ? (
+                <ProtectedRoute user={currentUser} roles={['PATIENT']}>
+                  <Hospitals />
+                </ProtectedRoute>
+              ) : null
+            }
+          />
+          <Route
+            path="/hospitals/:id"
+            element={
+              sessionReady ? (
+                <ProtectedRoute user={currentUser} roles={['PATIENT']}>
+                  <HospitalDetail />
+                </ProtectedRoute>
+              ) : null
+            }
+          />
+          <Route
+            path="/profile"
+            element={
+              sessionReady ? (
+                <ProtectedRoute user={currentUser} roles={['PATIENT']}>
+                  <PatientProfile />
                 </ProtectedRoute>
               ) : null
             }

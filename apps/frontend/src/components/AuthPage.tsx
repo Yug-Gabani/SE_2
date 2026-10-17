@@ -15,6 +15,7 @@ import {
 import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { authApi } from '../services/api';
 import type { Role, User } from '../types';
+import { PageTransition } from '../motion/PageTransition';
 
 interface AuthPageProps {
   onLoginSuccess: (user: User, token: string) => void;
@@ -34,15 +35,18 @@ export const AuthPage: React.FC<AuthPageProps> = ({ onLoginSuccess, currentUser 
     setIsLogin(!location.pathname.includes('/signup'));
   }, [location.pathname]);
 
-  // If already logged in, redirect to appropriate dashboard
+  // Where to land after successful auth. Honours ?next=/some/path (used by the landing-page
+   // "Login/Signup to book" CTA so users return to the hospital they were browsing).
+   const nextParam = new URLSearchParams(location.search).get('next');
+   const landingFor = (role: Role) =>
+     nextParam ? nextParam : role === 'DOCTOR' ? '/doctor' : '/patient';
+
+  // If already logged in, redirect to appropriate landing
   useEffect(() => {
     if (currentUser) {
-      if (currentUser.role === 'DOCTOR') {
-        navigate('/doctor');
-      } else {
-        navigate('/patient');
-      }
+      navigate(landingFor(currentUser.role));
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentUser, navigate]);
 
   // Form State
@@ -80,11 +84,7 @@ export const AuthPage: React.FC<AuthPageProps> = ({ onLoginSuccess, currentUser 
         setSuccessMsg('Authentication successful! Redirecting...');
         setTimeout(() => {
           onLoginSuccess(data.user, data.accessToken);
-          if (data.user.role === 'DOCTOR') {
-            navigate('/doctor');
-          } else {
-            navigate('/patient');
-          }
+          navigate(landingFor(data.user.role));
         }, 400);
       } else {
         // --- REAL BACKEND REGISTRATION ---
@@ -108,11 +108,7 @@ export const AuthPage: React.FC<AuthPageProps> = ({ onLoginSuccess, currentUser 
         setSuccessMsg('Account created successfully! Redirecting to dashboard...');
         setTimeout(() => {
           onLoginSuccess(data.user, data.accessToken);
-          if (data.user.role === 'DOCTOR') {
-            navigate('/doctor');
-          } else {
-            navigate('/patient');
-          }
+          navigate(landingFor(data.user.role));
         }, 500);
       }
     } catch (err: unknown) {
@@ -136,11 +132,7 @@ export const AuthPage: React.FC<AuthPageProps> = ({ onLoginSuccess, currentUser 
       setSuccessMsg(`Welcome, ${data.user.fullName}! Entering demo mode...`);
       setTimeout(() => {
         onLoginSuccess(data.user, data.accessToken);
-        if (demoRole === 'DOCTOR') {
-          navigate('/doctor');
-        } else {
-          navigate('/patient');
-        }
+        navigate(landingFor(demoRole));
       }, 350);
     } catch {
       // Fallback demo user if backend is rebooting
@@ -151,53 +143,54 @@ export const AuthPage: React.FC<AuthPageProps> = ({ onLoginSuccess, currentUser 
         role: demoRole,
       };
       onLoginSuccess(fallbackUser, 'mock-jwt-token');
-      navigate(demoRole === 'DOCTOR' ? '/doctor' : '/patient');
+      navigate(landingFor(demoRole));
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div
-      style={{
-        minHeight: '100vh',
-        backgroundColor: '#f8f3eb',
-        display: 'flex',
-        flexDirection: 'column',
-        color: '#1a110a',
-        fontFamily: 'Inter, system-ui, -apple-system, sans-serif',
-      }}
-    >
-      {/* Top mini-bar with Back to Home only */}
+    <PageTransition>
       <div
         style={{
-          padding: '20px 32px 0 32px',
+          minHeight: '100vh',
+          backgroundColor: '#f8f3eb',
           display: 'flex',
-          justifyContent: 'flex-start',
-          alignItems: 'center',
-          maxWidth: '1200px',
-          margin: '0 auto',
-          width: '100%',
-          boxSizing: 'border-box',
+          flexDirection: 'column',
+          color: '#1a110a',
+          fontFamily: 'Inter, system-ui, -apple-system, sans-serif',
         }}
       >
-        <Link
-          to="/"
+        {/* Top mini-bar with Back to Home only */}
+        <div
           style={{
-            display: 'inline-flex',
+            padding: '20px 32px 0 32px',
+            display: 'flex',
+            justifyContent: 'flex-start',
             alignItems: 'center',
-            gap: '8px',
-            color: '#785b47',
-            textDecoration: 'none',
-            fontSize: '14px',
-            fontWeight: 600,
-            padding: '8px 16px',
-            borderRadius: '9999px',
-            backgroundColor: '#ffffff',
-            border: '1px solid #eae3d8',
-            transition: 'all 0.15s ease',
-            boxShadow: '0 2px 6px rgba(75, 68, 57, 0.04)',
+            maxWidth: '1200px',
+            margin: '0 auto',
+            width: '100%',
+            boxSizing: 'border-box',
           }}
+        >
+          <Link
+            to="/"
+            className="hover-lift"
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '8px',
+              color: '#785b47',
+              textDecoration: 'none',
+              fontSize: '14px',
+              fontWeight: 600,
+              padding: '8px 16px',
+              borderRadius: '9999px',
+              backgroundColor: '#ffffff',
+              border: '1px solid #eae3d8',
+              boxShadow: '0 2px 6px rgba(75, 68, 57, 0.04)',
+            }}
           onMouseEnter={e => {
             e.currentTarget.style.backgroundColor = '#f5efe6';
             e.currentTarget.style.color = '#543b2a';
@@ -223,6 +216,7 @@ export const AuthPage: React.FC<AuthPageProps> = ({ onLoginSuccess, currentUser 
         }}
       >
         <div
+          className="card card-hover"
           style={{
             maxWidth: '480px',
             width: '100%',
@@ -666,6 +660,7 @@ export const AuthPage: React.FC<AuthPageProps> = ({ onLoginSuccess, currentUser 
             <button
               type="submit"
               disabled={loading}
+              className="hover-lift"
               style={{
                 width: '100%',
                 backgroundColor: '#785b47',
@@ -677,7 +672,6 @@ export const AuthPage: React.FC<AuthPageProps> = ({ onLoginSuccess, currentUser 
                 fontWeight: 600,
                 cursor: loading ? 'not-allowed' : 'pointer',
                 opacity: loading ? 0.7 : 1,
-                transition: 'background-color 0.15s ease',
                 boxShadow: '0 4px 12px rgba(120, 91, 71, 0.2)',
               }}
               onMouseEnter={e => {
@@ -736,6 +730,7 @@ export const AuthPage: React.FC<AuthPageProps> = ({ onLoginSuccess, currentUser 
                   type="button"
                   onClick={() => handleQuickDemo('PATIENT')}
                   disabled={loading}
+                  className="hover-lift"
                   style={{
                     padding: '8px 12px',
                     borderRadius: '8px',
@@ -749,15 +744,6 @@ export const AuthPage: React.FC<AuthPageProps> = ({ onLoginSuccess, currentUser 
                     alignItems: 'center',
                     justifyContent: 'center',
                     gap: '6px',
-                    transition: 'all 0.15s ease',
-                  }}
-                  onMouseEnter={e => {
-                    e.currentTarget.style.borderColor = '#785b47';
-                    e.currentTarget.style.backgroundColor = '#f5efe6';
-                  }}
-                  onMouseLeave={e => {
-                    e.currentTarget.style.borderColor = '#eae3d8';
-                    e.currentTarget.style.backgroundColor = '#faf8f5';
                   }}
                 >
                   <UserIcon size={13} color="#785b47" />
@@ -768,6 +754,7 @@ export const AuthPage: React.FC<AuthPageProps> = ({ onLoginSuccess, currentUser 
                   type="button"
                   onClick={() => handleQuickDemo('DOCTOR')}
                   disabled={loading}
+                  className="hover-lift"
                   style={{
                     padding: '8px 12px',
                     borderRadius: '8px',
@@ -781,15 +768,6 @@ export const AuthPage: React.FC<AuthPageProps> = ({ onLoginSuccess, currentUser 
                     alignItems: 'center',
                     justifyContent: 'center',
                     gap: '6px',
-                    transition: 'all 0.15s ease',
-                  }}
-                  onMouseEnter={e => {
-                    e.currentTarget.style.borderColor = '#785b47';
-                    e.currentTarget.style.backgroundColor = '#f5efe6';
-                  }}
-                  onMouseLeave={e => {
-                    e.currentTarget.style.borderColor = '#eae3d8';
-                    e.currentTarget.style.backgroundColor = '#faf8f5';
                   }}
                 >
                   <Stethoscope size={13} color="#0d9488" />
@@ -801,5 +779,6 @@ export const AuthPage: React.FC<AuthPageProps> = ({ onLoginSuccess, currentUser 
         </div>
       </div>
     </div>
+    </PageTransition>
   );
 };

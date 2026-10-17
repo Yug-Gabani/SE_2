@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import {
   Search,
   MapPin,
@@ -8,7 +8,18 @@ import {
   Check,
   ClipboardList,
   Video,
+  Building2,
+  Loader2,
+  X,
+  LogIn,
+  UserPlus,
 } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { motion, AnimatePresence } from 'framer-motion';
+import type { Hospital } from '../types';
+import { publicHospitalsApi } from '../services/api';
+import { PageTransition } from '../motion/PageTransition';
+import { listItem, staggerContainer, EASE_ENTER } from '../motion/presets';
 
 interface LandingPageProps {
   onSelectDoctor?: (doctorName: string) => void;
@@ -56,11 +67,61 @@ export const LandingPage: React.FC<LandingPageProps> = ({
   onBookSpecialty,
   onGetCare,
 }) => {
+  const navigate = useNavigate();
   const [city, setCity] = useState('Ahmedabad');
   const [searchQuery, setSearchQuery] = useState('');
 
+  // Live hospital search (public endpoint — works for unauthenticated visitors).
+  const [results, setResults] = useState<Hospital[]>([]);
+  const [showResults, setShowResults] = useState(false);
+  const [searching, setSearching] = useState(false);
+  const [preview, setPreview] = useState<Hospital | null>(null);
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const searchContainerRef = useRef<HTMLDivElement>(null);
+
+  // Close suggestions when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (searchContainerRef.current && !searchContainerRef.current.contains(e.target as Node)) {
+        setShowResults(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  useEffect(() => {
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    const q = searchQuery.trim();
+    // Only query and suggest when the user actually types a name
+    if (!q) {
+      setResults([]);
+      setShowResults(false);
+      setSearching(false);
+      return;
+    }
+
+    const cityParam = city && city !== 'All India' ? city : undefined;
+    setSearching(true);
+    debounceRef.current = setTimeout(() => {
+      publicHospitalsApi.search({ q, city: cityParam, limit: 8 })
+        .then(list => {
+          setResults(list);
+          setShowResults(true);
+        })
+        .catch(() => setResults([]))
+        .finally(() => setSearching(false));
+    }, 300);
+    return () => { if (debounceRef.current) clearTimeout(debounceRef.current); };
+  }, [searchQuery, city]);
+
+  const goToAuth = (mode: 'login' | 'signup', nextPath?: string) => {
+    const nextParam = nextPath ? `?next=${encodeURIComponent(nextPath)}` : '';
+    navigate(`/${mode}${nextParam}`);
+  };
+
   return (
-    <div style={{
+    <PageTransition style={{
       maxWidth: '1200px',
       margin: '0 auto',
       padding: '56px 24px 80px 24px',
@@ -117,6 +178,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
         </p>
 
         {/* Search Band Card */}
+        <div id="for-hospitals" ref={searchContainerRef} style={{ position: 'relative', maxWidth: '740px', margin: '0 auto' }}>
         <div style={{
           backgroundColor: '#ffffff',
           borderRadius: '20px',
@@ -125,8 +187,6 @@ export const LandingPage: React.FC<LandingPageProps> = ({
           alignItems: 'center',
           boxShadow: '0 8px 30px rgba(75, 68, 57, 0.08)',
           border: '1px solid #eae3d8',
-          maxWidth: '740px',
-          margin: '0 auto',
           gap: '12px',
         }}>
           {/* Location Selector */}
@@ -143,26 +203,35 @@ export const LandingPage: React.FC<LandingPageProps> = ({
             cursor: 'pointer',
           }}>
             <MapPin size={16} color="#785b47" />
-            <select
-              value={city}
-              onChange={e => setCity(e.target.value)}
-              style={{
-                border: 'none',
-                background: 'transparent',
-                fontSize: '14px',
-                fontWeight: 600,
-                color: '#2a231b',
-                cursor: 'pointer',
-                outline: 'none',
-              }}
-            >
-              <option value="Ahmedabad">Ahmedabad</option>
-              <option value="Gandhinagar">Gandhinagar</option>
-              <option value="Mumbai">Mumbai</option>
-              <option value="Delhi">Delhi</option>
-              <option value="Bengaluru">Bengaluru</option>
-            </select>
-            <ChevronDown size={14} color="#785b47" />
+            <div style={{ position: 'relative', display: 'inline-flex', alignItems: 'center' }}>
+              <select
+                value={city}
+                onChange={e => setCity(e.target.value)}
+                style={{
+                  border: 'none',
+                  background: 'transparent',
+                  fontSize: '14px',
+                  fontWeight: 600,
+                  color: '#2a231b',
+                  cursor: 'pointer',
+                  outline: 'none',
+                  appearance: 'none',
+                  WebkitAppearance: 'none',
+                  MozAppearance: 'none',
+                  paddingRight: '18px',
+                }}
+              >
+                <option value="All India">All India</option>
+                <option value="Ahmedabad">Ahmedabad</option>
+                <option value="Gandhinagar">Gandhinagar</option>
+                <option value="Mumbai">Mumbai</option>
+                <option value="Delhi">Delhi</option>
+                <option value="Bengaluru">Bengaluru Urban</option>
+                <option value="Pune">Pune</option>
+                <option value="Chennai">Chennai</option>
+              </select>
+              <ChevronDown size={14} color="#785b47" style={{ position: 'absolute', right: 0, pointerEvents: 'none' }} />
+            </div>
           </div>
 
           {/* Search Input */}
@@ -175,9 +244,17 @@ export const LandingPage: React.FC<LandingPageProps> = ({
             <Search size={16} color="#948c80" />
             <input
               type="text"
-              placeholder="Doctor, hospital, specialty"
+              placeholder="Search hospitals by name (e.g. Apollo, Lilavati)"
               value={searchQuery}
-              onChange={e => setSearchQuery(e.target.value)}
+              onChange={e => {
+                const val = e.target.value;
+                setSearchQuery(val);
+                if (!val.trim()) {
+                  setShowResults(false);
+                  setResults([]);
+                }
+              }}
+              onFocus={() => { if (searchQuery.trim() && results.length) setShowResults(true); }}
               style={{
                 width: '100%',
                 border: 'none',
@@ -187,11 +264,13 @@ export const LandingPage: React.FC<LandingPageProps> = ({
                 background: 'transparent',
               }}
             />
+            {searching && <Loader2 size={14} className="animate-spin" color="#785b47" />}
           </div>
 
           {/* Search Button */}
           <button
             onClick={onGetCare}
+            className="hover-lift"
             style={{
               backgroundColor: '#785b47',
               color: '#ffffff',
@@ -214,15 +293,109 @@ export const LandingPage: React.FC<LandingPageProps> = ({
             <ArrowRight size={14} />
           </button>
         </div>
+
+        {/* Live-results dropdown */}
+        <AnimatePresence>
+          {showResults && searchQuery.trim() && results.length > 0 && (
+            <motion.div
+              initial={{ opacity: 0, y: 4 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: 4 }}
+              transition={{ duration: 0.18, ease: EASE_ENTER }}
+              style={{
+                position: 'absolute',
+                top: 'calc(100% + 8px)',
+                left: 0, right: 0,
+                backgroundColor: '#ffffff',
+                borderRadius: '16px',
+                border: '1px solid #eae3d8',
+                boxShadow: '0 12px 32px rgba(75, 68, 57, 0.12)',
+                maxHeight: '360px', overflowY: 'auto',
+                zIndex: 20, textAlign: 'left',
+              }}
+            >
+              {results.map(h => (
+                <button
+                  key={h.id}
+                  onClick={() => { setPreview(h); setShowResults(false); }}
+                  className="card-hover"
+                  style={{
+                    display: 'block', width: '100%',
+                    padding: '12px 16px',
+                    border: 'none', borderBottom: '1px solid #f2ece2',
+                    backgroundColor: 'transparent',
+                    textAlign: 'left', cursor: 'pointer',
+                    fontFamily: 'inherit',
+                  }}
+                  onMouseEnter={e => (e.currentTarget.style.backgroundColor = '#faf7f1')}
+                  onMouseLeave={e => (e.currentTarget.style.backgroundColor = 'transparent')}
+                >
+                  <div style={{ fontSize: '14px', fontWeight: 600, color: '#1a110a' }}>
+                    {h.name}
+                  </div>
+                  <div style={{ fontSize: '12px', color: '#706b63', marginTop: '2px' }}>
+                    <MapPin size={11} style={{ display: 'inline', marginRight: 4, verticalAlign: 'middle' }} />
+                    {[h.city, h.state].filter(Boolean).join(', ') || 'Location unknown'}
+                    {h.specialties.length > 0 && (
+                      <span> · {h.specialties.length} specialt{h.specialties.length === 1 ? 'y' : 'ies'}</span>
+                    )}
+                  </div>
+                </button>
+              ))}
+              <button
+                onClick={() => { setShowResults(false); }}
+                style={{
+                  display: 'block', width: '100%', padding: '8px',
+                  background: 'transparent', border: 'none',
+                  fontSize: '11px', color: '#8c857b', cursor: 'pointer',
+                }}
+              >
+                Close results
+              </button>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {showResults && !searching && results.length === 0 && searchQuery.trim() && (
+          <div style={{
+            position: 'absolute', top: 'calc(100% + 8px)',
+            left: 0, right: 0,
+            backgroundColor: '#ffffff', borderRadius: '16px',
+            border: '1px solid #eae3d8', padding: '18px',
+            fontSize: '13px', color: '#706b63', textAlign: 'left', zIndex: 20,
+          }}>
+            No hospitals match "{searchQuery}" in {city}.
+          </div>
+        )}
+        </div>
       </section>
 
+      {/* Hospital preview modal */}
+      <AnimatePresence mode="wait">
+        {preview && (
+          <HospitalPreviewModal
+            key={preview.id}
+            hospital={preview}
+            onClose={() => setPreview(null)}
+            onLogin={() => goToAuth('login', `/hospitals/${preview.id}`)}
+            onSignup={() => goToAuth('signup', `/hospitals/${preview.id}`)}
+          />
+        )}
+      </AnimatePresence>
+
       {/* SECTION B: 4 CATEGORY TILES */}
-      <section style={{
-        display: 'grid',
-        gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))',
-        gap: '24px',
-        marginBottom: '72px',
-      }}>
+      <motion.section
+        variants={staggerContainer}
+        initial="initial"
+        whileInView="animate"
+        viewport={{ once: true, margin: '-20px' }}
+        style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))',
+          gap: '24px',
+          marginBottom: '72px',
+        }}
+      >
         {[
           {
             image: '/video-consult.jpg',
@@ -245,9 +418,12 @@ export const LandingPage: React.FC<LandingPageProps> = ({
             subtitle: 'Fast delivery',
           },
         ].map((tile, idx) => (
-          <div
+          <motion.div
             key={idx}
+            variants={listItem}
+            id={idx === 0 ? 'video-consult' : idx === 1 ? 'find-doctors' : undefined}
             onClick={onGetCare}
+            className="card-hover"
             style={{
               backgroundColor: '#ffffff',
               borderRadius: '20px',
@@ -255,15 +431,6 @@ export const LandingPage: React.FC<LandingPageProps> = ({
               border: '1px solid #eae3d8',
               boxShadow: '0 4px 16px rgba(75, 68, 57, 0.04)',
               cursor: 'pointer',
-              transition: 'all 0.2s ease',
-            }}
-            onMouseEnter={e => {
-              e.currentTarget.style.transform = 'translateY(-3px)';
-              e.currentTarget.style.boxShadow = '0 8px 24px rgba(75, 68, 57, 0.08)';
-            }}
-            onMouseLeave={e => {
-              e.currentTarget.style.transform = 'translateY(0)';
-              e.currentTarget.style.boxShadow = '0 4px 16px rgba(75, 68, 57, 0.04)';
             }}
           >
             <div style={{
@@ -295,9 +462,9 @@ export const LandingPage: React.FC<LandingPageProps> = ({
                 {tile.subtitle}
               </div>
             </div>
-          </div>
+          </motion.div>
         ))}
-      </section>
+      </motion.section>
 
       {/* SECTION C: CONSULT A DOCTOR FOR (6 shortcuts) */}
       <section style={{ marginBottom: '72px' }}>
@@ -318,6 +485,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
           </h2>
           <button
             onClick={onGetCare}
+            className="hover-lift"
             style={{
               backgroundColor: '#ffffff',
               border: '1px solid #eae3d8',
@@ -333,11 +501,17 @@ export const LandingPage: React.FC<LandingPageProps> = ({
           </button>
         </div>
 
-        <div style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))',
-          gap: '16px',
-        }}>
+        <motion.div
+          variants={staggerContainer}
+          initial="initial"
+          whileInView="animate"
+          viewport={{ once: true, margin: '-20px' }}
+          style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))',
+            gap: '16px',
+          }}
+        >
           {[
             { label: 'Fever & cough', image: '/symptom-fever.jpg' },
             { label: 'Headache', image: '/symptom-headache.jpg' },
@@ -346,9 +520,11 @@ export const LandingPage: React.FC<LandingPageProps> = ({
             { label: 'Pregnancy', image: '/symptom-pregnancy.jpg' },
             { label: 'Mental health', image: '/symptom-mentalhealth.jpg' },
           ].map((item, idx) => (
-            <div
+            <motion.div
               key={idx}
+              variants={listItem}
               onClick={() => onBookSpecialty?.(item.label)}
+              className="card-hover"
               style={{
                 backgroundColor: '#ffffff',
                 borderRadius: '18px',
@@ -357,22 +533,11 @@ export const LandingPage: React.FC<LandingPageProps> = ({
                 textAlign: 'center',
                 boxShadow: '0 4px 12px rgba(75, 68, 57, 0.04)',
                 cursor: 'pointer',
-                transition: 'all 0.2s ease',
                 display: 'flex',
                 flexDirection: 'column',
                 alignItems: 'center',
                 justifyContent: 'space-between',
                 minHeight: '162px',
-              }}
-              onMouseEnter={e => {
-                e.currentTarget.style.borderColor = '#785b47';
-                e.currentTarget.style.transform = 'translateY(-3px)';
-                e.currentTarget.style.boxShadow = '0 8px 20px rgba(75, 68, 57, 0.08)';
-              }}
-              onMouseLeave={e => {
-                e.currentTarget.style.borderColor = '#eae3d8';
-                e.currentTarget.style.transform = 'translateY(0)';
-                e.currentTarget.style.boxShadow = '0 4px 12px rgba(75, 68, 57, 0.04)';
               }}
             >
               <div style={{
@@ -412,9 +577,9 @@ export const LandingPage: React.FC<LandingPageProps> = ({
               }}>
                 BOOK
               </div>
-            </div>
+            </motion.div>
           ))}
-        </div>
+        </motion.div>
       </section>
 
       {/* SECTION D: HOW PULSECARE WORKS */}
@@ -565,6 +730,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
           ].map((doc, idx) => (
             <div
               key={idx}
+              className="card-hover"
               style={{
                 backgroundColor: '#ffffff',
                 borderRadius: '20px',
@@ -688,21 +854,13 @@ export const LandingPage: React.FC<LandingPageProps> = ({
             <div
               key={idx}
               onClick={() => onBookSpecialty?.(spec.name)}
+              className="card-hover"
               style={{
                 backgroundColor: '#ede7de',
                 borderRadius: '16px',
                 padding: '16px 14px',
                 textAlign: 'left',
                 cursor: 'pointer',
-                transition: 'all 0.15s ease',
-              }}
-              onMouseEnter={e => {
-                e.currentTarget.style.backgroundColor = '#e5ded3';
-                e.currentTarget.style.transform = 'translateY(-2px)';
-              }}
-              onMouseLeave={e => {
-                e.currentTarget.style.backgroundColor = '#ede7de';
-                e.currentTarget.style.transform = 'translateY(0)';
               }}
             >
               <div style={{ fontSize: '14px', fontWeight: 600, color: '#1a110a' }}>
@@ -802,6 +960,145 @@ export const LandingPage: React.FC<LandingPageProps> = ({
           © 2026 PulseCare – Group 6 – IT314 – DA-IICT
         </div>
       </footer>
-    </div>
+    </PageTransition>
   );
 };
+
+/** Preview panel shown when an unauthenticated visitor clicks a hospital search result. */
+const HospitalPreviewModal: React.FC<{
+  hospital: Hospital;
+  onClose: () => void;
+  onLogin: () => void;
+  onSignup: () => void;
+}> = ({ hospital, onClose, onLogin, onSignup }) => (
+  <motion.div
+    initial={{ opacity: 0 }}
+    animate={{ opacity: 1 }}
+    exit={{ opacity: 0 }}
+    transition={{ duration: 0.18, ease: EASE_ENTER }}
+    style={{
+      position: 'fixed', inset: 0, zIndex: 1200,
+      backgroundColor: 'rgba(26, 17, 10, 0.6)',
+      backdropFilter: 'blur(4px)',
+      display: 'flex', alignItems: 'center', justifyContent: 'center',
+      padding: '20px',
+    }}
+  >
+    <motion.div
+      initial={{ opacity: 0, scale: 0.96, y: 8 }}
+      animate={{ opacity: 1, scale: 1, y: 0 }}
+      exit={{ opacity: 0, scale: 0.96, y: 8 }}
+      transition={{ duration: 0.22, ease: EASE_ENTER }}
+      style={{
+        backgroundColor: '#ffffff', borderRadius: '20px',
+        maxWidth: '600px', width: '100%', maxHeight: '88vh', overflow: 'auto',
+        boxShadow: '0 24px 64px rgba(75, 68, 57, 0.25)',
+        border: '1px solid #eae3d8',
+        padding: '28px',
+      }}
+    >
+      <div style={{
+        display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start',
+        marginBottom: '16px',
+      }}>
+        <div style={{ display: 'flex', alignItems: 'flex-start', gap: '14px' }}>
+          <div style={{
+            width: '42px', height: '42px', borderRadius: '12px',
+            backgroundColor: '#f5efe6', color: '#785b47',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+          }}>
+            <Building2 size={22} />
+          </div>
+          <div>
+            <h2 style={{ margin: 0, fontSize: '18px', fontWeight: 700, color: '#1a110a' }}>
+              {hospital.name}
+            </h2>
+            <div style={{ fontSize: '13px', color: '#706b63', marginTop: '2px', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+              <MapPin size={12} />
+              {[hospital.city, hospital.state].filter(Boolean).join(', ') || 'Location unknown'}
+            </div>
+          </div>
+        </div>
+        <button
+          onClick={onClose}
+          className="icon-pop"
+          style={{ background: 'transparent', border: 'none', color: '#706b63', cursor: 'pointer', padding: '4px' }}
+        >
+          <X size={20} />
+        </button>
+      </div>
+
+      {hospital.address && (
+        <div style={{ fontSize: '13px', color: '#443e37', marginBottom: '14px' }}>
+          {hospital.address}
+          {hospital.pincode ? ` — ${hospital.pincode}` : ''}
+        </div>
+      )}
+
+      <div style={{
+        fontSize: '11px', fontWeight: 700, color: '#8c857b',
+        textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '8px',
+      }}>
+        Available specialties ({hospital.specialties.length})
+      </div>
+      {hospital.specialties.length === 0 ? (
+        <div style={{
+          padding: '14px', borderRadius: '12px',
+          backgroundColor: '#faf7f1', border: '1px solid #eae3d8',
+          fontSize: '13px', color: '#706b63',
+          marginBottom: '18px',
+        }}>
+          Specialty details are not published for this hospital in the government directory.
+          You can still find a doctor via symptom triage after signing in.
+        </div>
+      ) : (
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', marginBottom: '18px' }}>
+          {hospital.specialties.map(s => (
+            <span key={s} className="chip" style={{
+              padding: '4px 12px', borderRadius: '9999px',
+              fontSize: '12px', color: '#443e37',
+              backgroundColor: '#faf7f1', border: '1px solid #eae3d8',
+            }}>{s}</span>
+          ))}
+        </div>
+      )}
+
+      {/* Auth CTA panel */}
+      <div style={{
+        padding: '16px 18px', borderRadius: '14px',
+        backgroundColor: '#fff8ec',
+        border: '1px solid #f6e5c0',
+      }}>
+        <div style={{ fontSize: '14px', fontWeight: 700, color: '#1a110a', marginBottom: '4px' }}>
+          Sign in to book an appointment
+        </div>
+        <div style={{ fontSize: '13px', color: '#706b63', marginBottom: '14px' }}>
+          You need an account to run symptom triage and book a slot with a doctor at this hospital.
+        </div>
+        <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
+          <button
+            onClick={onLogin}
+            className="hover-lift"
+            style={{
+              backgroundColor: '#785b47', color: '#ffffff', border: 'none',
+              borderRadius: '9999px', padding: '10px 20px',
+              fontSize: '13px', fontWeight: 600, cursor: 'pointer',
+              display: 'inline-flex', alignItems: 'center', gap: '6px',
+            }}
+          ><LogIn size={14} /> Log in</button>
+          <button
+            onClick={onSignup}
+            className="hover-lift"
+            style={{
+              backgroundColor: 'transparent', color: '#785b47',
+              border: '1px solid #785b47',
+              borderRadius: '9999px', padding: '10px 20px',
+              fontSize: '13px', fontWeight: 600, cursor: 'pointer',
+              display: 'inline-flex', alignItems: 'center', gap: '6px',
+            }}
+          ><UserPlus size={14} /> Sign up</button>
+        </div>
+      </div>
+    </motion.div>
+  </motion.div>
+);

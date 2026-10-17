@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
+import { PageTransition } from '../motion/PageTransition';
 import { ArrowLeft, Calendar, Clock, Loader2, MapPin, Video, XCircle } from 'lucide-react';
 import type { Appointment } from '../types';
 import { appointmentsApi } from '../services/api';
@@ -65,9 +66,10 @@ export const AppointmentDetail: React.FC = () => {
   };
 
   return (
-    <div style={{ maxWidth: '720px', margin: '48px auto', padding: '0 24px' }}>
+    <PageTransition style={{ maxWidth: '720px', margin: '48px auto', padding: '0 24px' }}>
       <button
         onClick={() => navigate(-1)}
+        className="hover-lift"
         style={{
           background: 'transparent', border: 'none', color: '#785b47',
           fontSize: '14px', fontWeight: 600, cursor: 'pointer',
@@ -97,7 +99,7 @@ export const AppointmentDetail: React.FC = () => {
       )}
 
       {appt && (
-        <div className="card" style={{ padding: '32px' }}>
+        <div className="card card-hover" style={{ padding: '32px' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '16px', marginBottom: '24px' }}>
             {appt.doctorAvatarUrl ? (
               <img
@@ -123,10 +125,13 @@ export const AppointmentDetail: React.FC = () => {
                 {appt.doctorSpecialty} · {appt.doctorHospital}
               </div>
             </div>
-            <span style={{
-              padding: '4px 12px', borderRadius: '9999px', fontSize: '12px', fontWeight: 700,
-              color: urgencyColor(appt.urgency), backgroundColor: urgencyBg(appt.urgency),
-            }}>{appt.urgency}</span>
+            <span
+              className="badge-morph"
+              style={{
+                padding: '4px 12px', borderRadius: '9999px', fontSize: '12px', fontWeight: 700,
+                color: urgencyColor(appt.urgency), backgroundColor: urgencyBg(appt.urgency),
+              }}
+            >{appt.urgency}</span>
           </div>
 
           <div style={{
@@ -164,15 +169,21 @@ export const AppointmentDetail: React.FC = () => {
 
           <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
             {appt.consultationType === 'VIDEO' && appt.status !== 'CANCELLED' && (
-              <button className="btn btn-primary">
+              <button className="btn btn-primary hover-lift">
                 <Video size={16} /> Join Video (coming soon)
               </button>
             )}
+            <button
+              onClick={() => navigate('/prescriptions')}
+              className="btn btn-secondary hover-lift"
+            >
+              View prescriptions
+            </button>
             {canCancel && (
               <button
                 onClick={handleCancel}
                 disabled={cancelling}
-                className="btn btn-secondary"
+                className="btn btn-secondary hover-lift"
                 style={{ color: '#dc2626', borderColor: 'rgba(220,38,38,0.3)' }}
               >
                 {cancelling ? (
@@ -189,6 +200,6 @@ export const AppointmentDetail: React.FC = () => {
           </div>
         </div>
       )}
-    </div>
+    </PageTransition>
   );
 };

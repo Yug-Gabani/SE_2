@@ -23,6 +23,7 @@ import type {
   User,
 } from '../types';
 import { appointmentsApi, doctorsApi, triageApi } from '../services/api';
+import { PageTransition } from '../motion/PageTransition';
 
 interface PatientTriageBookingProps {
   currentUser: User | null;
@@ -179,55 +180,58 @@ export const PatientTriageBooking: React.FC<PatientTriageBookingProps> = ({ curr
 
   if (confirmed) {
     return (
-      <div className="card" style={{ maxWidth: '680px', margin: '56px auto', padding: '40px', textAlign: 'center' }}>
-        <div style={{
-          width: '64px', height: '64px', borderRadius: '50%',
-          backgroundColor: 'rgba(50, 138, 59, 0.12)', color: 'var(--success)',
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
-          margin: '0 auto 20px',
-        }}>
-          <CheckCircle2 size={36} />
-        </div>
-        <h1 className="font-serif text-heading-lg" style={{ color: 'var(--ink)', marginBottom: '12px' }}>
-          Your appointment is confirmed.
-        </h1>
-        <p className="text-body" style={{ color: 'var(--muted)', marginBottom: '28px' }}>
-          Your intake and advisory triage are now attached to the record for{' '}
-          <strong>{confirmed.doctorName}</strong>.
-        </p>
-        <div style={{
-          backgroundColor: 'var(--canvas)', borderRadius: '16px', padding: '24px',
-          textAlign: 'left', marginBottom: '28px', display: 'grid', gap: '12px',
-          fontSize: '14px', border: '1px solid var(--border)',
-        }}>
-          <div><strong>Patient:</strong> {currentUser?.fullName ?? 'You'}</div>
-          <div><strong>Mode:</strong> {confirmed.consultationType === 'VIDEO' ? 'Encrypted Video Telehealth' : 'In-Person Clinic'}</div>
-          <div><strong>Attending Physician:</strong> {confirmed.doctorName} ({confirmed.doctorSpecialty})</div>
-          <div><strong>Hospital:</strong> {confirmed.doctorHospital}</div>
-          <div><strong>Scheduled Slot:</strong> {confirmed.slotAt ? formatSlot(confirmed.slotAt) : 'TBA'}</div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <strong>Triage Classification:</strong>
-            <span style={{
-              padding: '2px 10px', borderRadius: '9999px', fontSize: '12px', fontWeight: 700,
-              color: urgencyColor(confirmed.urgency), backgroundColor: urgencyBg(confirmed.urgency),
-            }}>{confirmed.urgency}</span>
+      <PageTransition>
+        <div className="card card-hover" style={{ maxWidth: '680px', margin: '56px auto', padding: '40px', textAlign: 'center' }}>
+          <div style={{
+            width: '64px', height: '64px', borderRadius: '50%',
+            backgroundColor: 'rgba(50, 138, 59, 0.12)', color: 'var(--success)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            margin: '0 auto 20px',
+          }}>
+            <CheckCircle2 size={36} />
+          </div>
+          <h1 className="font-serif text-heading-lg" style={{ color: 'var(--ink)', marginBottom: '12px' }}>
+            Your appointment is confirmed.
+          </h1>
+          <p className="text-body" style={{ color: 'var(--muted)', marginBottom: '28px' }}>
+            Your intake and advisory triage are now attached to the record for{' '}
+            <strong>{confirmed.doctorName}</strong>.
+          </p>
+          <div style={{
+            backgroundColor: 'var(--canvas)', borderRadius: '16px', padding: '24px',
+            textAlign: 'left', marginBottom: '28px', display: 'grid', gap: '12px',
+            fontSize: '14px', border: '1px solid var(--border)',
+          }}>
+            <div><strong>Patient:</strong> {currentUser?.fullName ?? 'You'}</div>
+            <div><strong>Mode:</strong> {confirmed.consultationType === 'VIDEO' ? 'Encrypted Video Telehealth' : 'In-Person Clinic'}</div>
+            <div><strong>Attending Physician:</strong> {confirmed.doctorName} ({confirmed.doctorSpecialty})</div>
+            <div><strong>Hospital:</strong> {confirmed.doctorHospital}</div>
+            <div><strong>Scheduled Slot:</strong> {confirmed.slotAt ? formatSlot(confirmed.slotAt) : 'TBA'}</div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <strong>Triage Classification:</strong>
+              <span className="badge-morph" style={{
+                padding: '2px 10px', borderRadius: '9999px', fontSize: '12px', fontWeight: 700,
+                color: urgencyColor(confirmed.urgency), backgroundColor: urgencyBg(confirmed.urgency),
+              }}>{confirmed.urgency}</span>
+            </div>
+          </div>
+          <div style={{ display: 'flex', justifyContent: 'center', gap: '12px', flexWrap: 'wrap' }}>
+            <button onClick={() => navigate('/appointments')} className="btn btn-secondary hover-lift">
+              View All Appointments
+            </button>
+            <button onClick={() => navigate('/patient')} className="btn btn-primary hover-lift">
+              Back to Dashboard
+            </button>
           </div>
         </div>
-        <div style={{ display: 'flex', justifyContent: 'center', gap: '12px', flexWrap: 'wrap' }}>
-          <button onClick={() => navigate('/appointments')} className="btn btn-secondary">
-            View All Appointments
-          </button>
-          <button onClick={() => navigate('/patient')} className="btn btn-primary">
-            Back to Dashboard
-          </button>
-        </div>
-      </div>
+      </PageTransition>
     );
   }
 
   return (
-    <div style={{ maxWidth: '1160px', margin: '48px auto', padding: '0 24px' }}>
-      <section style={{ maxWidth: '840px', margin: '0 auto 48px', textAlign: 'center' }}>
+    <PageTransition>
+      <div style={{ maxWidth: '1160px', margin: '48px auto', padding: '0 24px' }}>
+        <section style={{ maxWidth: '840px', margin: '0 auto 48px', textAlign: 'center' }}>
         <span className="badge-ai-warm" style={{ marginBottom: '24px' }}>
           <Sparkles size={14} />
           AI-assisted · reviewed by doctors
@@ -330,10 +334,11 @@ export const PatientTriageBooking: React.FC<PatientTriageBookingProps> = ({ curr
                         key={s}
                         type="button"
                         onClick={() => toggleSymptom(s)}
+                        className="chip"
                         style={{
                           padding: '8px 18px', borderRadius: '9999px', fontSize: '13px',
                           fontFamily: 'var(--font-sans)', fontWeight: active ? 600 : 400,
-                          cursor: 'pointer', transition: 'all 0.2s',
+                          cursor: 'pointer',
                           border: active ? '1px solid var(--primary)' : '1px solid var(--border)',
                           backgroundColor: active ? 'var(--info)' : 'var(--canvas)',
                           color: active ? 'var(--primary)' : 'var(--ink)',
@@ -427,7 +432,7 @@ export const PatientTriageBooking: React.FC<PatientTriageBookingProps> = ({ curr
                   type="button"
                   onClick={handleAssess}
                   disabled={assessing || !chiefComplaint.trim()}
-                  className="btn btn-primary"
+                  className="btn btn-primary hover-lift"
                 >
                   {assessing ? (
                     <>
@@ -500,10 +505,10 @@ export const PatientTriageBooking: React.FC<PatientTriageBookingProps> = ({ curr
               </div>
 
               <div style={{ display: 'flex', justifyContent: 'space-between', gap: '14px' }}>
-                <button type="button" onClick={() => setStep(1)} className="btn btn-secondary">
+                <button type="button" onClick={() => setStep(1)} className="btn btn-secondary hover-lift">
                   Back to Symptoms
                 </button>
-                <button type="button" onClick={() => setStep(3)} className="btn btn-primary">
+                <button type="button" onClick={() => setStep(3)} className="btn btn-primary hover-lift">
                   Select Doctor & Slot <ArrowRight size={16} />
                 </button>
               </div>
@@ -597,12 +602,13 @@ export const PatientTriageBooking: React.FC<PatientTriageBookingProps> = ({ curr
                           setSelectedDoctorId(doc.id);
                           setSelectedSlotId(doc.nextSlots[0]?.id ?? '');
                         }}
+                        className="card-hover"
                         style={{
                           padding: '16px 20px', borderRadius: '16px',
                           border: active ? '2px solid var(--primary)' : '1px solid var(--border)',
                           backgroundColor: active ? 'var(--info)' : 'var(--surface)',
                           display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                          cursor: 'pointer', transition: 'all 0.2s',
+                          cursor: 'pointer',
                         }}
                       >
                         <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
@@ -656,6 +662,7 @@ export const PatientTriageBooking: React.FC<PatientTriageBookingProps> = ({ curr
                         key={slot.id}
                         type="button"
                         onClick={() => setSelectedSlotId(slot.id)}
+                        className="chip"
                         style={{
                           padding: '8px 20px', borderRadius: '9999px',
                           border: active ? '1px solid var(--primary)' : '1px solid var(--border)',
@@ -683,13 +690,13 @@ export const PatientTriageBooking: React.FC<PatientTriageBookingProps> = ({ curr
               )}
 
               <div style={{ marginTop: '36px', display: 'flex', justifyContent: 'space-between', gap: '12px' }}>
-                <button type="button" onClick={() => setStep(2)} className="btn btn-secondary">
+                <button type="button" onClick={() => setStep(2)} className="btn btn-secondary hover-lift">
                   Back
                 </button>
                 <button
                   type="submit"
                   disabled={booking || !selectedDoctorId || !selectedSlotId}
-                  className="btn btn-primary"
+                  className="btn btn-primary hover-lift"
                 >
                   {booking ? (
                     <>
@@ -706,7 +713,7 @@ export const PatientTriageBooking: React.FC<PatientTriageBookingProps> = ({ curr
 
         {/* Live summary */}
         <div>
-          <div className="card" style={{ padding: '28px', position: 'sticky', top: '96px' }}>
+          <div className="card card-hover" style={{ padding: '28px', position: 'sticky', top: '96px' }}>
             <div style={{
               display: 'flex', alignItems: 'center', justifyContent: 'space-between',
               borderBottom: '1px solid var(--border)', paddingBottom: '16px', marginBottom: '20px',
@@ -798,5 +805,6 @@ export const PatientTriageBooking: React.FC<PatientTriageBookingProps> = ({ curr
         </div>
       </div>
     </div>
+    </PageTransition>
   );
 };

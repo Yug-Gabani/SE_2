@@ -1,17 +1,57 @@
 /* =========================================================
-   Animation kit — recreated from the motion patterns on monday.com's homepage
-   (keyframes/timings matched, original code + your own visuals).
-   Drop in, then add the class names to your elements.
+   PulseCare Motion System
+   Easing, micro-interactions, and accessibility reductions.
    ========================================================= */
 
 :root {
+  --enter: cubic-bezier(0.22, 1, 0.36, 1);
+  --exit: cubic-bezier(0.4, 0, 0.2, 1);
   --anim-accent-1: #ff3d9a;
   --anim-accent-2: #8b5cf6;
   --anim-accent-3: #ffa600;
   --anim-ease-out: cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-/* 1. Animated gradient (their SVG icon gradient that cycles pink → purple → orange) */
+/* Micro-interaction utility classes */
+.hover-lift {
+  transition: transform 150ms var(--enter), box-shadow 150ms var(--enter);
+}
+
+.hover-lift:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 20px rgba(75, 68, 57, 0.12);
+}
+
+.card-hover {
+  transition: transform 180ms var(--enter), border-color 180ms var(--enter), box-shadow 180ms var(--enter);
+}
+
+.card-hover:hover {
+  transform: translateY(-2px);
+  border-color: #785b47;
+  box-shadow: 0 8px 24px rgba(75, 68, 57, 0.08);
+}
+
+.chip {
+  transition: background-color 150ms var(--enter), color 150ms var(--enter), border-color 150ms var(--enter);
+}
+
+.badge-morph {
+  transition: background-color 220ms var(--enter), color 220ms var(--enter), border-color 220ms var(--enter);
+}
+
+.icon-pop {
+  transition: transform 120ms var(--enter);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.icon-pop:hover {
+  transform: scale(1.08);
+}
+
+/* 1. Animated gradient */
 @keyframes gradientCycle {
   0%, 100% { background-position: 0% 50%; }
   50%      { background-position: 100% 50%; }
@@ -26,13 +66,13 @@
   display: inline-block;
 }
 
-/* For SVG icons: put class="grad-stop-a" / "grad-stop-b" on the <stop> elements */
+/* SVG icons gradient stops */
 @keyframes stopA { 0%,100% { stop-color: var(--anim-accent-1); } 50% { stop-color: var(--anim-accent-2); } }
 @keyframes stopB { 0%,100% { stop-color: var(--anim-accent-3); } 50% { stop-color: var(--anim-accent-1); } }
 .grad-stop-a { animation: stopA 3s ease infinite; }
 .grad-stop-b { animation: stopB 3s ease infinite; }
 
-/* 2. Infinite marquee (logo / card strip). Duplicate the content once inside .marquee */
+/* 2. Infinite marquee */
 @keyframes marquee {
   from { transform: translateX(0); }
   to   { transform: translateX(calc(-100% - var(--marquee-gap, 0.75rem))); }
@@ -44,7 +84,7 @@
 }
 .marquee:hover .marquee__track { animation-play-state: paused; }
 
-/* 3. CTA "light sweep" — a shine passes across the button every 6s */
+/* 3. CTA light sweep */
 @keyframes swoosh {
   0%      { background-position: -350px center; }
   25%     { background-position: calc(100% + 350px) center; }
@@ -58,7 +98,7 @@
   animation: swoosh 6s ease-in-out 1.5s infinite both !important;
 }
 
-/* 4. Click feedback — add the class via JS (see animations.js) */
+/* 4. Click feedback */
 @keyframes shake {
   0%    { transform: scale(1); }
   15%   { transform: scale(1.05); }
@@ -78,7 +118,7 @@
 }
 .is-breathing { animation: breathe 0.3s linear; }
 
-/* 5. Pop-up tag/badge that hops up then settles (uses ::before) */
+/* 5. Pop-up tag/badge */
 @keyframes tagPop {
   0%   { transform: translate(-50%, 0) rotate(24deg) scale(.2); animation-timing-function: linear; }
   25%  { transform: translate(-50%, -18px) rotate(24deg) scale(1); animation-timing-function: ease-out; }
@@ -101,12 +141,23 @@
 .enter-slide { animation: slideFade 0.3s ease-out forwards; }
 .enter-fade  { animation: fade 0.2s ease-out forwards; }
 
-/* 7. Scroll reveal (driven by animations.js) */
+/* 7. Scroll reveal */
 [data-reveal] { opacity: 0; transform: translateY(24px); transition: opacity .6s var(--anim-ease-out), transform .6s var(--anim-ease-out); }
 [data-reveal].is-visible { opacity: 1; transform: none; }
 
-/* Respect users who turn motion off */
+/* Global Reduced Motion Override */
 @media (prefers-reduced-motion: reduce) {
-  *, *::before, *::after { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; transition-duration: 0.01ms !important; }
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    animation: none !important;
+    transition: none !important;
+  }
+  .hover-lift:hover,
+  .card-hover:hover,
+  .icon-pop:hover {
+    transform: none !important;
+  }
   [data-reveal] { opacity: 1; transform: none; }
 }

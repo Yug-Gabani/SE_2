@@ -1,5 +1,8 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { AnimatePresence, motion } from 'framer-motion';
+import { PageTransition } from '../motion/PageTransition';
+import { listItem } from '../motion/presets';
 import { Calendar, Clock, Loader2, MapPin, Video, FileText, XCircle } from 'lucide-react';
 import type { Appointment, AppointmentStatus } from '../types';
 import { appointmentsApi } from '../services/api';
@@ -90,7 +93,7 @@ export const MyAppointments: React.FC = () => {
   };
 
   return (
-    <div style={{ maxWidth: '1000px', margin: '48px auto', padding: '0 24px' }}>
+    <PageTransition style={{ maxWidth: '1000px', margin: '48px auto', padding: '0 24px' }}>
       <div style={{
         display: 'flex', alignItems: 'center', justifyContent: 'space-between',
         flexWrap: 'wrap', gap: '20px', marginBottom: '28px',
@@ -103,7 +106,7 @@ export const MyAppointments: React.FC = () => {
             Track your booked, past, and cancelled visits.
           </p>
         </div>
-        <button onClick={() => navigate('/book')} className="btn btn-primary">
+        <button onClick={() => navigate('/book')} className="btn btn-primary hover-lift">
           <Calendar size={16} /> Book New Consultation
         </button>
       </div>
@@ -156,7 +159,7 @@ export const MyAppointments: React.FC = () => {
       )}
 
       {!loading && !error && filtered.length === 0 && (
-        <div className="card" style={{ padding: '48px', textAlign: 'center' }}>
+        <div className="card card-hover" style={{ padding: '48px', textAlign: 'center' }}>
           <div style={{
             width: '56px', height: '56px', borderRadius: '50%',
             backgroundColor: '#f5efe6', color: '#785b47',
@@ -174,7 +177,7 @@ export const MyAppointments: React.FC = () => {
               : 'Your history will appear here as you use PulseCare.'}
           </p>
           {tab === 'upcoming' && (
-            <button onClick={() => navigate('/book')} className="btn btn-primary">
+            <button onClick={() => navigate('/book')} className="btn btn-primary hover-lift">
               Start Triage & Booking
             </button>
           )}
@@ -183,120 +186,137 @@ export const MyAppointments: React.FC = () => {
 
       {!loading && !error && filtered.length > 0 && (
         <div style={{ display: 'grid', gap: '16px' }}>
-          {filtered.map(appt => {
-            const canCancel = isUpcoming(appt);
-            return (
-              <div key={appt.id} className="card" style={{ padding: '24px' }}>
-                <div style={{
-                  display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                  flexWrap: 'wrap', gap: '12px',
-                  borderBottom: '1px solid #eae3d8',
-                  paddingBottom: '16px', marginBottom: '16px',
-                }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
-                    {appt.doctorAvatarUrl ? (
-                      <img
-                        src={appt.doctorAvatarUrl}
-                        alt={appt.doctorName ?? ''}
-                        style={{ width: '48px', height: '48px', borderRadius: '50%', objectFit: 'cover' }}
-                      />
-                    ) : (
-                      <div style={{
-                        width: '48px', height: '48px', borderRadius: '50%',
-                        backgroundColor: '#f5efe6', color: '#785b47',
-                        display: 'flex', alignItems: 'center', justifyContent: 'center',
-                        fontWeight: 700,
-                      }}>
-                        {(appt.doctorName ?? 'Dr').split(' ').map(s => s[0]).join('').slice(0, 2)}
-                      </div>
-                    )}
-                    <div>
-                      <h2 style={{ fontSize: '17px', fontWeight: 700, color: '#1a110a', margin: 0 }}>
-                        {appt.doctorName ?? 'Attending physician'}
-                      </h2>
-                      <div style={{ fontSize: '13px', color: '#706b63' }}>
-                        {appt.doctorSpecialty}{appt.doctorHospital ? ` · ${appt.doctorHospital}` : ''}
+          <AnimatePresence>
+            {filtered.map(appt => {
+              const canCancel = isUpcoming(appt);
+              return (
+                <motion.div
+                  key={appt.id}
+                  layout
+                  variants={listItem}
+                  initial="initial"
+                  animate="animate"
+                  exit="exit"
+                  className="card card-hover"
+                  style={{ padding: '24px' }}
+                >
+                  <div style={{
+                    display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                    flexWrap: 'wrap', gap: '12px',
+                    borderBottom: '1px solid #eae3d8',
+                    paddingBottom: '16px', marginBottom: '16px',
+                  }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
+                      {appt.doctorAvatarUrl ? (
+                        <img
+                          src={appt.doctorAvatarUrl}
+                          alt={appt.doctorName ?? ''}
+                          style={{ width: '48px', height: '48px', borderRadius: '50%', objectFit: 'cover' }}
+                        />
+                      ) : (
+                        <div style={{
+                          width: '48px', height: '48px', borderRadius: '50%',
+                          backgroundColor: '#f5efe6', color: '#785b47',
+                          display: 'flex', alignItems: 'center', justifyContent: 'center',
+                          fontWeight: 700,
+                        }}>
+                          {(appt.doctorName ?? 'Dr').split(' ').map(s => s[0]).join('').slice(0, 2)}
+                        </div>
+                      )}
+                      <div>
+                        <h2 style={{ fontSize: '17px', fontWeight: 700, color: '#1a110a', margin: 0 }}>
+                          {appt.doctorName ?? 'Attending physician'}
+                        </h2>
+                        <div style={{ fontSize: '13px', color: '#706b63' }}>
+                          {appt.doctorSpecialty}{appt.doctorHospital ? ` · ${appt.doctorHospital}` : ''}
+                        </div>
                       </div>
                     </div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                      <span
+                        className="badge-morph"
+                        style={{
+                          padding: '3px 10px', borderRadius: '9999px',
+                          fontSize: '12px', fontWeight: 700,
+                          color: urgencyColor(appt.urgency), backgroundColor: urgencyBg(appt.urgency),
+                        }}
+                      >{appt.urgency}</span>
+                      <span
+                        className="badge-morph"
+                        style={{
+                          padding: '3px 10px', borderRadius: '9999px',
+                          fontSize: '12px', fontWeight: 600,
+                          color: '#1a110a', backgroundColor: '#f5efe6',
+                        }}
+                      >{statusLabel(appt.status)}</span>
+                    </div>
                   </div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                    <span style={{
-                      padding: '3px 10px', borderRadius: '9999px',
-                      fontSize: '12px', fontWeight: 700,
-                      color: urgencyColor(appt.urgency), backgroundColor: urgencyBg(appt.urgency),
-                    }}>{appt.urgency}</span>
-                    <span style={{
-                      padding: '3px 10px', borderRadius: '9999px',
-                      fontSize: '12px', fontWeight: 600,
-                      color: '#1a110a', backgroundColor: '#f5efe6',
-                    }}>{statusLabel(appt.status)}</span>
-                  </div>
-                </div>
 
-                <div style={{
-                  display: 'grid',
-                  gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
-                  gap: '14px',
-                  backgroundColor: '#faf7f1',
-                  padding: '14px 18px', borderRadius: '12px',
-                  marginBottom: '14px', fontSize: '13px',
-                  border: '1px solid #eae3d8',
-                }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <Clock size={16} color="#785b47" />
-                    <span><strong>Slot:</strong> {formatSlot(appt.slotAt)}</span>
-                  </div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    {appt.consultationType === 'VIDEO' ? (
-                      <Video size={16} color="#785b47" />
-                    ) : (
-                      <MapPin size={16} color="#785b47" />
-                    )}
-                    <span><strong>Mode:</strong> {appt.consultationType === 'VIDEO' ? 'Telehealth' : 'In-Person'}</span>
-                  </div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <FileText size={16} color="#785b47" />
-                    <span><strong>Ref:</strong> {appt.id.slice(0, 8)}</span>
-                  </div>
-                </div>
-
-                {appt.chiefComplaint && (
-                  <div style={{ fontSize: '14px', marginBottom: '12px', color: '#1a110a' }}>
-                    <strong>Reported concern:</strong> {appt.chiefComplaint}
-                  </div>
-                )}
-
-                <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
-                  <button
-                    onClick={() => navigate(`/appointments/${appt.id}`)}
-                    className="btn btn-secondary"
-                  >
-                    View details
-                  </button>
-                  {canCancel && (
-                    <button
-                      onClick={() => handleCancel(appt.id)}
-                      disabled={cancellingId === appt.id}
-                      className="btn btn-secondary"
-                      style={{ color: '#dc2626', borderColor: 'rgba(220,38,38,0.3)' }}
-                    >
-                      {cancellingId === appt.id ? (
-                        <>
-                          <Loader2 size={14} className="animate-spin" /> Cancelling…
-                        </>
+                  <div style={{
+                    display: 'grid',
+                    gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
+                    gap: '14px',
+                    backgroundColor: '#faf7f1',
+                    padding: '14px 18px', borderRadius: '12px',
+                    marginBottom: '14px', fontSize: '13px',
+                    border: '1px solid #eae3d8',
+                  }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <Clock size={16} color="#785b47" />
+                      <span><strong>Slot:</strong> {formatSlot(appt.slotAt)}</span>
+                    </div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      {appt.consultationType === 'VIDEO' ? (
+                        <Video size={16} color="#785b47" />
                       ) : (
-                        <>
-                          <XCircle size={14} /> Cancel
-                        </>
+                        <MapPin size={16} color="#785b47" />
                       )}
-                    </button>
+                      <span><strong>Mode:</strong> {appt.consultationType === 'VIDEO' ? 'Telehealth' : 'In-Person'}</span>
+                    </div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <FileText size={16} color="#785b47" />
+                      <span><strong>Ref:</strong> {appt.id.slice(0, 8)}</span>
+                    </div>
+                  </div>
+
+                  {appt.chiefComplaint && (
+                    <div style={{ fontSize: '14px', marginBottom: '12px', color: '#1a110a' }}>
+                      <strong>Reported concern:</strong> {appt.chiefComplaint}
+                    </div>
                   )}
-                </div>
-              </div>
-            );
-          })}
+
+                  <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
+                    <button
+                      onClick={() => navigate(`/appointments/${appt.id}`)}
+                      className="btn btn-secondary hover-lift"
+                    >
+                      View details
+                    </button>
+                    {canCancel && (
+                      <button
+                        onClick={() => handleCancel(appt.id)}
+                        disabled={cancellingId === appt.id}
+                        className="btn btn-secondary hover-lift"
+                        style={{ color: '#dc2626', borderColor: 'rgba(220,38,38,0.3)' }}
+                      >
+                        {cancellingId === appt.id ? (
+                          <>
+                            <Loader2 size={14} className="animate-spin" /> Cancelling…
+                          </>
+                        ) : (
+                          <>
+                            <XCircle size={14} /> Cancel
+                          </>
+                        )}
+                      </button>
+                    )}
+                  </div>
+                </motion.div>
+              );
+            })}
+          </AnimatePresence>
         </div>
       )}
-    </div>
+    </PageTransition>
   );
 };

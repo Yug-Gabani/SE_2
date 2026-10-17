@@ -1,5 +1,8 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useLocation } from 'react-router-dom';
+import { AnimatePresence, motion } from 'framer-motion';
+import { PageTransition } from '../motion/PageTransition';
+import { listItem, slideInRight, EASE_ENTER, EASE_EXIT } from '../motion/presets';
 import {
   Search,
   ChevronDown,
@@ -14,6 +17,7 @@ import {
 } from 'lucide-react';
 import type { Appointment } from '../types';
 import { appointmentsApi } from '../services/api';
+import { PrescriptionEditor } from './PrescriptionEditor';
 
 /**
  * Map a backend Appointment to the queue item shape this screen was originally built around.
@@ -85,6 +89,30 @@ export const DoctorDashboard: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [tab, setTab] = useState<ViewTab>('active');
 
+  const prevActiveIdsRef = useRef<Set<string>>(new Set());
+  const isFirstLoadRef = useRef(true);
+  const [newIds, setNewIds] = useState<Set<string>>(new Set());
+
+  useEffect(() => {
+    if (activeQueue.length > 0) {
+      if (isFirstLoadRef.current) {
+        prevActiveIdsRef.current = new Set(activeQueue.map(q => q.id));
+        isFirstLoadRef.current = false;
+      } else {
+        const fresh = new Set<string>();
+        for (const item of activeQueue) {
+          if (!prevActiveIdsRef.current.has(item.id)) {
+            fresh.add(item.id);
+          }
+        }
+        if (fresh.size > 0) {
+          setNewIds(fresh);
+        }
+        prevActiveIdsRef.current = new Set(activeQueue.map(q => q.id));
+      }
+    }
+  }, [activeQueue]);
+
   const reload = useCallback(() => {
     setLoading(true);
     setLoadError(null);
@@ -140,6 +168,7 @@ export const DoctorDashboard: React.FC = () => {
 
   const [actionBusy, setActionBusy] = useState<string | null>(null);
   const [actionError, setActionError] = useState<string | null>(null);
+  const [rxEditorFor, setRxEditorFor] = useState<QueueItem | null>(null);
 
   const applyUpdatedAppointment = (updated: Appointment) => {
     const next = appointmentToQueueItem(updated);
@@ -253,7 +282,7 @@ export const DoctorDashboard: React.FC = () => {
   });
 
   return (
-    <div style={{
+    <PageTransition style={{
       maxWidth: '1200px',
       margin: '0 auto',
       padding: '36px 20px 64px 20px',
@@ -306,6 +335,7 @@ export const DoctorDashboard: React.FC = () => {
             <button
               onClick={reload}
               title="Refresh"
+              className="icon-pop"
               style={{
                 background: 'transparent', border: 'none', cursor: 'pointer',
                 color: '#785b47', padding: '0 4px', display: 'inline-flex', alignItems: 'center',
@@ -333,13 +363,16 @@ export const DoctorDashboard: React.FC = () => {
         marginBottom: '28px',
       }}>
         {/* Tile 1: Today */}
-        <div style={{
-          backgroundColor: '#ffffff',
-          borderRadius: '16px',
-          padding: '18px 22px',
-          border: '1px solid #eae3d8',
-          boxShadow: '0 4px 16px rgba(75, 68, 57, 0.04)',
-        }}>
+        <div
+          className="card-hover"
+          style={{
+            backgroundColor: '#ffffff',
+            borderRadius: '16px',
+            padding: '18px 22px',
+            border: '1px solid #eae3d8',
+            boxShadow: '0 4px 16px rgba(75, 68, 57, 0.04)',
+          }}
+        >
           <div style={{ fontSize: '12px', color: '#706b63', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em' }}>
             Active
           </div>
@@ -352,13 +385,16 @@ export const DoctorDashboard: React.FC = () => {
         </div>
 
         {/* Tile 2: Emergency */}
-        <div style={{
-          backgroundColor: '#fef2f2',
-          borderRadius: '16px',
-          padding: '18px 22px',
-          border: '1px solid #fecaca',
-          boxShadow: '0 4px 16px rgba(220, 38, 38, 0.06)',
-        }}>
+        <div
+          className="card-hover"
+          style={{
+            backgroundColor: '#fef2f2',
+            borderRadius: '16px',
+            padding: '18px 22px',
+            border: '1px solid #fecaca',
+            boxShadow: '0 4px 16px rgba(220, 38, 38, 0.06)',
+          }}
+        >
           <div style={{ fontSize: '12px', color: '#dc2626', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.04em' }}>
             Emergency
           </div>
@@ -379,13 +415,16 @@ export const DoctorDashboard: React.FC = () => {
         </div>
 
         {/* Tile 3: Pending questions */}
-        <div style={{
-          backgroundColor: '#fffbeb',
-          borderRadius: '16px',
-          padding: '18px 22px',
-          border: '1px solid #fde68a',
-          boxShadow: '0 4px 16px rgba(217, 119, 6, 0.06)',
-        }}>
+        <div
+          className="card-hover"
+          style={{
+            backgroundColor: '#fffbeb',
+            borderRadius: '16px',
+            padding: '18px 22px',
+            border: '1px solid #fde68a',
+            boxShadow: '0 4px 16px rgba(217, 119, 6, 0.06)',
+          }}
+        >
           <div style={{ fontSize: '12px', color: '#b45309', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.04em' }}>
             Urgent
           </div>
@@ -398,13 +437,16 @@ export const DoctorDashboard: React.FC = () => {
         </div>
 
         {/* Tile 4: Routine */}
-        <div style={{
-          backgroundColor: '#ffffff',
-          borderRadius: '16px',
-          padding: '18px 22px',
-          border: '1px solid #eae3d8',
-          boxShadow: '0 4px 16px rgba(75, 68, 57, 0.04)',
-        }}>
+        <div
+          className="card-hover"
+          style={{
+            backgroundColor: '#ffffff',
+            borderRadius: '16px',
+            padding: '18px 22px',
+            border: '1px solid #eae3d8',
+            boxShadow: '0 4px 16px rgba(75, 68, 57, 0.04)',
+          }}
+        >
           <div style={{ fontSize: '12px', color: '#706b63', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em' }}>
             Routine
           </div>
@@ -517,11 +559,13 @@ export const DoctorDashboard: React.FC = () => {
                 color: '#2b251f',
                 cursor: 'pointer',
                 appearance: 'none',
+                WebkitAppearance: 'none',
+                MozAppearance: 'none',
                 outline: 'none',
                 boxShadow: '0 2px 6px rgba(75, 68, 57, 0.03)',
               }}
             >
-              <option value="ALL">All ⌄</option>
+              <option value="ALL">All</option>
               <option value="EMG">Emergency</option>
               <option value="URG">Urgent</option>
               <option value="RTN">Routine</option>
@@ -543,11 +587,13 @@ export const DoctorDashboard: React.FC = () => {
                 color: '#2b251f',
                 cursor: 'pointer',
                 appearance: 'none',
+                WebkitAppearance: 'none',
+                MozAppearance: 'none',
                 outline: 'none',
                 boxShadow: '0 2px 6px rgba(75, 68, 57, 0.03)',
               }}
             >
-              <option value="ALL">Mode ⌄</option>
+              <option value="ALL">All Modes</option>
               <option value="VID">Video</option>
               <option value="IPS">In-person</option>
             </select>
@@ -568,11 +614,13 @@ export const DoctorDashboard: React.FC = () => {
                 color: '#2b251f',
                 cursor: 'pointer',
                 appearance: 'none',
+                WebkitAppearance: 'none',
+                MozAppearance: 'none',
                 outline: 'none',
                 boxShadow: '0 2px 6px rgba(75, 68, 57, 0.03)',
               }}
             >
-              <option value="ALL">Status ⌄</option>
+              <option value="ALL">All Statuses</option>
               <option value="WAITING">Waiting</option>
               <option value="IN_PROGRESS">In Progress</option>
               <option value="DONE">Done</option>
@@ -672,115 +720,133 @@ export const DoctorDashboard: React.FC = () => {
                   </td>
                 </tr>
               )}
-              {!loading && !loadError && filteredQueue.map(item => {
-                const isEmergency = item.urgency === 'EMG';
-                const isUrgent = item.urgency === 'URG';
+              <AnimatePresence>
+                {!loading && !loadError && filteredQueue.map(item => {
+                  const isEmergency = item.urgency === 'EMG';
+                  const isUrgent = item.urgency === 'URG';
+                  const isNew = newIds.has(item.id);
 
-                const dotColor = isEmergency ? '#dc2626' : isUrgent ? '#d97706' : '#10b981';
-                const labelText = isEmergency ? 'EMG' : isUrgent ? 'URG' : 'RTN';
+                  const dotColor = isEmergency ? '#dc2626' : isUrgent ? '#d97706' : '#10b981';
+                  const labelText = isEmergency ? 'EMG' : isUrgent ? 'URG' : 'RTN';
 
-                return (
-                  <tr
-                    key={item.id}
-                    style={{
-                      borderBottom: '1px solid #f2ece2',
-                      backgroundColor: isEmergency ? '#fffbfb' : '#ffffff',
-                      borderLeft: isEmergency ? '3px solid #dc2626' : '3px solid transparent',
-                      transition: 'background-color 0.15s ease',
-                      height: '50px',
-                    }}
-                    onMouseEnter={e => {
-                      if (!isEmergency) e.currentTarget.style.backgroundColor = '#faf6f0';
-                    }}
-                    onMouseLeave={e => {
-                      if (!isEmergency) e.currentTarget.style.backgroundColor = '#ffffff';
-                    }}
-                  >
-                    {/* Urgency + (on Past tab) real status */}
-                    <td style={{ padding: '12px 20px', whiteSpace: 'nowrap' }}>
-                      <div style={{
-                        display: 'inline-flex', alignItems: 'center', gap: '6px',
-                        fontWeight: 700, fontSize: '12px', color: dotColor,
-                      }}>
-                        <span style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: dotColor }} />
-                        <span>{labelText}</span>
-                      </div>
-                      {tab === 'past' && queueStatus[item.id] && (
-                        <div style={{ marginTop: '4px' }}>
-                          <span style={{
-                            fontSize: '10px', fontWeight: 700,
-                            textTransform: 'uppercase', letterSpacing: '0.04em',
-                            padding: '2px 8px', borderRadius: '9999px',
-                            color: queueStatus[item.id] === 'COMPLETED' ? '#065f46'
-                                 : queueStatus[item.id] === 'NO_SHOW' ? '#92400e'
-                                 : '#6b7280',
-                            backgroundColor: queueStatus[item.id] === 'COMPLETED' ? '#d1fae5'
-                                 : queueStatus[item.id] === 'NO_SHOW' ? '#fef3c7'
-                                 : '#f3f4f6',
-                          }}>
-                            {queueStatus[item.id]}
-                          </span>
+                  return (
+                    <motion.tr
+                      key={item.id}
+                      layout
+                      variants={listItem}
+                      initial={isNew ? { backgroundColor: '#fff2d4' } : "initial"}
+                      animate={isNew ? {
+                        backgroundColor: isEmergency ? '#fffbfb' : '#ffffff',
+                        ...(isEmergency ? { borderLeftColor: ['#dc2626', 'transparent', '#dc2626'] } : {})
+                      } : "animate"}
+                      exit={{ opacity: 0, y: -6, transition: { duration: 0.18, ease: EASE_EXIT } }}
+                      transition={isNew ? { duration: 1.0, ease: EASE_ENTER } : undefined}
+                      style={{
+                        borderBottom: '1px solid #f2ece2',
+                        backgroundColor: isEmergency ? '#fffbfb' : '#ffffff',
+                        borderLeft: isEmergency ? '3px solid #dc2626' : '3px solid transparent',
+                        height: '50px',
+                      }}
+                      onMouseEnter={e => {
+                        if (!isEmergency) e.currentTarget.style.backgroundColor = '#faf6f0';
+                      }}
+                      onMouseLeave={e => {
+                        if (!isEmergency) e.currentTarget.style.backgroundColor = '#ffffff';
+                      }}
+                    >
+                      {/* Urgency + (on Past tab) real status */}
+                      <td style={{ padding: '12px 20px', whiteSpace: 'nowrap' }}>
+                        <div
+                          className="badge-morph"
+                          style={{
+                            display: 'inline-flex', alignItems: 'center', gap: '6px',
+                            fontWeight: 700, fontSize: '12px', color: dotColor,
+                          }}
+                        >
+                          <span style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: dotColor }} />
+                          <span>{labelText}</span>
                         </div>
-                      )}
-                    </td>
+                        {tab === 'past' && queueStatus[item.id] && (
+                          <div style={{ marginTop: '4px' }}>
+                            <span
+                              className="badge-morph"
+                              style={{
+                                fontSize: '10px', fontWeight: 700,
+                                textTransform: 'uppercase', letterSpacing: '0.04em',
+                                padding: '2px 8px', borderRadius: '9999px',
+                                color: queueStatus[item.id] === 'COMPLETED' ? '#065f46'
+                                     : queueStatus[item.id] === 'NO_SHOW' ? '#92400e'
+                                     : '#6b7280',
+                                backgroundColor: queueStatus[item.id] === 'COMPLETED' ? '#d1fae5'
+                                     : queueStatus[item.id] === 'NO_SHOW' ? '#fef3c7'
+                                     : '#f3f4f6',
+                              }}
+                            >
+                              {queueStatus[item.id]}
+                            </span>
+                          </div>
+                        )}
+                      </td>
 
-                    {/* Slot */}
-                    <td style={{ padding: '12px 20px', fontWeight: 600, color: '#3a332a' }}>
-                      {item.slot}
-                    </td>
+                      {/* Slot */}
+                      <td style={{ padding: '12px 20px', fontWeight: 600, color: '#3a332a' }}>
+                        {item.slot}
+                      </td>
 
-                    {/* Patient */}
-                    <td style={{ padding: '12px 20px', fontWeight: 700, color: '#1a110a' }}>
-                      {item.patientId}
-                    </td>
+                      {/* Patient */}
+                      <td style={{ padding: '12px 20px', fontWeight: 700, color: '#1a110a' }}>
+                        {item.patientId}
+                      </td>
 
-                    {/* Mode */}
-                    <td style={{ padding: '12px 20px', color: '#706b63', fontSize: '12px' }}>
-                      {item.mode}
-                    </td>
+                      {/* Mode */}
+                      <td style={{ padding: '12px 20px', color: '#706b63', fontSize: '12px' }}>
+                        {item.mode}
+                      </td>
 
-                    {/* AI Rationale */}
-                    <td style={{ padding: '12px 20px', color: '#2c251f' }}>
-                      {item.rationale}
-                    </td>
+                      {/* AI Rationale */}
+                      <td style={{ padding: '12px 20px', color: '#2c251f' }}>
+                        {item.rationale}
+                      </td>
 
-                    {/* Confidence */}
-                    <td style={{ padding: '12px 20px', color: '#706b63', fontSize: '12px' }}>
-                      {item.confidence}%
-                    </td>
+                      {/* Confidence */}
+                      <td style={{ padding: '12px 20px', color: '#706b63', fontSize: '12px' }}>
+                        {item.confidence}%
+                      </td>
 
-                    {/* Action */}
-                    <td style={{ padding: '12px 20px', textAlign: 'right' }}>
-                      <button
-                        onClick={() => handleOpenItem(item)}
-                        style={{
-                          backgroundColor: 'transparent',
-                          border: '1px solid #dcd4c7',
-                          borderRadius: '9999px',
-                          padding: '5px 16px',
-                          fontSize: '12px',
-                          fontWeight: 600,
-                          color: '#2b2520',
-                          cursor: 'pointer',
-                          transition: 'all 0.15s ease',
-                        }}
-                        onMouseEnter={e => {
-                          e.currentTarget.style.backgroundColor = '#785b47';
-                          e.currentTarget.style.color = '#ffffff';
-                          e.currentTarget.style.borderColor = '#785b47';
-                        }}
-                        onMouseLeave={e => {
-                          e.currentTarget.style.backgroundColor = 'transparent';
-                          e.currentTarget.style.color = '#2b2520';
-                          e.currentTarget.style.borderColor = '#dcd4c7';
-                        }}
-                      >
-                        Open
-                      </button>
-                    </td>
-                  </tr>
-                );
-              })}
+                      {/* Action */}
+                      <td style={{ padding: '12px 20px', textAlign: 'right' }}>
+                        <button
+                          onClick={() => handleOpenItem(item)}
+                          className="hover-lift"
+                          style={{
+                            backgroundColor: 'transparent',
+                            border: '1px solid #dcd4c7',
+                            borderRadius: '9999px',
+                            padding: '5px 16px',
+                            fontSize: '12px',
+                            fontWeight: 600,
+                            color: '#2b2520',
+                            cursor: 'pointer',
+                            transition: 'all 0.15s ease',
+                          }}
+                          onMouseEnter={e => {
+                            e.currentTarget.style.backgroundColor = '#785b47';
+                            e.currentTarget.style.color = '#ffffff';
+                            e.currentTarget.style.borderColor = '#785b47';
+                          }}
+                          onMouseLeave={e => {
+                            e.currentTarget.style.backgroundColor = 'transparent';
+                            e.currentTarget.style.color = '#2b2520';
+                            e.currentTarget.style.borderColor = '#dcd4c7';
+                          }}
+                        >
+                          Open
+                        </button>
+                      </td>
+                    </motion.tr>
+                  );
+                })}
+              </AnimatePresence>
             </tbody>
           </table>
         </div>
@@ -1044,362 +1110,435 @@ export const DoctorDashboard: React.FC = () => {
       )}
 
       {/* CLINICAL REVIEW SIDE DRAWER (Slides from right, 480px width) */}
-      {selectedItem && (
-        <div style={{
-          position: 'fixed',
-          top: 0,
-          right: 0,
-          bottom: 0,
-          width: '480px',
-          maxWidth: '100vw',
-          backgroundColor: '#ffffff',
-          boxShadow: '-8px 0 32px rgba(75, 68, 57, 0.15)',
-          zIndex: 100,
-          display: 'flex',
-          flexDirection: 'column',
-          borderLeft: '1px solid #eae3d8',
-          fontFamily: "'Inter', sans-serif",
-          animation: 'fadeIn 0.2s ease',
-        }}>
-          {/* Drawer Header */}
-          <div style={{
-            padding: '20px 24px',
-            borderBottom: '1px solid #eae3d8',
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'flex-start',
-          }}>
-            <div>
-              <div style={{ fontSize: '18px', fontWeight: 700, color: '#1a110a' }}>
-                Patient {selectedItem.patientId} · {selectedItem.age} {selectedItem.gender}
-              </div>
-              <div style={{ fontSize: '13px', color: '#706b63', marginTop: '2px' }}>
-                Appointment {selectedItem.slot} · {selectedItem.mode === 'VID' ? 'Video consult' : 'In-person consult'}
-              </div>
-            </div>
-            <button
+      <AnimatePresence>
+        {selectedItem && (
+          <>
+            <motion.div
+              key="drawer-backdrop"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 0.4 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.2 }}
               onClick={() => setSelectedItem(null)}
               style={{
-                background: 'transparent',
-                border: 'none',
-                cursor: 'pointer',
-                color: '#706b63',
-                padding: '4px',
+                position: 'fixed',
+                inset: 0,
+                backgroundColor: '#1a110a',
+                zIndex: 99,
               }}
-            >
-              <X size={20} />
-            </button>
-          </div>
-
-          {/* Drawer Content */}
-          <div style={{
-            flex: 1,
-            overflowY: 'auto',
-            padding: '24px',
-            display: 'flex',
-            flexDirection: 'column',
-            gap: '24px',
-          }}>
-            {saveBanner && (
-              <div style={{
-                backgroundColor: '#ecfdf5',
-                color: '#065f46',
-                border: '1px solid #a7f3d0',
-                padding: '10px 14px',
-                borderRadius: '8px',
-                fontSize: '13px',
-                fontWeight: 500,
-              }}>
-                ✓ Clinical override updated successfully.
-              </div>
-            )}
-
-            {/* AI Advisory Box */}
-            <div style={{
-              backgroundColor: '#faf6f0',
-              border: '1px solid #eae3d8',
-              borderRadius: '16px',
-              padding: '18px',
-            }}>
-              <div style={{
-                fontSize: '11px',
-                fontWeight: 700,
-                letterSpacing: '0.08em',
-                color: '#785b47',
-                marginBottom: '10px',
-                textTransform: 'uppercase',
-              }}>
-                AI ADVISORY
-              </div>
-              <div style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '8px',
-                fontSize: '14px',
-                fontWeight: 600,
-                color: selectedItem.urgency === 'EMG' ? '#dc2626' : selectedItem.urgency === 'URG' ? '#d97706' : '#10b981',
-                marginBottom: '16px',
-              }}>
-                <span>Urgency: {selectedItem.urgency === 'EMG' ? 'EMERGENCY' : selectedItem.urgency === 'URG' ? 'URGENT' : 'ROUTINE'}</span>
-                <span style={{ color: '#706b63', fontWeight: 400 }}>· {selectedItem.confidence}% confidence</span>
-              </div>
-
-              {/* Override Controls */}
-              <div style={{
-                paddingTop: '12px',
-                borderTop: '1px solid #eae3d8',
+            />
+            <motion.aside
+              key="drawer-body"
+              variants={slideInRight}
+              initial="initial"
+              animate="animate"
+              exit={{ x: 480, opacity: 0.9, transition: { duration: 0.22, ease: EASE_EXIT } }}
+              style={{
+                position: 'fixed',
+                top: 0,
+                right: 0,
+                bottom: 0,
+                width: '480px',
+                maxWidth: '100vw',
+                backgroundColor: '#ffffff',
+                boxShadow: '-8px 0 32px rgba(75, 68, 57, 0.15)',
+                zIndex: 100,
                 display: 'flex',
                 flexDirection: 'column',
-                gap: '10px',
+                borderLeft: '1px solid #eae3d8',
+                fontFamily: "'Inter', sans-serif",
+              }}
+            >
+              {/* Drawer Header */}
+              <div style={{
+                padding: '20px 24px',
+                borderBottom: '1px solid #eae3d8',
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'flex-start',
               }}>
-                <div style={{ fontSize: '12px', fontWeight: 600, color: '#332b24' }}>
-                  Override Urgency:
+                <div>
+                  <div style={{ fontSize: '18px', fontWeight: 700, color: '#1a110a' }}>
+                    Patient {selectedItem.patientId} · {selectedItem.age} {selectedItem.gender}
+                  </div>
+                  <div style={{ fontSize: '13px', color: '#706b63', marginTop: '2px' }}>
+                    Appointment {selectedItem.slot} · {selectedItem.mode === 'VID' ? 'Video consult' : 'In-person consult'}
+                  </div>
                 </div>
-                <div style={{ display: 'flex', gap: '8px' }}>
-                  <select
-                    value={overrideScore}
-                    onChange={e => setOverrideScore(e.target.value)}
-                    style={{
-                      flex: 1,
-                      backgroundColor: '#ffffff',
-                      border: '1px solid #eae3d8',
-                      borderRadius: '8px',
-                      padding: '7px 10px',
-                      fontSize: '13px',
-                      color: '#1a110a',
-                      outline: 'none',
-                    }}
-                  >
-                    <option value="Routine">Routine</option>
-                    <option value="Urgent">Urgent</option>
-                    <option value="Emergency">Emergency</option>
-                  </select>
-                  <button
-                    onClick={handleSaveOverride}
-                    disabled={actionBusy === 'OVERRIDE_URGENCY'}
-                    style={{
-                      backgroundColor: '#785b47',
-                      color: '#ffffff',
-                      border: 'none',
-                      borderRadius: '8px',
-                      padding: '7px 16px',
-                      fontSize: '12px',
-                      fontWeight: 600,
-                      cursor: actionBusy === 'OVERRIDE_URGENCY' ? 'wait' : 'pointer',
-                      opacity: actionBusy === 'OVERRIDE_URGENCY' ? 0.6 : 1,
-                    }}
-                  >
-                    {actionBusy === 'OVERRIDE_URGENCY' ? 'Saving…' : 'Save with reason'}
-                  </button>
-                </div>
-                <input
-                  type="text"
-                  placeholder="Clinical reason for override (e.g., patient vitals stable)"
-                  value={overrideReason}
-                  onChange={e => setOverrideReason(e.target.value)}
+                <button
+                  onClick={() => setSelectedItem(null)}
+                  className="icon-pop"
                   style={{
-                    backgroundColor: '#ffffff',
-                    border: '1px solid #eae3d8',
-                    borderRadius: '8px',
-                    padding: '7px 10px',
-                    fontSize: '12px',
-                    color: '#1a110a',
-                    outline: 'none',
+                    background: 'transparent',
+                    border: 'none',
+                    cursor: 'pointer',
+                    color: '#706b63',
+                    padding: '4px',
                   }}
-                />
-                {actionError && (
-                  <div style={{
-                    marginTop: '4px',
-                    fontSize: '12px', color: '#dc2626',
-                    backgroundColor: 'rgba(220, 38, 38, 0.06)',
-                    border: '1px solid rgba(220, 38, 38, 0.2)',
-                    borderRadius: '8px', padding: '6px 10px',
-                  }}>{actionError}</div>
-                )}
+                >
+                  <X size={20} />
+                </button>
               </div>
-            </div>
 
-            {/* Why Section */}
-            <div>
-              <div style={{ fontSize: '13px', fontWeight: 700, color: '#1a110a', marginBottom: '8px' }}>
-                Why
-              </div>
-              <ul style={{
-                margin: 0,
-                paddingLeft: '18px',
-                fontSize: '13px',
-                color: '#332b24',
-                lineHeight: '1.7',
+              {/* Drawer Content */}
+              <div style={{
+                flex: 1,
+                overflowY: 'auto',
+                padding: '24px',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '24px',
               }}>
-                {selectedItem.symptoms.map((sym, idx) => (
-                  <li key={idx}>{sym}</li>
-                ))}
-              </ul>
-            </div>
+                <AnimatePresence>
+                  {saveBanner && (
+                    <motion.div
+                      initial={{ opacity: 0, y: 8 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -4 }}
+                      transition={{ duration: 0.2, ease: EASE_ENTER }}
+                      style={{
+                        backgroundColor: '#ecfdf5',
+                        color: '#065f46',
+                        border: '1px solid #a7f3d0',
+                        padding: '10px 14px',
+                        borderRadius: '8px',
+                        fontSize: '13px',
+                        fontWeight: 500,
+                      }}
+                    >
+                      ✓ Clinical override updated successfully.
+                    </motion.div>
+                  )}
+                </AnimatePresence>
 
-            {/* Questionnaire responses */}
-            <div style={{
-              border: '1px solid #eae3d8',
-              borderRadius: '16px',
-              padding: '16px',
-              backgroundColor: '#ffffff',
-            }}>
-              <div style={{ fontSize: '13px', fontWeight: 700, color: '#1a110a', marginBottom: '8px' }}>
-                Questionnaire responses
-              </div>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', fontSize: '12px' }}>
-                {selectedItem.questionnaire.map((q, idx) => (
-                  <div key={idx} style={{ borderBottom: '1px solid #f2ece2', paddingBottom: '6px' }}>
-                    <div style={{ color: '#706b63' }}>{q.q}</div>
-                    <div style={{ fontWeight: 600, color: '#1a110a', marginTop: '2px' }}>{q.a}</div>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* Past Visits */}
-            <div style={{
-              border: '1px solid #eae3d8',
-              borderRadius: '16px',
-              padding: '16px',
-              backgroundColor: '#ffffff',
-            }}>
-              <div style={{ fontSize: '13px', fontWeight: 700, color: '#1a110a', marginBottom: '8px' }}>
-                Past visits ({selectedItem.pastVisits.length})
-              </div>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', fontSize: '12px' }}>
-                {selectedItem.pastVisits.map((pv, idx) => (
-                  <div key={idx} style={{ display: 'flex', justifyContent: 'space-between', color: '#332b24' }}>
-                    <span>{pv.date} · {pv.doctor}</span>
-                    <span style={{ color: '#706b63' }}>{pv.diagnosis}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* Attached Images */}
-            <div>
-              <div style={{ fontSize: '13px', fontWeight: 700, color: '#1a110a', marginBottom: '8px' }}>
-                Attached images (2)
-              </div>
-              <div style={{ display: 'flex', gap: '10px' }}>
+                {/* AI Advisory Box */}
                 <div style={{
-                  width: '60px',
-                  height: '60px',
-                  borderRadius: '10px',
-                  backgroundColor: '#ede7de',
-                  border: '1px solid #dfd6c8',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  fontSize: '11px',
-                  color: '#706b63',
-                  fontWeight: 600,
+                  backgroundColor: '#faf6f0',
+                  border: '1px solid #eae3d8',
+                  borderRadius: '16px',
+                  padding: '18px',
                 }}>
-                  ECG
-                </div>
-                <div style={{
-                  width: '60px',
-                  height: '60px',
-                  borderRadius: '10px',
-                  backgroundColor: '#ede7de',
-                  border: '1px solid #dfd6c8',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  fontSize: '11px',
-                  color: '#706b63',
-                  fontWeight: 600,
-                }}>
-                  Vitals
-                </div>
-              </div>
-            </div>
-          </div>
+                  <div style={{
+                    fontSize: '11px',
+                    fontWeight: 700,
+                    letterSpacing: '0.08em',
+                    color: '#785b47',
+                    marginBottom: '10px',
+                    textTransform: 'uppercase',
+                  }}>
+                    AI ADVISORY
+                  </div>
+                  <div style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '8px',
+                    fontSize: '14px',
+                    fontWeight: 600,
+                    color: selectedItem.urgency === 'EMG' ? '#dc2626' : selectedItem.urgency === 'URG' ? '#d97706' : '#10b981',
+                    marginBottom: '16px',
+                  }}>
+                    <span>Urgency: {selectedItem.urgency === 'EMG' ? 'EMERGENCY' : selectedItem.urgency === 'URG' ? 'URGENT' : 'ROUTINE'}</span>
+                    <span style={{ color: '#706b63', fontWeight: 400 }}>· {selectedItem.confidence}% confidence</span>
+                  </div>
 
-          {/* Drawer Footer: read-only banner on past tab, actions on active */}
-          {tab === 'past' ? (
-            <div style={{
-              padding: '18px 24px', borderTop: '1px solid #eae3d8',
-              display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-              backgroundColor: '#faf7f1',
-            }}>
-              <div style={{ fontSize: '13px', color: '#706b63' }}>
-                Read-only · final status:{' '}
-                <strong style={{ color: '#1a110a' }}>{queueStatus[selectedItem.id] ?? '—'}</strong>
+                  {/* Override Controls */}
+                  <div style={{
+                    paddingTop: '12px',
+                    borderTop: '1px solid #eae3d8',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '10px',
+                  }}>
+                    <div style={{ fontSize: '12px', fontWeight: 600, color: '#332b24' }}>
+                      Override Urgency:
+                    </div>
+                    <div style={{ display: 'flex', gap: '8px' }}>
+                      <select
+                        value={overrideScore}
+                        onChange={e => setOverrideScore(e.target.value)}
+                        style={{
+                          flex: 1,
+                          backgroundColor: '#ffffff',
+                          border: '1px solid #eae3d8',
+                          borderRadius: '8px',
+                          padding: '7px 10px',
+                          fontSize: '13px',
+                          color: '#1a110a',
+                          outline: 'none',
+                        }}
+                      >
+                        <option value="Routine">Routine</option>
+                        <option value="Urgent">Urgent</option>
+                        <option value="Emergency">Emergency</option>
+                      </select>
+                      <button
+                        onClick={handleSaveOverride}
+                        disabled={actionBusy === 'OVERRIDE_URGENCY'}
+                        className="hover-lift"
+                        style={{
+                          backgroundColor: '#785b47',
+                          color: '#ffffff',
+                          border: 'none',
+                          borderRadius: '8px',
+                          padding: '7px 16px',
+                          fontSize: '12px',
+                          fontWeight: 600,
+                          cursor: actionBusy === 'OVERRIDE_URGENCY' ? 'wait' : 'pointer',
+                          opacity: actionBusy === 'OVERRIDE_URGENCY' ? 0.6 : 1,
+                        }}
+                      >
+                        {actionBusy === 'OVERRIDE_URGENCY' ? 'Saving…' : 'Save with reason'}
+                      </button>
+                    </div>
+                    <input
+                      type="text"
+                      placeholder="Clinical reason for override (e.g., patient vitals stable)"
+                      value={overrideReason}
+                      onChange={e => setOverrideReason(e.target.value)}
+                      style={{
+                        backgroundColor: '#ffffff',
+                        border: '1px solid #eae3d8',
+                        borderRadius: '8px',
+                        padding: '7px 10px',
+                        fontSize: '12px',
+                        color: '#1a110a',
+                        outline: 'none',
+                      }}
+                    />
+                    {actionError && (
+                      <div style={{
+                        marginTop: '4px',
+                        fontSize: '12px', color: '#dc2626',
+                        backgroundColor: 'rgba(220, 38, 38, 0.06)',
+                        border: '1px solid rgba(220, 38, 38, 0.2)',
+                        borderRadius: '8px', padding: '6px 10px',
+                      }}>{actionError}</div>
+                    )}
+                  </div>
+                </div>
+
+                {/* Why Section */}
+                <div>
+                  <div style={{ fontSize: '13px', fontWeight: 700, color: '#1a110a', marginBottom: '8px' }}>
+                    Why
+                  </div>
+                  <ul style={{
+                    margin: 0,
+                    paddingLeft: '18px',
+                    fontSize: '13px',
+                    color: '#332b24',
+                    lineHeight: '1.7',
+                  }}>
+                    {selectedItem.symptoms.map((sym, idx) => (
+                      <li key={idx}>{sym}</li>
+                    ))}
+                  </ul>
+                </div>
+
+                {/* Questionnaire responses */}
+                <div style={{
+                  border: '1px solid #eae3d8',
+                  borderRadius: '16px',
+                  padding: '16px',
+                  backgroundColor: '#ffffff',
+                }}>
+                  <div style={{ fontSize: '13px', fontWeight: 700, color: '#1a110a', marginBottom: '8px' }}>
+                    Questionnaire responses
+                  </div>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', fontSize: '12px' }}>
+                    {selectedItem.questionnaire.map((q, idx) => (
+                      <div key={idx} style={{ borderBottom: '1px solid #f2ece2', paddingBottom: '6px' }}>
+                        <div style={{ color: '#706b63' }}>{q.q}</div>
+                        <div style={{ fontWeight: 600, color: '#1a110a', marginTop: '2px' }}>{q.a}</div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Past Visits */}
+                <div style={{
+                  border: '1px solid #eae3d8',
+                  borderRadius: '16px',
+                  padding: '16px',
+                  backgroundColor: '#ffffff',
+                }}>
+                  <div style={{ fontSize: '13px', fontWeight: 700, color: '#1a110a', marginBottom: '8px' }}>
+                    Past visits ({selectedItem.pastVisits.length})
+                  </div>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', fontSize: '12px' }}>
+                    {selectedItem.pastVisits.map((pv, idx) => (
+                      <div key={idx} style={{ display: 'flex', justifyContent: 'space-between', color: '#332b24' }}>
+                        <span>{pv.date} · {pv.doctor}</span>
+                        <span style={{ color: '#706b63' }}>{pv.diagnosis}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Attached Images */}
+                <div>
+                  <div style={{ fontSize: '13px', fontWeight: 700, color: '#1a110a', marginBottom: '8px' }}>
+                    Attached images (2)
+                  </div>
+                  <div style={{ display: 'flex', gap: '10px' }}>
+                    <div style={{
+                      width: '60px',
+                      height: '60px',
+                      borderRadius: '10px',
+                      backgroundColor: '#ede7de',
+                      border: '1px solid #dfd6c8',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      fontSize: '11px',
+                      color: '#706b63',
+                      fontWeight: 600,
+                    }}>
+                      ECG
+                    </div>
+                    <div style={{
+                      width: '60px',
+                      height: '60px',
+                      borderRadius: '10px',
+                      backgroundColor: '#ede7de',
+                      border: '1px solid #dfd6c8',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      fontSize: '11px',
+                      color: '#706b63',
+                      fontWeight: 600,
+                    }}>
+                      Vitals
+                    </div>
+                  </div>
+                </div>
               </div>
-              <button
-                onClick={() => setSelectedItem(null)}
-                style={{
-                  backgroundColor: 'transparent', color: '#2b2520',
-                  border: '1px solid #dcd4c7', borderRadius: '9999px',
-                  padding: '8px 18px', fontSize: '13px', fontWeight: 500,
-                  cursor: 'pointer',
-                }}
-              >
-                Close
-              </button>
-            </div>
-          ) : (
-          <div style={{
-            padding: '18px 24px',
-            borderTop: '1px solid #eae3d8',
-            display: 'flex',
-            gap: '10px',
-            flexWrap: 'wrap',
-          }}>
-            <button
-              onClick={() => runAction('ACCEPT')}
-              disabled={!!actionBusy}
-              style={{
-                flex: 1, minWidth: '140px',
-                backgroundColor: '#785b47',
-                color: '#ffffff',
-                border: 'none',
-                borderRadius: '9999px',
-                padding: '11px 0',
-                fontSize: '13px', fontWeight: 600,
-                cursor: actionBusy ? 'wait' : 'pointer',
-                opacity: actionBusy ? 0.6 : 1,
-              }}
-              title="Accept this appointment (BOOKED → CONFIRMED)"
-            >
-              {actionBusy === 'ACCEPT' ? 'Accepting…' : 'Accept & confirm'}
-            </button>
-            <button
-              onClick={() => runAction('COMPLETE', { notes: 'Consultation completed' })}
-              disabled={!!actionBusy}
-              style={{
-                flex: 1, minWidth: '120px',
-                backgroundColor: '#059669', color: '#ffffff',
-                border: 'none', borderRadius: '9999px',
-                padding: '11px 0', fontSize: '13px', fontWeight: 600,
-                cursor: actionBusy ? 'wait' : 'pointer',
-                opacity: actionBusy ? 0.6 : 1,
-              }}
-              title="Mark completed"
-            >
-              {actionBusy === 'COMPLETE' ? 'Saving…' : 'Mark complete'}
-            </button>
-            <button
-              onClick={() => runAction('NO_SHOW')}
-              disabled={!!actionBusy}
-              style={{
-                backgroundColor: 'transparent',
-                color: '#dc2626',
-                border: '1px solid rgba(220, 38, 38, 0.3)',
-                borderRadius: '9999px',
-                padding: '11px 18px',
-                fontSize: '13px', fontWeight: 500,
-                cursor: actionBusy ? 'wait' : 'pointer',
-              }}
-            >
-              {actionBusy === 'NO_SHOW' ? 'Saving…' : 'No-show'}
-            </button>
-          </div>
-          )}
-        </div>
+
+              {/* Drawer Footer: read-only banner on past tab, actions on active */}
+              {tab === 'past' ? (
+                <div style={{
+                  padding: '18px 24px', borderTop: '1px solid #eae3d8',
+                  display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+                  gap: '10px', flexWrap: 'wrap',
+                  backgroundColor: '#faf7f1',
+                }}>
+                  <div style={{ fontSize: '13px', color: '#706b63' }}>
+                    Read-only · final status:{' '}
+                    <strong style={{ color: '#1a110a' }}>{queueStatus[selectedItem.id] ?? '—'}</strong>
+                  </div>
+                  <div style={{ display: 'flex', gap: '10px' }}>
+                    <button
+                      onClick={() => setRxEditorFor(selectedItem)}
+                      className="hover-lift"
+                      style={{
+                        backgroundColor: '#785b47', color: '#ffffff',
+                        border: 'none', borderRadius: '9999px',
+                        padding: '8px 18px', fontSize: '13px', fontWeight: 600,
+                        cursor: 'pointer',
+                      }}
+                    >
+                      Prescription
+                    </button>
+                    <button
+                      onClick={() => setSelectedItem(null)}
+                      style={{
+                        backgroundColor: 'transparent', color: '#2b2520',
+                        border: '1px solid #dcd4c7', borderRadius: '9999px',
+                        padding: '8px 18px', fontSize: '13px', fontWeight: 500,
+                        cursor: 'pointer',
+                      }}
+                    >
+                      Close
+                    </button>
+                  </div>
+                </div>
+              ) : (
+              <div style={{
+                padding: '18px 24px',
+                borderTop: '1px solid #eae3d8',
+                display: 'flex',
+                gap: '10px',
+                flexWrap: 'wrap',
+              }}>
+                <button
+                  onClick={() => runAction('ACCEPT')}
+                  disabled={!!actionBusy}
+                  className="hover-lift"
+                  style={{
+                    flex: 1, minWidth: '140px',
+                    backgroundColor: '#785b47',
+                    color: '#ffffff',
+                    border: 'none',
+                    borderRadius: '9999px',
+                    padding: '11px 0',
+                    fontSize: '13px', fontWeight: 600,
+                    cursor: actionBusy ? 'wait' : 'pointer',
+                    opacity: actionBusy ? 0.6 : 1,
+                  }}
+                  title="Accept this appointment (BOOKED → CONFIRMED)"
+                >
+                  {actionBusy === 'ACCEPT' ? 'Accepting…' : 'Accept & confirm'}
+                </button>
+                <button
+                  onClick={() => runAction('COMPLETE', { notes: 'Consultation completed' })}
+                  disabled={!!actionBusy}
+                  className="hover-lift"
+                  style={{
+                    flex: 1, minWidth: '120px',
+                    backgroundColor: '#059669', color: '#ffffff',
+                    border: 'none', borderRadius: '9999px',
+                    padding: '11px 0', fontSize: '13px', fontWeight: 600,
+                    cursor: actionBusy ? 'wait' : 'pointer',
+                    opacity: actionBusy ? 0.6 : 1,
+                  }}
+                  title="Mark completed"
+                >
+                  {actionBusy === 'COMPLETE' ? 'Saving…' : 'Mark complete'}
+                </button>
+                <button
+                  onClick={() => runAction('NO_SHOW')}
+                  disabled={!!actionBusy}
+                  className="hover-lift"
+                  style={{
+                    backgroundColor: 'transparent',
+                    color: '#dc2626',
+                    border: '1px solid rgba(220, 38, 38, 0.3)',
+                    borderRadius: '9999px',
+                    padding: '11px 18px',
+                    fontSize: '13px', fontWeight: 500,
+                    cursor: actionBusy ? 'wait' : 'pointer',
+                  }}
+                >
+                  {actionBusy === 'NO_SHOW' ? 'Saving…' : 'No-show'}
+                </button>
+                <button
+                  onClick={() => setRxEditorFor(selectedItem)}
+                  disabled={!!actionBusy}
+                  className="hover-lift"
+                  style={{
+                    backgroundColor: '#0284c7', color: '#ffffff',
+                    border: 'none', borderRadius: '9999px',
+                    padding: '11px 18px', fontSize: '13px', fontWeight: 600,
+                    cursor: actionBusy ? 'wait' : 'pointer',
+                  }}
+                >
+                  Write prescription
+                </button>
+              </div>
+              )}
+            </motion.aside>
+          </>
+        )}
+      </AnimatePresence>
+
+      {rxEditorFor && (
+        <PrescriptionEditor
+          appointmentId={rxEditorFor.id}
+          patientName={rxEditorFor.patientName}
+          onClose={() => setRxEditorFor(null)}
+        />
       )}
-    </div>
+    </PageTransition>
   );
 };
