@@ -58,8 +58,6 @@ export const WaveInput: React.FC<WaveInputProps> = ({
         {label}
       </label>
 
-      <span className="bar"></span>
-
       {rightElement && <div className="element-right">{rightElement}</div>}
     </div>
   );

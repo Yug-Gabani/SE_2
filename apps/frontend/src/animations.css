@@ -467,13 +467,6 @@ input:focus ~ .highlight,
   top: 10px;
 }
 
-.wave-group.wave-underline .bar {
-  left: 0;
-  right: 0;
-  bottom: 0;
-  border-radius: 0;
-}
-
 .wave-group .icon-left {
   position: absolute;
   left: 14px;
@@ -512,10 +505,14 @@ input:focus ~ .highlight,
   display: flex;
   align-items: center;
   z-index: 3;
-  transition: transform 0.22s cubic-bezier(0.22, 1, 0.36, 1),
-              font-size 0.22s cubic-bezier(0.22, 1, 0.36, 1),
-              color 0.22s cubic-bezier(0.22, 1, 0.36, 1),
-              font-weight 0.22s cubic-bezier(0.22, 1, 0.36, 1);
+  padding: 0 4px;
+  border-radius: 4px;
+  background-color: transparent;
+  transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1),
+              font-size 0.35s cubic-bezier(0.16, 1, 0.3, 1),
+              color 0.35s cubic-bezier(0.16, 1, 0.3, 1),
+              font-weight 0.35s cubic-bezier(0.16, 1, 0.3, 1),
+              background-color 0.35s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .wave-group .label.has-icon {
@@ -527,7 +524,7 @@ input:focus ~ .highlight,
   white-space: pre;
 }
 
-/* When input is focused, valid, or active with text, the whole label moves to top at once! */
+/* When input is focused, valid, or active with text, the whole label moves to top smoothly */
 .wave-group .input:focus ~ .label,
 .wave-group .input:focus ~ label,
 .wave-group .input:valid ~ .label,
@@ -546,49 +543,15 @@ input:focus ~ .highlight,
 .wave-group .input:-webkit-autofill ~ .label .label-char,
 .wave-group.is-active .label .label-char,
 .wave-group.is-active label .label-char {
-  transform: translateY(-26px);
+  transform: translateY(-24px);
   font-size: 11px;
   font-weight: 700;
   letter-spacing: 0.04em;
   text-transform: uppercase;
   color: #785b47;
+  background-color: #ffffff;
 }
 
-/* Center-expanding underline bar */
-.wave-group .bar {
-  position: absolute;
-  bottom: 0;
-  left: 12px;
-  right: 12px;
-  height: 2px;
-  pointer-events: none;
-  overflow: hidden;
-  border-radius: 0 0 12px 12px;
-}
-
-.wave-group .bar:before,
-.wave-group .bar:after {
-  content: '';
-  height: 2.5px;
-  width: 0;
-  bottom: 0;
-  position: absolute;
-  background: #785b47;
-  transition: width 0.3s cubic-bezier(0.22, 1, 0.36, 1);
-}
-
-.wave-group .bar:before {
-  left: 50%;
-}
-
-.wave-group .bar:after {
-  right: 50%;
-}
-
-.wave-group .input:focus ~ .bar:before,
-.wave-group .input:focus ~ .bar:after {
-  width: 50%;
-}
 
 /* Global Reduced Motion Override */
 @media (prefers-reduced-motion: reduce) {
