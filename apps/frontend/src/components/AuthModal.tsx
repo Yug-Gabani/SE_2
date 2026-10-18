@@ -81,7 +81,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onLoginSu
       justifyContent: 'center',
       padding: '20px',
     }}>
-      <div className="card" style={{
+      <div style={{
         maxWidth: '460px',
         width: '100%',
         padding: '36px',

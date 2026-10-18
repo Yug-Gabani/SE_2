@@ -217,7 +217,6 @@ export const AuthPage: React.FC<AuthPageProps> = ({ onLoginSuccess, currentUser 
         }}
       >
         <div
-          className="card card-hover"
           style={{
             maxWidth: '480px',
             width: '100%',
