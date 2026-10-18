@@ -403,90 +403,91 @@ input:focus ~ .highlight,
 }
 
 /* =========================================================
-   10. Wave Floating Label Input System (Uiverse by AbanoubMagdy1)
+   10. Minimalist Underline Input System (Uiverse by Satwinder04)
    ========================================================= */
 
+.input-container,
 .wave-group {
   position: relative;
   width: 100%;
-  margin-top: 14px;
-  margin-bottom: 20px;
+  margin-top: 22px;
+  margin-bottom: 24px;
 }
 
+.input-container input,
+.input-container .input,
+.wave-group input,
 .wave-group .input {
-  font-size: 14px;
+  font-size: 15px;
   font-family: inherit;
-  padding: 12px 14px;
-  display: block;
   width: 100%;
-  border: 1px solid #eae3d8;
-  border-radius: 12px;
-  background: #ffffff;
+  border: none;
+  border-bottom: 2px solid #eae3d8;
+  border-radius: 0;
+  padding: 8px 0;
+  background-color: transparent;
+  outline: none;
   color: #1a110a;
   box-sizing: border-box;
-  outline: none;
-  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  box-shadow: none;
+  transition: border-color 0.3s ease;
 }
 
+.input-container input.has-icon,
+.input-container .input.has-icon,
+.wave-group input.has-icon,
 .wave-group .input.has-icon {
-  padding-left: 42px;
+  padding-left: 28px;
 }
 
+.input-container input.has-right-element,
+.input-container .input.has-right-element,
+.wave-group input.has-right-element,
 .wave-group .input.has-right-element {
-  padding-right: 42px;
+  padding-right: 32px;
 }
 
+.input-container input:focus,
+.input-container .input:focus,
+.wave-group input:focus,
 .wave-group .input:focus {
-  border-color: #785b47;
-  box-shadow: 0 0 0 3px rgba(120, 91, 71, 0.12);
-}
-
-.wave-group .input:disabled {
-  background-color: #faf7f1;
-  color: #706b63;
-  cursor: not-allowed;
-  border-color: #e5dfd5;
-}
-
-/* Classic Uiverse Underline variant */
-.wave-group.wave-underline .input {
-  border: none;
-  border-bottom: 1.5px solid #eae3d8;
-  border-radius: 0;
-  padding: 10px 4px;
-  background: transparent;
-}
-
-.wave-group.wave-underline .input:focus {
-  border-bottom-color: #785b47;
+  outline: none;
+  border-color: #eae3d8;
   box-shadow: none;
 }
 
-.wave-group.wave-underline .label {
-  left: 4px;
-  top: 10px;
+.input-container input:disabled,
+.input-container .input:disabled,
+.wave-group input:disabled,
+.wave-group .input:disabled {
+  color: #8c857b;
+  cursor: not-allowed;
+  border-bottom-style: dashed;
 }
 
+.input-container .icon-left,
 .wave-group .icon-left {
   position: absolute;
-  left: 14px;
+  left: 0;
   top: 50%;
   transform: translateY(-50%);
   color: #948c80;
   pointer-events: none;
   display: flex;
   align-items: center;
-  transition: color 0.2s ease;
+  transition: color 0.3s ease;
   z-index: 2;
 }
 
+.input-container:focus-within .icon-left,
 .wave-group:focus-within .icon-left {
   color: #785b47;
 }
 
+.input-container .element-right,
 .wave-group .element-right {
   position: absolute;
-  right: 12px;
+  right: 0;
   top: 50%;
   transform: translateY(-50%);
   display: flex;
@@ -494,63 +495,80 @@ input:focus ~ .highlight,
   z-index: 2;
 }
 
+.input-container .label,
 .wave-group .label {
-  color: #8c857b;
-  font-size: 14px;
-  font-weight: 500;
   position: absolute;
+  top: 8px;
+  left: 0;
+  color: #948c80;
+  font-size: 15px;
+  font-weight: 400;
   pointer-events: none;
-  left: 14px;
-  top: 13px;
   display: flex;
   align-items: center;
-  z-index: 3;
-  padding: 0 4px;
-  border-radius: 4px;
-  background-color: transparent;
-  transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1),
-              font-size 0.35s cubic-bezier(0.16, 1, 0.3, 1),
-              color 0.35s cubic-bezier(0.16, 1, 0.3, 1),
-              font-weight 0.35s cubic-bezier(0.16, 1, 0.3, 1),
-              background-color 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+  z-index: 2;
+  transition: all 0.3s ease;
 }
 
+.input-container .label.has-icon,
 .wave-group .label.has-icon {
-  left: 42px;
+  left: 28px;
 }
 
-.wave-group .label-char {
-  display: inline-block;
-  white-space: pre;
-}
-
-/* When input is focused, valid, or active with text, the whole label moves to top smoothly */
-.wave-group .input:focus ~ .label,
-.wave-group .input:focus ~ label,
-.wave-group .input:valid ~ .label,
-.wave-group .input:valid ~ label,
-.wave-group .input:not(:placeholder-shown) ~ .label,
-.wave-group .input:not(:placeholder-shown) ~ label,
-.wave-group .input:-webkit-autofill ~ .label,
-.wave-group.is-active .label,
-.wave-group.is-active label,
-.wave-group .input:focus ~ .label .label-char,
-.wave-group .input:focus ~ label .label-char,
-.wave-group .input:valid ~ .label .label-char,
-.wave-group .input:valid ~ label .label-char,
-.wave-group .input:not(:placeholder-shown) ~ .label .label-char,
-.wave-group .input:not(:placeholder-shown) ~ label .label-char,
-.wave-group .input:-webkit-autofill ~ .label .label-char,
-.wave-group.is-active .label .label-char,
-.wave-group.is-active label .label-char {
-  transform: translateY(-24px);
-  font-size: 11px;
-  font-weight: 700;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
+/* Floating label when focused, valid, or active */
+.input-container input:focus ~ .label,
+.input-container input:valid ~ .label,
+.input-container input:not(:placeholder-shown) ~ .label,
+.input-container input:-webkit-autofill ~ .label,
+.input-container.is-active .label,
+.wave-group input:focus ~ .label,
+.wave-group input:valid ~ .label,
+.wave-group input:not(:placeholder-shown) ~ .label,
+.wave-group input:-webkit-autofill ~ .label,
+.wave-group.is-active .label {
+  top: -18px;
+  font-size: 13px;
+  font-weight: 600;
   color: #785b47;
-  background-color: #ffffff;
 }
+
+.input-container input:focus ~ .label.has-icon,
+.input-container input:valid ~ .label.has-icon,
+.input-container input:not(:placeholder-shown) ~ .label.has-icon,
+.input-container input:-webkit-autofill ~ .label.has-icon,
+.input-container.is-active .label.has-icon,
+.wave-group input:focus ~ .label.has-icon,
+.wave-group input:valid ~ .label.has-icon,
+.wave-group input:not(:placeholder-shown) ~ .label.has-icon,
+.wave-group input:-webkit-autofill ~ .label.has-icon,
+.wave-group.is-active .label.has-icon {
+  left: 0;
+}
+
+/* Satwinder04 .underline expanding effect */
+.input-container .underline,
+.wave-group .underline {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  height: 2px;
+  width: 100%;
+  background-color: #785b47;
+  transform: scaleX(0);
+  transform-origin: center;
+  transition: transform 0.3s ease;
+  pointer-events: none;
+}
+
+.input-container input:focus ~ .underline,
+.input-container input:valid ~ .underline,
+.input-container.is-active .underline,
+.wave-group input:focus ~ .underline,
+.wave-group input:valid ~ .underline,
+.wave-group.is-active .underline {
+  transform: scaleX(1);
+}
+
 
 
 /* Global Reduced Motion Override */

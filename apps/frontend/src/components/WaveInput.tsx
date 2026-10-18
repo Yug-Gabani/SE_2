@@ -20,7 +20,7 @@ export const WaveInput: React.FC<WaveInputProps> = ({
   id,
   required = false,
   disabled = false,
-  variant = 'boxed',
+  variant = 'underline',
   style,
   containerStyle,
   className = '',
@@ -34,7 +34,7 @@ export const WaveInput: React.FC<WaveInputProps> = ({
 
   return (
     <div
-      className={`wave-group ${variant === 'underline' ? 'wave-underline' : ''} ${isActive ? 'is-active' : ''} ${className}`}
+      className={`input-container wave-group ${isActive ? 'is-active' : ''} ${className}`}
       style={containerStyle}
     >
       {icon && <div className="icon-left">{icon}</div>}
@@ -57,6 +57,8 @@ export const WaveInput: React.FC<WaveInputProps> = ({
       <label className={`label ${icon ? 'has-icon' : ''}`} htmlFor={inputId}>
         {label}
       </label>
+
+      <span className="underline"></span>
 
       {rightElement && <div className="element-right">{rightElement}</div>}
     </div>
