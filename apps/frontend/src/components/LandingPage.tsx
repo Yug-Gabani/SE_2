@@ -20,6 +20,7 @@ import { publicHospitalsApi } from '../services/api';
 import { CustomSelect } from './CustomSelect';
 import { PageTransition } from '../motion/PageTransition';
 import { listItem, staggerContainer, EASE_ENTER } from '../motion/presets';
+import BodyMapHero from './BodyMapHero';
 
 interface LandingPageProps {
   onSelectDoctor?: (doctorName: string) => void;
@@ -452,121 +453,18 @@ export const LandingPage: React.FC<LandingPageProps> = ({
         ))}
       </motion.section>
 
-      {/* SECTION C: CONSULT A DOCTOR FOR (6 shortcuts) */}
-      <section style={{ marginBottom: '72px' }}>
-        <div style={{
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          marginBottom: '28px',
-        }}>
-          <h2 style={{
-            fontSize: '22px',
-            fontWeight: 700,
-            color: '#1a110a',
-            margin: 0,
-            letterSpacing: '-0.02em',
-          }}>
-            Consult a doctor for
-          </h2>
-          <button
-            onClick={onGetCare}
-            className="hover-lift"
-            style={{
-              backgroundColor: '#ffffff',
-              border: '1px solid #eae3d8',
-              borderRadius: '9999px',
-              padding: '6px 18px',
-              fontSize: '12px',
-              fontWeight: 600,
-              color: '#3a342e',
-              cursor: 'pointer',
-            }}
-          >
-            View all specialties
-          </button>
-        </div>
-
-        <motion.div
-          variants={staggerContainer}
-          initial="initial"
-          whileInView="animate"
-          viewport={{ once: true, margin: '-20px' }}
-          style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))',
-            gap: '16px',
-          }}
-        >
-          {[
-            { label: 'Fever & cough', image: '/symptom-fever.jpg' },
-            { label: 'Headache', image: '/symptom-headache.jpg' },
-            { label: 'Chest pain', image: '/symptom-chestpain.jpg' },
-            { label: 'Child unwell', image: '/symptom-child.jpg' },
-            { label: 'Pregnancy', image: '/symptom-pregnancy.jpg' },
-            { label: 'Mental health', image: '/symptom-mentalhealth.jpg' },
-          ].map((item, idx) => (
-            <motion.div
-              key={idx}
-              variants={listItem}
-              onClick={() => onBookSpecialty?.(item.label)}
-              className="card-hover"
-              style={{
-                backgroundColor: '#ffffff',
-                borderRadius: '18px',
-                padding: '18px 12px 16px 12px',
-                border: '1px solid #eae3d8',
-                textAlign: 'center',
-                boxShadow: '0 4px 12px rgba(75, 68, 57, 0.04)',
-                cursor: 'pointer',
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-                minHeight: '162px',
-              }}
-            >
-              <div style={{
-                width: '64px',
-                height: '64px',
-                borderRadius: '16px',
-                overflow: 'hidden',
-                marginBottom: '10px',
-                backgroundColor: '#f5efe6',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                boxShadow: '0 2px 6px rgba(75, 68, 57, 0.06)',
-              }}>
-                <img
-                  src={item.image}
-                  alt={item.label}
-                  style={{
-                    width: '100%',
-                    height: '100%',
-                    objectFit: 'cover',
-                    display: 'block',
-                    transition: 'transform 0.25s ease',
-                  }}
-                  onMouseEnter={e => (e.currentTarget.style.transform = 'scale(1.06)')}
-                  onMouseLeave={e => (e.currentTarget.style.transform = 'scale(1)')}
-                />
-              </div>
-              <div style={{ fontSize: '13px', fontWeight: 600, color: '#2a241e', marginBottom: '8px' }}>
-                {item.label}
-              </div>
-              <div style={{
-                fontSize: '11px',
-                fontWeight: 700,
-                color: '#0284c7',
-                letterSpacing: '0.04em',
-              }}>
-                BOOK
-              </div>
-            </motion.div>
-          ))}
-        </motion.div>
-      </section>
+      {/* SECTION C: BODY MAP HERO */}
+      <BodyMapHero
+        onStartTriage={(hotspotId) => {
+          if (onBookSpecialty) {
+            onBookSpecialty(hotspotId);
+          } else if (onGetCare) {
+            onGetCare();
+          } else {
+            navigate('/book');
+          }
+        }}
+      />
 
       {/* SECTION D: HOW PULSECARE WORKS */}
       <section style={{
