@@ -244,7 +244,7 @@ export const PrescriptionEditor: React.FC<PrescriptionEditorProps> = ({
       transition={{ duration: 0.18 }}
       style={{
         position: 'fixed', inset: 0, zIndex: 1200,
-        backgroundColor: 'rgba(26, 17, 10, 0.65)',
+        backgroundColor: 'rgba(11, 63, 58, 0.65)',
         backdropFilter: 'blur(4px)',
         display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px',
       }}
@@ -257,27 +257,27 @@ export const PrescriptionEditor: React.FC<PrescriptionEditorProps> = ({
         style={{
           backgroundColor: '#ffffff', borderRadius: '20px',
           maxWidth: '820px', width: '100%', maxHeight: '92vh', overflow: 'auto',
-          boxShadow: '0 24px 64px rgba(75, 68, 57, 0.25)',
-          border: '1px solid #eae3d8',
+          boxShadow: '0 24px 64px rgba(20, 60, 55, 0.20)',
+          border: '1px solid #d9ece7',
         }}
       >
         <div style={{
-          padding: '20px 24px', borderBottom: '1px solid #eae3d8',
+          padding: '20px 24px', borderBottom: '1px solid #d9ece7',
           display: 'flex', alignItems: 'center', justifyContent: 'space-between',
           position: 'sticky', top: 0, backgroundColor: '#ffffff', zIndex: 2,
         }}>
           <div>
-            <h2 style={{ margin: 0, fontSize: '20px', fontWeight: 700, color: '#1a110a' }}>
+            <h2 style={{ margin: 0, fontSize: '20px', fontWeight: 700, color: '#0b3f3a' }}>
               Prescription
             </h2>
-            <div style={{ fontSize: '13px', color: '#706b63', marginTop: '2px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+            <div style={{ fontSize: '13px', color: '#52736d', marginTop: '2px', display: 'flex', alignItems: 'center', gap: '6px' }}>
               <span>{patientName ? `For ${patientName}` : 'Patient'}</span>
               {active && (
                 <span className="badge-morph" style={{
                   fontSize: '11px', fontWeight: 700, padding: '2px 8px', borderRadius: '9999px',
-                  backgroundColor: active.status === 'SIGNED' ? '#ecfdf5' : '#faf7f1',
-                  color: active.status === 'SIGNED' ? '#065f46' : '#785b47',
-                  border: active.status === 'SIGNED' ? '1px solid #a7f3d0' : '1px solid #eae3d8',
+                  backgroundColor: active.status === 'SIGNED' ? '#ecfdf5' : '#eaf6f2',
+                  color: active.status === 'SIGNED' ? '#065f46' : '#0f766e',
+                  border: active.status === 'SIGNED' ? '1px solid #a7f3d0' : '1px solid #d9ece7',
                 }}>
                   {active.status}
                 </span>
@@ -289,7 +289,7 @@ export const PrescriptionEditor: React.FC<PrescriptionEditorProps> = ({
             className="icon-pop"
             style={{
               background: 'transparent', border: 'none', cursor: 'pointer',
-              color: '#706b63', padding: '4px',
+              color: '#52736d', padding: '4px',
             }}
           ><X size={20} /></button>
         </div>
@@ -317,14 +317,14 @@ export const PrescriptionEditor: React.FC<PrescriptionEditorProps> = ({
           )}
 
           {busy === 'load' ? (
-            <div style={{ padding: '32px', textAlign: 'center', color: '#706b63' }}>
+            <div style={{ padding: '32px', textAlign: 'center', color: '#52736d' }}>
               <Loader2 size={20} className="animate-spin" style={{ display: 'inline', marginRight: 8 }} />
               Loading…
             </div>
           ) : (
             <>
               <label style={{ display: 'block', fontSize: '12px', fontWeight: 700,
-                color: '#706b63', textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: '6px' }}>
+                color: '#52736d', textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: '6px' }}>
                 Clinical notes
               </label>
               <textarea
@@ -334,9 +334,9 @@ export const PrescriptionEditor: React.FC<PrescriptionEditorProps> = ({
                 placeholder="e.g. patient has mild penicillin sensitivity; monitor for rash."
                 style={{
                   width: '100%', minHeight: '60px', padding: '10px 12px',
-                  borderRadius: '10px', border: '1px solid #eae3d8',
-                  fontFamily: 'inherit', fontSize: '14px', color: '#1a110a',
-                  backgroundColor: canEdit ? '#ffffff' : '#faf7f1',
+                  borderRadius: '10px', border: '1px solid #d9ece7',
+                  fontFamily: 'inherit', fontSize: '14px', color: '#0b3f3a',
+                  backgroundColor: canEdit ? '#ffffff' : '#eaf6f2',
                   outline: 'none', resize: 'vertical',
                 }}
               />
@@ -346,7 +346,7 @@ export const PrescriptionEditor: React.FC<PrescriptionEditorProps> = ({
                 marginTop: '18px', marginBottom: '8px',
               }}>
                 <div style={{ fontSize: '12px', fontWeight: 700,
-                  color: '#706b63', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                  color: '#52736d', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
                   Medications
                 </div>
                 {canEdit && (
@@ -354,8 +354,8 @@ export const PrescriptionEditor: React.FC<PrescriptionEditorProps> = ({
                     onClick={addItem}
                     className="hover-lift"
                     style={{
-                      backgroundColor: 'transparent', border: '1px dashed #785b47',
-                      color: '#785b47', borderRadius: '9999px',
+                      backgroundColor: 'transparent', border: '1px dashed #0f766e',
+                      color: '#0f766e', borderRadius: '9999px',
                       padding: '6px 14px', fontSize: '12px', fontWeight: 600,
                       display: 'inline-flex', alignItems: 'center', gap: '6px',
                       cursor: 'pointer',
@@ -381,8 +381,8 @@ export const PrescriptionEditor: React.FC<PrescriptionEditorProps> = ({
                         gridTemplateColumns: '1.4fr 0.8fr 1fr 0.9fr 36px',
                         gap: '8px', alignItems: 'start',
                         padding: '12px', borderRadius: '12px',
-                        border: '1px solid #eae3d8',
-                        backgroundColor: canEdit ? '#ffffff' : '#faf7f1',
+                        border: '1px solid #d9ece7',
+                        backgroundColor: canEdit ? '#ffffff' : '#eaf6f2',
                       }}
                     >
                       <div>
@@ -453,7 +453,7 @@ export const PrescriptionEditor: React.FC<PrescriptionEditorProps> = ({
                             );
                           })}
                           <span aria-hidden style={{
-                            width: '1px', height: '18px', backgroundColor: '#eae3d8',
+                            width: '1px', height: '18px', backgroundColor: '#d9ece7',
                             margin: '0 4px',
                           }} />
                           {OTHER_CHIPS.map(opt => {
@@ -486,10 +486,10 @@ export const PrescriptionEditor: React.FC<PrescriptionEditorProps> = ({
                       {/* readable preview — helps the doctor see what the patient will read */}
                       <div style={{
                         gridColumn: '1 / -1',
-                        fontSize: '12px', color: '#785b47',
-                        backgroundColor: '#faf7f1', padding: '6px 10px',
+                        fontSize: '12px', color: '#0f766e',
+                        backgroundColor: '#eaf6f2', padding: '6px 10px',
                         borderRadius: '8px', fontStyle: 'italic',
-                        border: '1px dashed #eae3d8',
+                        border: '1px dashed #d9ece7',
                       }}>
                         Patient will see: <strong>{it.drugName || '(drug)'}</strong> — {describePrescriptionItem(it) || '…'}
                         {it.instructions ? ` · ${it.instructions}` : ''}
@@ -503,7 +503,7 @@ export const PrescriptionEditor: React.FC<PrescriptionEditorProps> = ({
               {history.filter(r => r.status === 'VOIDED').length > 0 && (
                 <div style={{ marginTop: '20px' }}>
                   <div style={{ fontSize: '12px', fontWeight: 700,
-                    color: '#706b63', textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: '8px' }}>
+                    color: '#52736d', textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: '8px' }}>
                     Prior voided versions
                   </div>
                   {history.filter(r => r.status === 'VOIDED').map(v => (
@@ -523,9 +523,9 @@ export const PrescriptionEditor: React.FC<PrescriptionEditorProps> = ({
 
         {/* Footer */}
         <div style={{
-          padding: '16px 24px', borderTop: '1px solid #eae3d8',
+          padding: '16px 24px', borderTop: '1px solid #d9ece7',
           display: 'flex', gap: '10px', flexWrap: 'wrap', justifyContent: 'flex-end',
-          backgroundColor: '#faf7f1',
+          backgroundColor: '#eaf6f2',
         }}>
           {canEdit && active?.status === 'DRAFT' && (
             <button onClick={discardDraft} disabled={!!busy}
@@ -536,7 +536,7 @@ export const PrescriptionEditor: React.FC<PrescriptionEditorProps> = ({
           )}
           {canEdit && (
             <>
-              <button onClick={saveDraft} disabled={!!busy} className="hover-lift" style={ghostBtn('#785b47')}>
+              <button onClick={saveDraft} disabled={!!busy} className="hover-lift" style={ghostBtn('#0f766e')}>
                 {busy === 'save' ? 'Saving…' : 'Save draft'}
               </button>
               <button onClick={signNow} disabled={!!busy} className="hover-lift" style={primaryBtn()}>
@@ -546,7 +546,7 @@ export const PrescriptionEditor: React.FC<PrescriptionEditorProps> = ({
           )}
           {isSigned && (
             <>
-              <button onClick={downloadPdf} className="hover-lift" style={ghostBtn('#785b47')}>
+              <button onClick={downloadPdf} className="hover-lift" style={ghostBtn('#0f766e')}>
                 <Download size={14} /> Download PDF
               </button>
               <button onClick={() => setVoidOpen(true)} disabled={!!busy}
@@ -556,23 +556,23 @@ export const PrescriptionEditor: React.FC<PrescriptionEditorProps> = ({
               </button>
             </>
           )}
-          <button onClick={onClose} style={ghostBtn('#706b63')}>Close</button>
+          <button onClick={onClose} style={ghostBtn('#52736d')}>Close</button>
         </div>
 
         {/* Void confirmation modal (overlay inside) */}
         {voidOpen && (
           <div style={{
-            position: 'absolute', inset: 0, backgroundColor: 'rgba(26, 17, 10, 0.5)',
+            position: 'absolute', inset: 0, backgroundColor: 'rgba(11, 63, 58, 0.5)',
             display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px',
             borderRadius: '20px',
           }}>
             <div style={{
               backgroundColor: '#ffffff', borderRadius: '14px', padding: '20px',
               maxWidth: '420px', width: '100%',
-              boxShadow: '0 12px 32px rgba(26, 17, 10, 0.25)',
+              boxShadow: '0 12px 32px rgba(20, 60, 55, 0.18)',
             }}>
               <h3 style={{ margin: 0, fontSize: '16px', fontWeight: 700 }}>Void this prescription?</h3>
-              <p style={{ fontSize: '13px', color: '#706b63', marginTop: '6px' }}>
+              <p style={{ fontSize: '13px', color: '#52736d', marginTop: '6px' }}>
                 A VOIDED record is added. The original SIGNED copy remains in the audit trail.
               </p>
               <input
@@ -580,12 +580,12 @@ export const PrescriptionEditor: React.FC<PrescriptionEditorProps> = ({
                 placeholder="Reason (required)"
                 style={{
                   width: '100%', padding: '10px 12px', borderRadius: '10px',
-                  border: '1px solid #eae3d8', fontSize: '14px',
+                  border: '1px solid #d9ece7', fontSize: '14px',
                   margin: '12px 0', outline: 'none',
                 }}
               />
               <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px' }}>
-                <button onClick={() => setVoidOpen(false)} style={ghostBtn('#706b63')}>Cancel</button>
+                <button onClick={() => setVoidOpen(false)} style={ghostBtn('#52736d')}>Cancel</button>
                 <button onClick={confirmVoid} disabled={!!busy}
                   className="hover-lift"
                   style={{ ...primaryBtn(), backgroundColor: '#dc2626' }}>
@@ -603,7 +603,7 @@ export const PrescriptionEditor: React.FC<PrescriptionEditorProps> = ({
 function cellStyle(editable: boolean): React.CSSProperties {
   return {
     padding: '8px 10px', borderRadius: '8px',
-    border: '1px solid #eae3d8', fontSize: '13px', color: '#1a110a',
+    border: '1px solid #d9ece7', fontSize: '13px', color: '#0b3f3a',
     backgroundColor: editable ? '#ffffff' : 'transparent',
     outline: 'none', fontFamily: 'inherit', minWidth: 0, width: '100%',
     boxSizing: 'border-box',
@@ -612,7 +612,7 @@ function cellStyle(editable: boolean): React.CSSProperties {
 
 const FieldLabel: React.FC<{ children: React.ReactNode }> = ({ children }) => (
   <div style={{
-    fontSize: '10px', fontWeight: 700, color: '#8c857b',
+    fontSize: '10px', fontWeight: 700, color: '#8aa39d',
     textTransform: 'uppercase', letterSpacing: '0.05em',
     marginBottom: '4px',
   }}>{children}</div>
@@ -635,10 +635,10 @@ const TimingChip: React.FC<TimingChipProps> = ({ label, active, disabled, muted,
     fontFamily: 'inherit',
   };
   const inactive: React.CSSProperties = muted
-    ? { backgroundColor: '#ffffff', borderColor: '#eae3d8', color: '#8c857b' }
-    : { backgroundColor: '#faf7f1', borderColor: '#eae3d8', color: '#443e37' };
+    ? { backgroundColor: '#ffffff', borderColor: '#d9ece7', color: '#8aa39d' }
+    : { backgroundColor: '#eaf6f2', borderColor: '#d9ece7', color: '#0b3f3a' };
   const activeStyle: React.CSSProperties = {
-    backgroundColor: '#785b47', borderColor: '#785b47', color: '#ffffff', fontWeight: 600,
+    backgroundColor: '#0f766e', borderColor: '#0f766e', color: '#ffffff', fontWeight: 600,
   };
   const style = { ...base, ...(active ? activeStyle : inactive), opacity: disabled && !active ? 0.5 : 1 };
   return (
@@ -651,10 +651,10 @@ const TimingChip: React.FC<TimingChipProps> = ({ label, active, disabled, muted,
       className="chip"
       style={style}
       onMouseEnter={e => {
-        if (!disabled && !active) e.currentTarget.style.borderColor = '#785b47';
+        if (!disabled && !active) e.currentTarget.style.borderColor = '#0f766e';
       }}
       onMouseLeave={e => {
-        if (!disabled && !active) e.currentTarget.style.borderColor = '#eae3d8';
+        if (!disabled && !active) e.currentTarget.style.borderColor = '#d9ece7';
       }}
     >
       {label}
@@ -672,7 +672,7 @@ function ghostBtn(color: string): React.CSSProperties {
 
 function primaryBtn(): React.CSSProperties {
   return {
-    backgroundColor: '#785b47', color: '#ffffff', border: 'none',
+    backgroundColor: '#0f766e', color: '#ffffff', border: 'none',
     borderRadius: '9999px', padding: '8px 20px', fontSize: '13px', fontWeight: 600,
     cursor: 'pointer',
   };

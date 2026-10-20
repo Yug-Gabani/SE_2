@@ -71,7 +71,7 @@ export const AppointmentDetail: React.FC = () => {
         onClick={() => navigate(-1)}
         className="hover-lift"
         style={{
-          background: 'transparent', border: 'none', color: '#785b47',
+          background: 'transparent', border: 'none', color: '#0f766e',
           fontSize: '14px', fontWeight: 600, cursor: 'pointer',
           padding: '6px 0', marginBottom: '16px',
           display: 'inline-flex', alignItems: 'center', gap: '6px',
@@ -81,7 +81,7 @@ export const AppointmentDetail: React.FC = () => {
       </button>
 
       {loading && (
-        <div style={{ padding: '48px', textAlign: 'center', color: '#706b63' }}>
+        <div style={{ padding: '48px', textAlign: 'center', color: '#52736d' }}>
           <Loader2 size={24} className="animate-spin" style={{ display: 'inline', marginRight: 8 }} />
           Loading…
         </div>
@@ -110,7 +110,7 @@ export const AppointmentDetail: React.FC = () => {
             ) : (
               <div style={{
                 width: '64px', height: '64px', borderRadius: '50%',
-                backgroundColor: '#f5efe6', color: '#785b47',
+                backgroundColor: '#eaf6f2', color: '#0f766e',
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
                 fontWeight: 700, fontSize: '20px',
               }}>
@@ -118,10 +118,10 @@ export const AppointmentDetail: React.FC = () => {
               </div>
             )}
             <div style={{ flex: 1 }}>
-              <h1 style={{ fontSize: '22px', fontWeight: 700, margin: 0 }}>
+              <h1 style={{ fontSize: '22px', fontWeight: 700, color: '#0b3f3a', margin: 0 }}>
                 {appt.doctorName}
               </h1>
-              <div style={{ color: '#706b63', fontSize: '14px' }}>
+              <div style={{ color: '#52736d', fontSize: '14px' }}>
                 {appt.doctorSpecialty} · {appt.doctorHospital}
               </div>
             </div>
@@ -136,34 +136,34 @@ export const AppointmentDetail: React.FC = () => {
 
           <div style={{
             display: 'grid', gap: '12px',
-            backgroundColor: '#faf7f1', borderRadius: '14px',
-            padding: '18px 20px', border: '1px solid #eae3d8',
+            backgroundColor: '#eaf6f2', borderRadius: '14px',
+            padding: '18px 20px', border: '1px solid #d9ece7',
             fontSize: '14px', marginBottom: '20px',
           }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-              <Calendar size={16} color="#785b47" />
+              <Calendar size={16} color="#0f766e" />
               <span><strong>Date:</strong> {formatSlot(appt.slotAt)}</span>
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
               {appt.consultationType === 'VIDEO' ? (
-                <Video size={16} color="#785b47" />
+                <Video size={16} color="#0f766e" />
               ) : (
-                <MapPin size={16} color="#785b47" />
+                <MapPin size={16} color="#0f766e" />
               )}
               <span><strong>Mode:</strong> {appt.consultationType === 'VIDEO' ? 'Encrypted video consult' : 'In-person at hospital'}</span>
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-              <Clock size={16} color="#785b47" />
+              <Clock size={16} color="#0f766e" />
               <span><strong>Status:</strong> {appt.status}</span>
             </div>
           </div>
 
           {appt.chiefComplaint && (
             <div style={{ marginBottom: '20px' }}>
-              <div style={{ fontSize: '12px', fontWeight: 700, color: '#706b63', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '6px' }}>
+              <div style={{ fontSize: '12px', fontWeight: 700, color: '#52736d', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '6px' }}>
                 Reported concern
               </div>
-              <div style={{ fontSize: '14px', color: '#1a110a', lineHeight: 1.6 }}>{appt.chiefComplaint}</div>
+              <div style={{ fontSize: '14px', color: '#0b3f3a', lineHeight: 1.6 }}>{appt.chiefComplaint}</div>
             </div>
           )}
 

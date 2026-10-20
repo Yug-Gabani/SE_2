@@ -74,7 +74,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onLoginSu
       position: 'fixed',
       inset: 0,
       zIndex: 100,
-      backgroundColor: 'rgba(8, 3, 49, 0.45)',
+      backgroundColor: 'rgba(11, 63, 58, 0.45)',
       backdropFilter: 'blur(6px)',
       display: 'flex',
       alignItems: 'center',
@@ -85,10 +85,12 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onLoginSu
         maxWidth: '460px',
         width: '100%',
         padding: '36px',
-        backgroundColor: 'var(--surface)',
+        backgroundColor: '#ffffff',
+        border: '1px solid #d9ece7',
         position: 'relative',
         borderRadius: '20px',
-        boxShadow: 'var(--shadow-lg)',
+        boxShadow: '0 10px 24px rgba(20, 60, 55, 0.10)',
+        fontFamily: "'Space Grotesk', sans-serif",
       }}>
         {/* Close Button */}
         <button
@@ -100,7 +102,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onLoginSu
             background: 'transparent',
             border: 'none',
             cursor: 'pointer',
-            color: 'var(--muted)',
+            color: '#8aa39d',
           }}
           aria-label="Close dialog"
         >
@@ -108,18 +110,18 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onLoginSu
         </button>
 
         {/* Modal title */}
-        <h2 className="font-serif text-heading" style={{ color: 'var(--ink)', marginBottom: '8px' }}>
-          {isLogin ? 'Sign In to PulseCare' : 'Create Patient Account'}
+        <h2 style={{ color: '#0b3f3a', fontSize: '24px', fontWeight: 700, letterSpacing: '-0.02em', marginBottom: '8px' }}>
+          {isLogin ? 'Sign In to pulsecare' : 'Create an Account'}
         </h2>
-        <p className="text-body-sm" style={{ color: 'var(--muted)', marginBottom: '24px' }}>
+        <p style={{ color: '#52736d', fontSize: '14px', marginBottom: '24px', lineHeight: 1.5 }}>
           {isLogin ? 'Access your triage records and medical consultations' : 'Register for secure doctor triage and telehealth'}
         </p>
 
         {error && (
           <div style={{
-            backgroundColor: 'rgba(192, 57, 43, 0.1)',
-            border: '1px solid rgba(192, 57, 43, 0.25)',
-            color: 'var(--danger)',
+            backgroundColor: '#fef2f2',
+            border: '1px solid #fecaca',
+            color: '#dc2626',
             padding: '12px 16px',
             borderRadius: '12px',
             fontSize: '13px',
@@ -174,8 +176,21 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onLoginSu
 
           <button
             type="submit"
-            className="btn btn-primary"
-            style={{ width: '100%', marginTop: '12px' }}
+            className="hover-lift"
+            style={{
+              width: '100%',
+              backgroundColor: '#0f766e',
+              color: '#ffffff',
+              border: 'none',
+              borderRadius: '14px',
+              padding: '12px',
+              fontSize: '15px',
+              fontWeight: 600,
+              cursor: loading ? 'not-allowed' : 'pointer',
+              boxShadow: '0 2px 10px rgba(20, 60, 55, 0.08)',
+              marginTop: '12px',
+              fontFamily: "'Space Grotesk', sans-serif",
+            }}
             disabled={loading}
           >
             {loading ? 'Authenticating...' : isLogin ? 'Sign In' : 'Create Account'}
@@ -183,7 +198,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onLoginSu
         </form>
 
         <div style={{ textAlign: 'center', marginTop: '18px', fontSize: '13px' }}>
-          <span style={{ color: 'var(--muted)' }}>
+          <span style={{ color: '#52736d' }}>
             {isLogin ? "Don't have an account? " : 'Already registered? '}
           </span>
           <button
@@ -195,10 +210,10 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onLoginSu
             style={{
               background: 'none',
               border: 'none',
-              color: 'var(--primary)',
+              color: '#ff6b5b',
               fontWeight: 600,
               cursor: 'pointer',
-              fontFamily: 'var(--font-sans)',
+              fontFamily: "'Space Grotesk', sans-serif",
             }}
           >
             {isLogin ? 'Register now' : 'Sign In'}
@@ -209,26 +224,46 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onLoginSu
         <div style={{
           marginTop: '24px',
           paddingTop: '20px',
-          borderTop: '1px solid var(--border)',
+          borderTop: '1px solid #d9ece7',
           textAlign: 'center',
         }}>
-          <div style={{ fontSize: '11px', color: 'var(--muted)', marginBottom: '10px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+          <div style={{ fontSize: '11px', color: '#8aa39d', marginBottom: '10px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em' }}>
             Instant Demo Account (1-Click Switch):
           </div>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
             <button
               type="button"
               onClick={() => handleDemoLogin('PATIENT')}
-              className="btn btn-secondary"
-              style={{ padding: '8px 14px', fontSize: '13px', minHeight: '36px' }}
+              className="hover-lift"
+              style={{
+                padding: '8px 14px',
+                fontSize: '13px',
+                borderRadius: '10px',
+                backgroundColor: '#eaf6f2',
+                border: '1px solid #d9ece7',
+                color: '#0b3f3a',
+                fontWeight: 600,
+                cursor: 'pointer',
+                fontFamily: "'Space Grotesk', sans-serif",
+              }}
             >
               Demo Patient
             </button>
             <button
               type="button"
               onClick={() => handleDemoLogin('DOCTOR')}
-              className="btn btn-secondary"
-              style={{ padding: '8px 14px', fontSize: '13px', minHeight: '36px' }}
+              className="hover-lift"
+              style={{
+                padding: '8px 14px',
+                fontSize: '13px',
+                borderRadius: '10px',
+                backgroundColor: '#eaf6f2',
+                border: '1px solid #d9ece7',
+                color: '#0b3f3a',
+                fontWeight: 600,
+                cursor: 'pointer',
+                fontFamily: "'Space Grotesk', sans-serif",
+              }}
             >
               Demo Doctor (MD)
             </button>

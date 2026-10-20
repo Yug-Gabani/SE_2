@@ -18,7 +18,7 @@ export const CustomCheckbox: React.FC<CustomCheckboxProps> = ({
   onChange,
   label,
   disabled = false,
-  color = '#785b47',
+  color = '#0f766e',
   size = 20,
   className = '',
   style,
@@ -63,7 +63,7 @@ export const CustomCheckbox: React.FC<CustomCheckboxProps> = ({
             height="172"
             rx="36"
             className="checkbox-box-bg"
-            stroke="#d5cec4"
+            stroke="#d9ece7"
             strokeWidth="24"
             fill="#ffffff"
           />

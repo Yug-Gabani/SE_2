@@ -51,15 +51,15 @@ export const MyPrescriptions: React.FC = () => {
 
   return (
     <PageTransition style={{ maxWidth: '960px', margin: '48px auto', padding: '0 24px' }}>
-      <h1 style={{ fontSize: '28px', fontWeight: 700, color: '#1a110a', margin: 0, letterSpacing: '-0.02em' }}>
+      <h1 style={{ fontSize: '28px', fontWeight: 700, color: '#0b3f3a', margin: 0, letterSpacing: '-0.02em' }}>
         My prescriptions
       </h1>
-      <p style={{ color: '#706b63', margin: '6px 0 24px 0' }}>
+      <p style={{ color: '#52736d', margin: '6px 0 24px 0' }}>
         Prescriptions issued by your doctors. Download the PDF to show at the pharmacy.
       </p>
 
       {loading && (
-        <div style={{ padding: '48px', textAlign: 'center', color: '#706b63' }}>
+        <div style={{ padding: '48px', textAlign: 'center', color: '#52736d' }}>
           <Loader2 size={24} className="animate-spin" style={{ display: 'inline', marginRight: 8 }} />
           Loading…
         </div>
@@ -78,16 +78,16 @@ export const MyPrescriptions: React.FC = () => {
         <div className="card card-hover" style={{ padding: '48px', textAlign: 'center' }}>
           <div style={{
             width: '56px', height: '56px', borderRadius: '50%',
-            backgroundColor: '#f5efe6', color: '#785b47',
+            backgroundColor: '#eaf6f2', color: '#0f766e',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
             margin: '0 auto 16px',
           }}>
             <Pill size={26} />
           </div>
-          <h2 style={{ fontSize: '18px', fontWeight: 700, margin: '0 0 8px 0' }}>
+          <h2 style={{ fontSize: '18px', fontWeight: 700, color: '#0b3f3a', margin: '0 0 8px 0' }}>
             No prescriptions yet
           </h2>
-          <p style={{ color: '#706b63', marginBottom: '24px' }}>
+          <p style={{ color: '#52736d', marginBottom: '24px' }}>
             After your doctor completes a consultation and issues a prescription, it will appear here.
           </p>
           <button onClick={() => navigate('/appointments')} className="btn btn-primary hover-lift">
@@ -129,10 +129,10 @@ export const MyPrescriptions: React.FC = () => {
                     marginBottom: '12px', flexWrap: 'wrap', gap: '10px',
                   }}>
                     <div>
-                      <div style={{ fontSize: '16px', fontWeight: 700, color: '#1a110a' }}>
+                      <div style={{ fontSize: '16px', fontWeight: 700, color: '#0b3f3a' }}>
                         {rx.doctorName ?? 'Doctor'}
                       </div>
-                      <div style={{ fontSize: '12px', color: '#706b63' }}>
+                      <div style={{ fontSize: '12px', color: '#52736d' }}>
                         {rx.doctorSpecialty} · {rx.doctorHospital}
                       </div>
                     </div>
@@ -148,10 +148,10 @@ export const MyPrescriptions: React.FC = () => {
                   </div>
 
                   {/* Primary "signed by / on" / "voided on" line */}
-                  <div style={{ fontSize: '13px', color: '#706b63', marginBottom: '6px' }}>
+                  <div style={{ fontSize: '13px', color: '#52736d', marginBottom: '6px' }}>
                     {voided
                       ? `Voided on ${formatDate(rx.createdAt)}`
-                      : <>Signed by <strong style={{ color: '#1a110a' }}>{rx.doctorName ?? 'Attending physician'}</strong> on {formatDate(rx.signedAt ?? rx.createdAt)}</>}
+                      : <>Signed by <strong style={{ color: '#0b3f3a' }}>{rx.doctorName ?? 'Attending physician'}</strong> on {formatDate(rx.signedAt ?? rx.createdAt)}</>}
                     {voided && rx.voidReason ? ` · ${rx.voidReason}` : ''}
                   </div>
 
@@ -188,12 +188,12 @@ export const MyPrescriptions: React.FC = () => {
                     </div>
                   )}
 
-                  <ul style={{ margin: 0, paddingLeft: '20px', fontSize: '14px', color: '#1a110a', lineHeight: 1.7 }}>
+                  <ul style={{ margin: 0, paddingLeft: '20px', fontSize: '14px', color: '#0b3f3a', lineHeight: 1.7 }}>
                     {rx.items.map(it => (
                       <li key={it.id ?? it.drugName} style={{ marginBottom: '6px' }}>
                         <strong>{it.drugName}</strong> — {describePrescriptionItem(it)}
                         {it.instructions ? (
-                          <div style={{ fontSize: '12px', color: '#706b63', marginTop: '2px' }}>
+                          <div style={{ fontSize: '12px', color: '#52736d', marginTop: '2px' }}>
                             Notes: {it.instructions}
                           </div>
                         ) : null}
@@ -204,8 +204,8 @@ export const MyPrescriptions: React.FC = () => {
                   {rx.notes && (
                     <div style={{
                       marginTop: '10px', padding: '10px 12px', borderRadius: '10px',
-                      backgroundColor: '#faf7f1', border: '1px solid #eae3d8',
-                      fontSize: '13px', color: '#443f38',
+                      backgroundColor: '#eaf6f2', border: '1px solid #d9ece7',
+                      fontSize: '13px', color: '#0b3f3a',
                     }}>
                       <strong>Notes:</strong> {rx.notes}
                     </div>

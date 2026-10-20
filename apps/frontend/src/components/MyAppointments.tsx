@@ -99,10 +99,10 @@ export const MyAppointments: React.FC = () => {
         flexWrap: 'wrap', gap: '20px', marginBottom: '28px',
       }}>
         <div>
-          <h1 style={{ fontSize: '30px', fontWeight: 700, color: '#1a110a', letterSpacing: '-0.02em', margin: 0 }}>
+          <h1 style={{ fontSize: '30px', fontWeight: 700, color: '#0b3f3a', letterSpacing: '-0.02em', margin: 0 }}>
             My Consultations
           </h1>
-          <p style={{ color: '#706b63', margin: '6px 0 0 0' }}>
+          <p style={{ color: '#52736d', margin: '6px 0 0 0' }}>
             Track your booked, past, and cancelled visits.
           </p>
         </div>
@@ -113,7 +113,7 @@ export const MyAppointments: React.FC = () => {
 
       <div style={{
         display: 'flex', gap: '8px', marginBottom: '24px',
-        borderBottom: '1px solid #eae3d8', paddingBottom: '2px',
+        borderBottom: '1px solid #d9ece7', paddingBottom: '2px',
       }}>
         {([
           { k: 'upcoming', label: `Upcoming (${counts.upcoming})` },
@@ -128,9 +128,9 @@ export const MyAppointments: React.FC = () => {
               style={{
                 padding: '10px 18px', fontSize: '14px',
                 fontWeight: active ? 700 : 500,
-                color: active ? '#1a110a' : '#706b63',
+                color: active ? '#0b3f3a' : '#52736d',
                 background: 'transparent', border: 'none',
-                borderBottom: active ? '2px solid #785b47' : '2px solid transparent',
+                borderBottom: active ? '2px solid #0f766e' : '2px solid transparent',
                 cursor: 'pointer', marginBottom: '-2px',
               }}
             >
@@ -141,7 +141,7 @@ export const MyAppointments: React.FC = () => {
       </div>
 
       {loading && (
-        <div style={{ padding: '48px', textAlign: 'center', color: '#706b63' }}>
+        <div style={{ padding: '48px', textAlign: 'center', color: '#52736d' }}>
           <Loader2 size={24} className="animate-spin" style={{ display: 'inline', marginRight: 8 }} />
           Loading…
         </div>
@@ -162,16 +162,16 @@ export const MyAppointments: React.FC = () => {
         <div className="card card-hover" style={{ padding: '48px', textAlign: 'center' }}>
           <div style={{
             width: '56px', height: '56px', borderRadius: '50%',
-            backgroundColor: '#f5efe6', color: '#785b47',
+            backgroundColor: '#eaf6f2', color: '#0f766e',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
             margin: '0 auto 16px',
           }}>
             <Calendar size={26} />
           </div>
-          <h2 style={{ fontSize: '18px', fontWeight: 700, marginBottom: '8px' }}>
+          <h2 style={{ fontSize: '18px', fontWeight: 700, color: '#0b3f3a', marginBottom: '8px' }}>
             Nothing in {tab}
           </h2>
-          <p style={{ color: '#706b63', marginBottom: '24px' }}>
+          <p style={{ color: '#52736d', marginBottom: '24px' }}>
             {tab === 'upcoming'
               ? 'Book a consultation to populate this list.'
               : 'Your history will appear here as you use PulseCare.'}
@@ -203,7 +203,7 @@ export const MyAppointments: React.FC = () => {
                   <div style={{
                     display: 'flex', alignItems: 'center', justifyContent: 'space-between',
                     flexWrap: 'wrap', gap: '12px',
-                    borderBottom: '1px solid #eae3d8',
+                    borderBottom: '1px solid #d9ece7',
                     paddingBottom: '16px', marginBottom: '16px',
                   }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
@@ -216,7 +216,7 @@ export const MyAppointments: React.FC = () => {
                       ) : (
                         <div style={{
                           width: '48px', height: '48px', borderRadius: '50%',
-                          backgroundColor: '#f5efe6', color: '#785b47',
+                          backgroundColor: '#eaf6f2', color: '#0f766e',
                           display: 'flex', alignItems: 'center', justifyContent: 'center',
                           fontWeight: 700,
                         }}>
@@ -224,10 +224,10 @@ export const MyAppointments: React.FC = () => {
                         </div>
                       )}
                       <div>
-                        <h2 style={{ fontSize: '17px', fontWeight: 700, color: '#1a110a', margin: 0 }}>
+                        <h2 style={{ fontSize: '17px', fontWeight: 700, color: '#0b3f3a', margin: 0 }}>
                           {appt.doctorName ?? 'Attending physician'}
                         </h2>
-                        <div style={{ fontSize: '13px', color: '#706b63' }}>
+                        <div style={{ fontSize: '13px', color: '#52736d' }}>
                           {appt.doctorSpecialty}{appt.doctorHospital ? ` · ${appt.doctorHospital}` : ''}
                         </div>
                       </div>
@@ -246,7 +246,7 @@ export const MyAppointments: React.FC = () => {
                         style={{
                           padding: '3px 10px', borderRadius: '9999px',
                           fontSize: '12px', fontWeight: 600,
-                          color: '#1a110a', backgroundColor: '#f5efe6',
+                          color: '#0b3f3a', backgroundColor: '#eaf6f2',
                         }}
                       >{statusLabel(appt.status)}</span>
                     </div>
@@ -256,31 +256,31 @@ export const MyAppointments: React.FC = () => {
                     display: 'grid',
                     gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
                     gap: '14px',
-                    backgroundColor: '#faf7f1',
+                    backgroundColor: '#eaf6f2',
                     padding: '14px 18px', borderRadius: '12px',
                     marginBottom: '14px', fontSize: '13px',
-                    border: '1px solid #eae3d8',
+                    border: '1px solid #d9ece7',
                   }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                      <Clock size={16} color="#785b47" />
+                      <Clock size={16} color="#0f766e" />
                       <span><strong>Slot:</strong> {formatSlot(appt.slotAt)}</span>
                     </div>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                       {appt.consultationType === 'VIDEO' ? (
-                        <Video size={16} color="#785b47" />
+                        <Video size={16} color="#0f766e" />
                       ) : (
-                        <MapPin size={16} color="#785b47" />
+                        <MapPin size={16} color="#0f766e" />
                       )}
                       <span><strong>Mode:</strong> {appt.consultationType === 'VIDEO' ? 'Telehealth' : 'In-Person'}</span>
                     </div>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                      <FileText size={16} color="#785b47" />
+                      <FileText size={16} color="#0f766e" />
                       <span><strong>Ref:</strong> {appt.id.slice(0, 8)}</span>
                     </div>
                   </div>
 
                   {appt.chiefComplaint && (
-                    <div style={{ fontSize: '14px', marginBottom: '12px', color: '#1a110a' }}>
+                    <div style={{ fontSize: '14px', marginBottom: '12px', color: '#0b3f3a' }}>
                       <strong>Reported concern:</strong> {appt.chiefComplaint}
                     </div>
                   )}

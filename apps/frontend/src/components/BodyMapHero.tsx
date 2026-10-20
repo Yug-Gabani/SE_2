@@ -6,7 +6,7 @@
 
 import { useEffect, useMemo, useRef, useState, useCallback } from 'react';
 import { motion, AnimatePresence, useInView, useReducedMotion } from 'framer-motion';
-import { ArrowRight, AlertTriangle } from 'lucide-react';
+import { ArrowRight, AlertTriangle, HelpCircle, Search } from 'lucide-react';
 
 export type HotspotId =
   | 'head' | 'mental' | 'chest' | 'abdomen' | 'joints' | 'skin' | 'reproductive'
@@ -46,11 +46,21 @@ const HOTSPOTS: Hotspot[] = [
   { id: 'calf',         view: 'back',  label: 'Calves & hamstrings',    specialties: ['Orthopedics','Physiotherapy'],         commonConditions: ['Muscle strain','Cramps','Hamstring pull'],         triageHint: 'Calf or hamstring strain, cramps, back-of-leg pain.',      x: 240, y: 495 },
 ];
 
+const SYSTEMIC_SUGGESTIONS = [
+  'General fatigue & weakness',
+  'Fever, chills & body aches',
+  'Allergic reaction / hives',
+  'Sleep difficulty & insomnia',
+  'Inner ear & dizziness',
+  'Digestive bloating & nausea',
+];
+
 const VB_W = 420;
 const VB_H = 640;
 
 export interface BodyMapHeroProps {
   onStartTriage: (hotspotId: HotspotId) => void;
+  onCustomTriage?: (causeDescription?: string) => void;
   frontImage?: string;
   backImage?: string;
   /** Override hotspot list if you want to add/remove regions. */
@@ -61,6 +71,7 @@ export interface BodyMapHeroProps {
 
 export default function BodyMapHero({
   onStartTriage,
+  onCustomTriage,
   frontImage = '/anatomy-front.png',
   backImage = '/anatomy-back.png',
   hotspots = HOTSPOTS,
@@ -72,6 +83,7 @@ export default function BodyMapHero({
   const inView = useInView(sectionRef, { margin: '-20% 0px', once: true });
   const [activeIdx, setActiveIdx] = useState(0);
   const [paused, setPaused] = useState(false);
+  const [customCause, setCustomCause] = useState('');
   const resumeTimer = useRef<number | null>(null);
 
   const [isWide, setIsWide] = useState(() =>
@@ -119,6 +131,21 @@ export default function BodyMapHero({
     }
   }, [hotspots.length, scheduleResume]);
 
+  const handleCustomSubmit = (e?: React.FormEvent, customText?: string) => {
+    if (e) e.preventDefault();
+    const textToSubmit = (customText !== undefined ? customText : customCause).trim();
+    try {
+      if (textToSubmit) {
+        sessionStorage.setItem('pulsecare_pending_complaint', textToSubmit);
+      }
+    } catch {}
+    if (onCustomTriage) {
+      onCustomTriage(textToSubmit);
+    } else {
+      onStartTriage('head');
+    }
+  };
+
   const active = hotspots[activeIdx];
   const front = useMemo(() => hotspots.filter(h => h.view === 'front'), [hotspots]);
   const back  = useMemo(() => hotspots.filter(h => h.view === 'back'), [hotspots]);
@@ -139,32 +166,39 @@ export default function BodyMapHero({
         transition={{ duration: 0.5, ease: 'easeOut' }}
         style={{
           background: '#ffffff',
-          border: '1px solid #eae3d8',
+          border: '1px solid #d9ece7',
           borderRadius: 16,
           padding: isWide ? '40px 44px' : '24px 20px',
-          boxShadow: '0 2px 8px rgba(75,68,57,0.04)',
+          boxShadow: '0 2px 10px rgba(20, 60, 55, 0.08)',
           display: 'grid',
           gridTemplateColumns: isWide ? '1fr 1fr' : '1fr',
           gap: isWide ? 48 : 28,
           alignItems: 'center',
+          fontFamily: "'Space Grotesk', sans-serif",
         }}
       >
         {/* LEFT: figures */}
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: isWide ? 'flex-start' : 'center' }}>
-          <div style={{ fontSize: 13, fontWeight: 500, color: '#785b47', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 10 }}>
+          <div style={{ fontSize: 13, fontWeight: 600, color: '#0f766e', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 10 }}>
             Where does it hurt?
           </div>
-          <h2 style={{ fontSize: 28, fontWeight: 700, letterSpacing: '-0.02em', margin: '0 0 12px', lineHeight: 1.1, color: '#1a110a' }}>
+          <h2 style={{ fontSize: 28, fontWeight: 700, letterSpacing: '-0.02em', margin: '0 0 12px', lineHeight: 1.1, color: '#0b3f3a' }}>
             Tap where you feel it. We'll do the rest.
           </h2>
-          <p style={{ fontSize: 14, lineHeight: 1.5, color: '#706b63', margin: '0 0 24px', maxWidth: 420 }}>
+          <p style={{ fontSize: 14, lineHeight: 1.5, color: '#52736d', margin: '0 0 24px', maxWidth: 420 }}>
             Point to the area on either the front or back view — we'll pre-fill the triage with the right specialty.
           </p>
 
           <div
             onPointerEnter={() => setPaused(true)}
             onPointerLeave={() => scheduleResume()}
-            style={{ display: 'flex', gap: isWide ? 20 : 12, width: '100%', justifyContent: isWide ? 'flex-start' : 'center' }}
+            style={{
+              display: 'flex',
+              gap: isWide ? 20 : 12,
+              width: '100%',
+              justifyContent: isWide ? 'flex-start' : 'center',
+              paddingBottom: 36,
+            }}
           >
             <FigureCol
               src={frontImage}
@@ -209,13 +243,13 @@ export default function BodyMapHero({
               exit={{ opacity: 0, y: -8 }}
               transition={{ duration: 0.22, ease: [0.2, 0.65, 0.3, 0.9] }}
             >
-              <div style={{ fontSize: 11, fontWeight: 500, color: '#785b47', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 10 }}>
+              <div style={{ fontSize: 11, fontWeight: 600, color: '#0f766e', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 10 }}>
                 Selected region
               </div>
-              <h3 style={{ fontSize: 20, fontWeight: 700, margin: '0 0 6px', color: '#1a110a', letterSpacing: '-0.01em' }}>
+              <h3 style={{ fontSize: 22, fontWeight: 700, margin: '0 0 6px', color: '#0b3f3a', letterSpacing: '-0.02em', lineHeight: 1.1 }}>
                 {active.label}
               </h3>
-              <p style={{ fontSize: 14, lineHeight: 1.5, color: '#706b63', margin: '0 0 16px' }}>
+              <p style={{ fontSize: 14, lineHeight: 1.5, color: '#52736d', margin: '0 0 16px' }}>
                 {active.triageHint}
               </p>
 
@@ -225,13 +259,13 @@ export default function BodyMapHero({
                 ))}
               </div>
 
-              <div style={{ fontSize: 12, fontWeight: 600, color: '#1a110a', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 8 }}>
+              <div style={{ fontSize: 12, fontWeight: 600, color: '#0b3f3a', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 8 }}>
                 Common concerns
               </div>
               <ul style={{ listStyle: 'none', padding: 0, margin: '0 0 24px' }}>
                 {active.commonConditions.map(c => (
-                  <li key={c} style={{ display: 'flex', alignItems: 'flex-start', gap: 8, fontSize: 13, lineHeight: 1.6, color: '#554e44', padding: '2px 0' }}>
-                    <span style={{ color: '#785b47', marginTop: 2 }}>•</span>
+                  <li key={c} style={{ display: 'flex', alignItems: 'flex-start', gap: 8, fontSize: 13, lineHeight: 1.6, color: '#52736d', padding: '2px 0' }}>
+                    <span style={{ color: '#0f766e', marginTop: 2 }}>•</span>
                     <span>{c}</span>
                   </li>
                 ))}
@@ -239,7 +273,12 @@ export default function BodyMapHero({
 
               <button
                 type="button"
-                onClick={() => onStartTriage(active.id)}
+                onClick={() => {
+                  try {
+                    sessionStorage.setItem('pulsecare_pending_hotspot', active.id);
+                  } catch {}
+                  onStartTriage(active.id);
+                }}
                 className="hover-lift"
                 style={ctaStyle}
               >
@@ -247,17 +286,205 @@ export default function BodyMapHero({
                 <ArrowRight size={14} strokeWidth={2.4} />
               </button>
 
-              <div style={{ marginTop: 20, paddingTop: 16, borderTop: '1px solid #eae3d8', fontSize: 12, color: '#706b63', display: 'flex', alignItems: 'center', gap: 8 }}>
-                <AlertTriangle size={14} />
+              <div style={{ marginTop: 20, paddingTop: 16, borderTop: '1px solid #d9ece7', fontSize: 12, color: '#8aa39d', display: 'flex', alignItems: 'center', gap: 8 }}>
+                <AlertTriangle size={14} color="#dc2626" />
                 Severe symptoms? <a href="#emergency" style={{ color: '#dc2626', fontWeight: 600, textDecoration: 'none' }}>Get emergency care →</a>
               </div>
             </motion.div>
           </AnimatePresence>
 
-          <div style={{ marginTop: 16, display: 'flex', alignItems: 'center', gap: 8, fontSize: 11, color: '#706b63' }}>
+          <div style={{ marginTop: 16, display: 'flex', alignItems: 'center', gap: 8, fontSize: 11, color: '#8aa39d' }}>
             <kbd style={kbdStyle}>← →</kbd> <span>cycle regions</span>
           </div>
         </motion.aside>
+
+        {/* BOTTOM: Didn't find the correct point? Describe the cause */}
+        <div
+          style={{
+            gridColumn: isWide ? '1 / -1' : 'auto',
+            borderTop: '1px solid #d9ece7',
+            paddingTop: 22,
+            marginTop: 8,
+            display: 'flex',
+            flexDirection: 'column',
+            gap: 14,
+            background: 'linear-gradient(180deg, rgba(234, 246, 242, 0.45) 0%, rgba(234, 246, 242, 0.8) 100%)',
+            border: '1px solid #d9ece7',
+            borderRadius: 14,
+            padding: isWide ? '20px 24px' : '18px 16px',
+          }}
+        >
+          <div
+            style={{
+              display: 'flex',
+              flexDirection: isWide ? 'row' : 'column',
+              alignItems: isWide ? 'center' : 'flex-start',
+              justifyContent: 'space-between',
+              gap: 14,
+            }}
+          >
+            <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12 }}>
+              <div
+                style={{
+                  width: 38,
+                  height: 38,
+                  borderRadius: 10,
+                  background: '#ffffff',
+                  border: '1px solid #d9ece7',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  color: '#0f766e',
+                  flexShrink: 0,
+                  marginTop: 2,
+                  boxShadow: '0 1px 3px rgba(20, 60, 55, 0.05)',
+                }}
+              >
+                <HelpCircle size={20} />
+              </div>
+              <div>
+                <div style={{ fontSize: 16, fontWeight: 700, color: '#0b3f3a', letterSpacing: '-0.02em', lineHeight: 1.2 }}>
+                  Didn't find the correct point on the body?
+                </div>
+                <div style={{ fontSize: 13, color: '#52736d', marginTop: 3, lineHeight: 1.4 }}>
+                  Can't pinpoint your pain or disease on the body? Describe what you're experiencing directly and our clinical triage will match you.
+                </div>
+              </div>
+            </div>
+
+            <button
+              type="button"
+              onClick={() => handleCustomSubmit()}
+              className="hover-lift"
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 8,
+                background: '#0f766e',
+                color: '#ffffff',
+                border: 'none',
+                borderRadius: 12,
+                padding: '9px 18px',
+                fontSize: 13,
+                fontWeight: 600,
+                cursor: 'pointer',
+                fontFamily: "'Space Grotesk', sans-serif",
+                whiteSpace: 'nowrap',
+                alignSelf: isWide ? 'center' : 'stretch',
+                justifyContent: 'center',
+              }}
+            >
+              <span>Describe cause directly</span>
+              <ArrowRight size={14} strokeWidth={2.2} />
+            </button>
+          </div>
+
+          {/* Quick symptom description input */}
+          <form
+            onSubmit={(e) => handleCustomSubmit(e)}
+            style={{
+              display: 'flex',
+              flexDirection: isWide ? 'row' : 'column',
+              gap: 10,
+              width: '100%',
+              marginTop: 2,
+            }}
+          >
+            <div
+              style={{
+                position: 'relative',
+                flex: 1,
+                display: 'flex',
+                alignItems: 'center',
+                background: '#ffffff',
+                border: '1px solid #d9ece7',
+                borderRadius: 10,
+                padding: '0 14px',
+              }}
+            >
+              <Search size={15} color="#8aa39d" style={{ marginRight: 8, flexShrink: 0 }} />
+              <input
+                type="text"
+                value={customCause}
+                onChange={(e) => setCustomCause(e.target.value)}
+                placeholder="Describe your cause or symptoms (e.g. fatigue, unexplained nausea, ear buzzing, all-over body aches)..."
+                style={{
+                  width: '100%',
+                  border: 'none',
+                  outline: 'none',
+                  background: 'transparent',
+                  fontFamily: "'Space Grotesk', sans-serif",
+                  fontSize: 13,
+                  color: '#0b3f3a',
+                  padding: '10px 0',
+                }}
+              />
+            </div>
+            <button
+              type="submit"
+              className="hover-lift"
+              style={{
+                background: '#ff6b5b',
+                color: '#ffffff',
+                border: 'none',
+                borderRadius: 10,
+                padding: '10px 22px',
+                fontSize: 13,
+                fontWeight: 600,
+                cursor: 'pointer',
+                fontFamily: "'Space Grotesk', sans-serif",
+                whiteSpace: 'nowrap',
+                display: 'inline-flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: 6,
+                boxShadow: '0 2px 8px rgba(255, 107, 91, 0.2)',
+              }}
+            >
+              <span>Continue to triage</span>
+              <ArrowRight size={14} strokeWidth={2.2} />
+            </button>
+          </form>
+
+          {/* Systemic condition tags */}
+          <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 6, marginTop: 2 }}>
+            <span style={{ fontSize: 11, fontWeight: 600, color: '#8aa39d', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+              Common systemic concerns:
+            </span>
+            {SYSTEMIC_SUGGESTIONS.map((sug) => (
+              <button
+                key={sug}
+                type="button"
+                onClick={() => {
+                  setCustomCause(sug);
+                  handleCustomSubmit(undefined, sug);
+                }}
+                style={{
+                  background: '#ffffff',
+                  border: '1px solid #d9ece7',
+                  borderRadius: 9999,
+                  padding: '4px 11px',
+                  fontSize: 11,
+                  color: '#0f766e',
+                  fontWeight: 500,
+                  cursor: 'pointer',
+                  fontFamily: "'Space Grotesk', sans-serif",
+                  transition: 'background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease',
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.background = '#eaf6f2';
+                  e.currentTarget.style.borderColor = '#0f766e';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.background = '#ffffff';
+                  e.currentTarget.style.borderColor = '#d9ece7';
+                }}
+              >
+                + {sug}
+              </button>
+            ))}
+          </div>
+        </div>
       </motion.div>
     </section>
   );
@@ -310,52 +537,56 @@ function FigureCol({ src, label, viewActive, hotspots, allHotspots, activeIdx, o
             }}
           >
             {h.glow && (
-              <span style={{ position: 'absolute', left: '50%', top: '50%', width: 22, height: 22, margin: '-11px 0 0 -11px', borderRadius: 9999, background: '#785b47', opacity: 0.35, animation: reduced ? undefined : 'bmh-glow 2.4s ease-in-out infinite', pointerEvents: 'none' }} />
+              <span style={{ position: 'absolute', left: '50%', top: '50%', width: 22, height: 22, margin: '-11px 0 0 -11px', borderRadius: 9999, background: '#ff6b5b', opacity: 0.4, animation: reduced ? undefined : 'bmh-glow 2.4s ease-in-out infinite', pointerEvents: 'none' }} />
             )}
             {isActive && !reduced && [0, 0.4, 0.8].map(delay => (
-              <span key={delay} style={{ position: 'absolute', inset: 0, borderRadius: 9999, border: '1.5px solid #1a110a', animation: `bmh-pulse 1.2s ease-out ${delay}s infinite`, pointerEvents: 'none' }} />
+              <span key={delay} style={{ position: 'absolute', inset: 0, borderRadius: 9999, border: '1.5px solid #ff6b5b', animation: `bmh-pulse 1.2s ease-out ${delay}s infinite`, pointerEvents: 'none' }} />
             ))}
             <span style={{
               display: 'block', width: '100%', height: '100%', borderRadius: 9999,
-              background: isActive ? '#1a110a' : '#785b47',
-              boxShadow: isActive ? '0 0 0 3px rgba(26,17,10,0.08)' : '0 0 0 3px rgba(120,91,71,0.08)',
-              transition: 'background 180ms ease',
+              background: isActive ? '#ff6b5b' : '#0f766e',
+              boxShadow: isActive ? '0 0 0 3px rgba(255, 107, 91, 0.25)' : '0 0 0 3px rgba(15, 118, 110, 0.2)',
+              transition: 'background 180ms ease, box-shadow 180ms ease',
             }} />
           </motion.button>
         );
       })}
 
-      <div style={{ position: 'absolute', left: '50%', bottom: -6, transform: 'translateX(-50%)', pointerEvents: 'none', whiteSpace: 'nowrap' }}>
+      <div style={{ position: 'absolute', left: '50%', bottom: -32, transform: 'translateX(-50%)', pointerEvents: 'none', whiteSpace: 'nowrap' }}>
         <span style={viewActive ? activeViewLabelStyle : viewLabelStyle}>{label}</span>
       </div>
 
       {/* Component-scoped keyframes */}
       <style>{`
-        @keyframes bmh-pulse { 0%{transform:scale(1);opacity:.5} 100%{transform:scale(2.6);opacity:0} }
-        @keyframes bmh-glow  { 0%,100%{opacity:.35} 50%{opacity:.6} }
+        @keyframes bmh-pulse { 0%{transform:scale(1);opacity:.6} 100%{transform:scale(2.6);opacity:0} }
+        @keyframes bmh-glow  { 0%,100%{opacity:.35} 50%{opacity:.65} }
       `}</style>
     </div>
   );
 }
 
 const pillStyle: React.CSSProperties = {
-  display: 'inline-flex', alignItems: 'center', padding: '3px 10px', borderRadius: 9999,
-  background: '#faf7f1', border: '1px solid #eae3d8', fontSize: 11, fontWeight: 500, color: '#554e44',
+  display: 'inline-flex', alignItems: 'center', padding: '4px 12px', borderRadius: 9999,
+  background: '#eaf6f2', border: '1px solid #d9ece7', fontSize: 12, fontWeight: 500, color: '#0b3f3a',
+  fontFamily: "'Space Grotesk', sans-serif",
 };
 const ctaStyle: React.CSSProperties = {
-  display: 'inline-flex', alignItems: 'center', gap: 8, background: '#785b47', color: 'white',
-  border: 'none', borderRadius: 9999, padding: '10px 20px', fontSize: 14, fontWeight: 600, cursor: 'pointer',
-  boxShadow: '0 2px 8px rgba(75,68,57,0.04)',
+  display: 'inline-flex', alignItems: 'center', gap: 8, background: '#ff6b5b', color: '#ffffff',
+  border: 'none', borderRadius: 14, padding: '11px 22px', fontSize: 14, fontWeight: 600, cursor: 'pointer',
+  boxShadow: '0 2px 10px rgba(20, 60, 55, 0.08)',
+  fontFamily: "'Space Grotesk', sans-serif",
+  transition: 'background-color 0.15s ease',
 };
 const kbdStyle: React.CSSProperties = {
-  fontFamily: 'ui-monospace, SFMono-Regular, Menlo, monospace', fontSize: 10,
-  padding: '2px 6px', borderRadius: 4, background: 'white', border: '1px solid #eae3d8',
+  fontFamily: "'Space Grotesk', ui-monospace, SFMono-Regular, Menlo, monospace", fontSize: 10,
+  padding: '2px 6px', borderRadius: 4, background: '#ffffff', border: '1px solid #d9ece7', color: '#52736d',
 };
 const viewLabelStyle: React.CSSProperties = {
-  display: 'inline-block', padding: '3px 10px', borderRadius: 9999, background: '#faf7f1',
-  border: '1px solid #eae3d8', fontSize: 11, fontWeight: 600, color: '#706b63',
+  display: 'inline-block', padding: '4px 12px', borderRadius: 9999, background: '#eaf6f2',
+  border: '1px solid #d9ece7', fontSize: 11, fontWeight: 600, color: '#52736d',
   letterSpacing: '0.08em', textTransform: 'uppercase', transition: 'all 220ms ease',
+  fontFamily: "'Space Grotesk', sans-serif",
 };
 const activeViewLabelStyle: React.CSSProperties = {
-  ...viewLabelStyle, background: '#1a110a', borderColor: '#1a110a', color: 'white',
+  ...viewLabelStyle, background: '#0f766e', borderColor: '#0f766e', color: '#ffffff',
 };

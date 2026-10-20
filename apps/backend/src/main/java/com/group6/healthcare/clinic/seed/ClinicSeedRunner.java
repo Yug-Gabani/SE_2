@@ -2,8 +2,10 @@ package com.group6.healthcare.clinic.seed;
 
 import com.group6.healthcare.clinic.entity.Doctor;
 import com.group6.healthcare.clinic.entity.DoctorSlot;
+import com.group6.healthcare.clinic.entity.Hospital;
 import com.group6.healthcare.clinic.repository.DoctorRepository;
 import com.group6.healthcare.clinic.repository.DoctorSlotRepository;
+import com.group6.healthcare.clinic.repository.HospitalRepository;
 import com.group6.healthcare.user.entity.Role;
 import com.group6.healthcare.user.entity.User;
 import com.group6.healthcare.user.repository.UserRepository;
@@ -41,29 +43,34 @@ public class ClinicSeedRunner {
      * `doctor1@pulse.test` and `doctor.mitchell@pulse.test` are kept as pre-existing aliases
      * (same password) because earlier builds created them.
      */
+    /**
+     * Seed doctors are now linked to real Indian hospitals from the PMJAY CSV.
+     * The `hospital` string MUST match a Hospital row's name exactly (case-insensitive) —
+     * boot fails otherwise, per the strict rule.
+     */
     private static final List<SeedDoctor> DOCTORS = List.of(
             new SeedDoctor("Dr. Sarah Mitchell, MD", "Emergency & Internal Medicine",
-                    "Metropolitan Medical Center",
+                    "Narayana Harudayalaya Hospitals",
                     "https://images.unsplash.com/photo-1559839734-2b71ea197ec2?auto=format&fit=crop&q=80&w=300",
                     new BigDecimal("4.90"), "doctor.mitchell@pulse.test"),
             new SeedDoctor("Dr. Robert Chen, FACC", "Cardiology",
-                    "Heart & Vascular Institute",
+                    "Asian Heart Institute And Research Center",
                     "https://images.unsplash.com/photo-1622253692010-333f2da6031d?auto=format&fit=crop&q=80&w=300",
                     new BigDecimal("4.95"), "doctor.chen@pulse.test"),
             new SeedDoctor("Dr. Emily Vance, MD", "Pediatrics",
-                    "St. Jude Children & Family Clinic",
+                    "Lilavati Hospital and Research Center",
                     "https://images.unsplash.com/photo-1594824813625-e517a26f6e16?auto=format&fit=crop&q=80&w=300",
                     new BigDecimal("4.88"), "doctor.vance@pulse.test"),
             new SeedDoctor("Dr. Marcus Reynolds, DO", "Neurology",
-                    "NeuroCare Regional Hospital",
+                    "Breach Candy Hospital, Mumbai",
                     "https://images.unsplash.com/photo-1612349317150-e413f6a5b16d?auto=format&fit=crop&q=80&w=300",
                     new BigDecimal("4.82"), "doctor.reynolds@pulse.test"),
             new SeedDoctor("Dr. Kavita Shah, MBBS", "General Medicine",
-                    "Apollo Hospitals, Ahmedabad",
+                    "Apollo Hospital International Ltd.",
                     "https://images.unsplash.com/photo-1527613426441-4da17471b66d?auto=format&fit=crop&q=80&w=300",
                     new BigDecimal("4.86"), "doctor1@pulse.test"),
             new SeedDoctor("Dr. Suresh Rao, MD", "Dermatology",
-                    "KD Hospital, Ahmedabad",
+                    "Sahyadri Hospital",
                     "https://images.unsplash.com/photo-1537368910025-700350fe46c7?auto=format&fit=crop&q=80&w=300",
                     new BigDecimal("4.78"), "doctor.rao@pulse.test")
     );
@@ -83,18 +90,27 @@ public class ClinicSeedRunner {
     ApplicationRunner clinicSeed(DoctorRepository doctorRepository,
                                  DoctorSlotRepository slotRepository,
                                  UserRepository userRepository,
+                                 HospitalRepository hospitalRepository,
                                  PasswordEncoder passwordEncoder) {
-        return args -> seed(doctorRepository, slotRepository, userRepository, passwordEncoder);
+        return args -> seed(doctorRepository, slotRepository, userRepository, hospitalRepository, passwordEncoder);
     }
 
     @Transactional
     void seed(DoctorRepository doctorRepository,
               DoctorSlotRepository slotRepository,
               UserRepository userRepository,
+              HospitalRepository hospitalRepository,
               PasswordEncoder passwordEncoder) {
         int demoUsers = 0;
         for (SeedDoctor sd : DOCTORS) {
-            // Ensure the login user exists first (for doctors that should be loginable).
+            // Strict rule: a Hospital row MUST exist that matches the seed doctor's hospital name.
+            Hospital hospital = hospitalRepository.findFirstByNameIgnoreCase(sd.hospital())
+                    .orElseThrow(() -> new IllegalStateException(
+                            "Seed doctor '" + sd.name() + "' references hospital '" + sd.hospital()
+                                    + "' which does not exist in the Hospital directory. "
+                                    + "Fix the seed list or import the hospitals CSV first."));
+
+            // Ensure the login user exists first.
             User doctorUser = null;
             if (sd.loginEmail() != null) {
                 doctorUser = userRepository.findByEmailIgnoreCase(sd.loginEmail())
@@ -109,6 +125,7 @@ public class ClinicSeedRunner {
             }
 
             final User linkedUser = doctorUser;
+            final UUID hospitalId = hospital.getId();
             Doctor doctor = doctorRepository.findAll().stream()
                     .filter(d -> d.getFullName().equalsIgnoreCase(sd.name()))
                     .findFirst()
@@ -117,16 +134,25 @@ public class ClinicSeedRunner {
                             .fullName(sd.name())
                             .specialty(sd.specialty())
                             .hospital(sd.hospital())
+                            .hospitalId(hospitalId)
                             .avatarUrl(sd.avatarUrl())
                             .rating(sd.rating())
                             .bio(sd.name() + " specialises in " + sd.specialty() + ".")
                             .build()));
 
-            // Backfill user_id on an existing doctor row that was seeded before this change landed.
+            // Backfill user_id + hospital_id on previously-seeded rows.
+            boolean dirty = false;
             if (linkedUser != null && doctor.getUserId() == null) {
-                doctor.setUserId(linkedUser.getId());
-                doctorRepository.save(doctor);
+                doctor.setUserId(linkedUser.getId()); dirty = true;
             }
+            if (doctor.getHospitalId() == null) {
+                doctor.setHospitalId(hospital.getId()); dirty = true;
+            }
+            // Also keep the human-readable hospital name in sync if the seed renamed it.
+            if (!sd.hospital().equalsIgnoreCase(doctor.getHospital())) {
+                doctor.setHospital(sd.hospital()); dirty = true;
+            }
+            if (dirty) doctorRepository.save(doctor);
 
             seedSlotsFor(doctor, slotRepository);
         }

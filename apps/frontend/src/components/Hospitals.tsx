@@ -63,10 +63,10 @@ export const Hospitals: React.FC = () => {
 
   return (
     <PageTransition style={{ maxWidth: '1100px', margin: '48px auto', padding: '0 24px' }}>
-      <h1 style={{ fontSize: '28px', fontWeight: 700, color: '#1a110a', margin: 0, letterSpacing: '-0.02em' }}>
+      <h1 style={{ fontSize: '28px', fontWeight: 700, color: '#0b3f3a', margin: 0, letterSpacing: '-0.02em' }}>
         Browse hospitals
       </h1>
-      <p style={{ color: '#706b63', margin: '6px 0 24px 0' }}>
+      <p style={{ color: '#52736d', margin: '6px 0 24px 0' }}>
         Search across 30,000+ hospitals from the government PMJAY directory.
       </p>
 
@@ -82,7 +82,7 @@ export const Hospitals: React.FC = () => {
         }}
       >
         <div style={{ position: 'relative' }}>
-          <Search size={16} color="#785b47" style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)' }} />
+          <Search size={16} color="#0f766e" style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)' }} />
           <input
             type="text"
             value={q}
@@ -90,7 +90,7 @@ export const Hospitals: React.FC = () => {
             placeholder="Hospital name (e.g. Apollo, Lilavati)"
             style={{
               width: '100%', padding: '10px 12px 10px 36px',
-              borderRadius: '10px', border: '1px solid #eae3d8',
+              borderRadius: '10px', border: '1px solid #d9ece7',
               fontSize: '14px', outline: 'none', boxSizing: 'border-box',
               backgroundColor: '#ffffff',
             }}
@@ -116,7 +116,7 @@ export const Hospitals: React.FC = () => {
           placeholder="Specialty (e.g. Cardiology)"
           style={{
             padding: '10px 12px', borderRadius: '10px',
-            border: '1px solid #eae3d8', fontSize: '14px', outline: 'none',
+            border: '1px solid #d9ece7', fontSize: '14px', outline: 'none',
             boxSizing: 'border-box', backgroundColor: '#ffffff',
           }}
         />
@@ -132,7 +132,7 @@ export const Hospitals: React.FC = () => {
       )}
 
       {loading && (
-        <div style={{ color: '#706b63', fontSize: '13px', marginBottom: '12px' }}>
+        <div style={{ color: '#52736d', fontSize: '13px', marginBottom: '12px' }}>
           <Loader2 size={14} className="animate-spin" style={{ display: 'inline', marginRight: 6, verticalAlign: 'middle' }} />
           Searching…
         </div>
@@ -140,9 +140,9 @@ export const Hospitals: React.FC = () => {
 
       {!loading && !initial && results.length === 0 && (
         <div className="card card-hover" style={{ padding: '48px', textAlign: 'center' }}>
-          <Building2 size={28} color="#b8b0a5" style={{ marginBottom: 8 }} />
-          <div style={{ fontSize: '15px', fontWeight: 600, color: '#1a110a' }}>No hospitals match these filters</div>
-          <div style={{ fontSize: '13px', color: '#706b63', marginTop: 6 }}>
+          <Building2 size={28} color="#8aa39d" style={{ marginBottom: 8 }} />
+          <div style={{ fontSize: '15px', fontWeight: 600, color: '#0b3f3a' }}>No hospitals match these filters</div>
+          <div style={{ fontSize: '13px', color: '#52736d', marginTop: 6 }}>
             Try a different name, loosen the state/city, or clear the specialty filter.
           </div>
         </div>
@@ -150,7 +150,7 @@ export const Hospitals: React.FC = () => {
 
       {results.length > 0 && (
         <>
-          <div style={{ color: '#706b63', fontSize: '13px', marginBottom: '12px' }}>
+          <div style={{ color: '#52736d', fontSize: '13px', marginBottom: '12px' }}>
             Showing {results.length}{hasFilters ? ' matching' : ''} hospital{results.length === 1 ? '' : 's'}
           </div>
           <motion.div
@@ -170,10 +170,10 @@ export const Hospitals: React.FC = () => {
                 className="card-hover"
                 style={{
                   backgroundColor: '#ffffff',
-                  border: '1px solid #eae3d8',
+                  border: '1px solid #d9ece7',
                   borderRadius: '16px',
                   padding: '20px',
-                  boxShadow: '0 2px 8px rgba(75, 68, 57, 0.04)',
+                  boxShadow: '0 2px 8px rgba(20, 60, 55, 0.05)',
                   display: 'flex',
                   flexDirection: 'column',
                   justifyContent: 'space-between',
@@ -184,7 +184,7 @@ export const Hospitals: React.FC = () => {
                   <h3 style={{
                     fontSize: '16px',
                     fontWeight: 700,
-                    color: '#1a110a',
+                    color: '#0b3f3a',
                     margin: '0 0 6px 0',
                     lineHeight: '1.35',
                     letterSpacing: '-0.01em',
@@ -193,13 +193,13 @@ export const Hospitals: React.FC = () => {
                   </h3>
                   <div style={{
                     fontSize: '13px',
-                    color: '#706b63',
+                    color: '#52736d',
                     display: 'flex',
                     alignItems: 'center',
                     gap: '6px',
                     lineHeight: '1.4',
                   }}>
-                    <MapPin size={14} color="#785b47" style={{ flexShrink: 0 }} />
+                    <MapPin size={14} color="#0f766e" style={{ flexShrink: 0 }} />
                     <span>{[h.city, h.state].filter(Boolean).join(', ') || 'Location unknown'}</span>
                   </div>
 
@@ -214,16 +214,16 @@ export const Hospitals: React.FC = () => {
                             borderRadius: '9999px',
                             fontSize: '11px',
                             fontWeight: 500,
-                            color: '#554e44',
-                            backgroundColor: '#faf7f1',
-                            border: '1px solid #eae3d8',
+                            color: '#0b3f3a',
+                            backgroundColor: '#eaf6f2',
+                            border: '1px solid #d9ece7',
                           }}
                         >
                           {s}
                         </span>
                       ))}
                       {h.specialties.length > 4 && (
-                        <span style={{ fontSize: '11px', color: '#8c857b', padding: '3px 4px' }}>
+                        <span style={{ fontSize: '11px', color: '#8aa39d', padding: '3px 4px' }}>
                           +{h.specialties.length - 4} more
                         </span>
                       )}
@@ -234,13 +234,13 @@ export const Hospitals: React.FC = () => {
                 {/* Bottom Footer Section with Aligned Action */}
                 <div style={{
                   paddingTop: '14px',
-                  borderTop: '1px solid #f3ece3',
+                  borderTop: '1px solid #d9ece7',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'space-between',
                   marginTop: 'auto',
                 }}>
-                  <span style={{ fontSize: '12px', color: '#8c857b', fontWeight: 500 }}>
+                  <span style={{ fontSize: '12px', color: '#8aa39d', fontWeight: 500 }}>
                     PMJAY Empanelled
                   </span>
                   <button
@@ -248,8 +248,8 @@ export const Hospitals: React.FC = () => {
                     className="hover-lift"
                     style={{
                       backgroundColor: 'transparent',
-                      color: '#785b47',
-                      border: '1px solid #785b47',
+                      color: '#0f766e',
+                      border: '1px solid #0f766e',
                       borderRadius: '9999px',
                       padding: '7px 16px',
                       fontSize: '13px',

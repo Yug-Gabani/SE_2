@@ -32,6 +32,7 @@ public class SecurityConfig {
             "/api/auth/login",
             "/api/auth/refresh",
             "/api/ping",
+            "/api/v1/hospitals/public/**",
             "/actuator/health",
             "/actuator/info",
             "/v3/api-docs/**",

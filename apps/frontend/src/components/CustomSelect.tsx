@@ -70,30 +70,33 @@ export const CustomSelect: React.FC<CustomSelectProps> = ({
           padding: '6px 20px 6px 0',
           fontSize: '14px',
           fontWeight: 600,
-          color: '#2a231b',
+          color: '#0b3f3a',
+          fontFamily: "'Space Grotesk', sans-serif",
         };
       case 'input':
         return {
           backgroundColor: '#ffffff',
-          border: '1px solid #eae3d8',
+          border: '1px solid #d9ece7',
           borderRadius: '10px',
           padding: '10px 32px 10px 14px',
           fontSize: '14px',
           fontWeight: 500,
-          color: '#2a231b',
-          boxShadow: '0 1px 3px rgba(75, 68, 57, 0.04)',
+          color: '#0b3f3a',
+          boxShadow: '0 2px 10px rgba(20, 60, 55, 0.08)',
+          fontFamily: "'Space Grotesk', sans-serif",
         };
       case 'pill':
       default:
         return {
           backgroundColor: '#ffffff',
-          border: '1px solid #eae3d8',
+          border: '1px solid #d9ece7',
           borderRadius: '9999px',
           padding: '7px 28px 7px 14px',
           fontSize: '13px',
           fontWeight: 500,
-          color: '#2b251f',
-          boxShadow: '0 2px 6px rgba(75, 68, 57, 0.03)',
+          color: '#0b3f3a',
+          boxShadow: '0 2px 10px rgba(20, 60, 55, 0.08)',
+          fontFamily: "'Space Grotesk', sans-serif",
         };
     }
   };
@@ -121,19 +124,19 @@ export const CustomSelect: React.FC<CustomSelectProps> = ({
           gap: '8px',
           cursor: disabled ? 'not-allowed' : 'pointer',
           opacity: disabled ? 0.6 : 1,
-          fontFamily: 'inherit',
+          fontFamily: "'Space Grotesk', sans-serif",
           outline: 'none',
           position: 'relative',
           transition: 'border-color 150ms ease, box-shadow 150ms ease',
         }}
         onMouseEnter={e => {
           if (!disabled && variant !== 'borderless') {
-            e.currentTarget.style.borderColor = '#785b47';
+            e.currentTarget.style.borderColor = '#0f766e';
           }
         }}
         onMouseLeave={e => {
           if (!disabled && variant !== 'borderless' && !isOpen) {
-            e.currentTarget.style.borderColor = '#eae3d8';
+            e.currentTarget.style.borderColor = '#d9ece7';
           }
         }}
       >
@@ -152,7 +155,7 @@ export const CustomSelect: React.FC<CustomSelectProps> = ({
           style={{
             display: 'inline-flex',
             alignItems: 'center',
-            color: '#785b47',
+            color: '#0f766e',
             flexShrink: 0,
             position: variant === 'borderless' ? 'absolute' : undefined,
             right: variant === 'borderless' ? 0 : undefined,
@@ -177,13 +180,14 @@ export const CustomSelect: React.FC<CustomSelectProps> = ({
               width: 'max-content',
               maxWidth: '300px',
               backgroundColor: '#ffffff',
-              border: '1px solid #eae3d8',
+              border: '1px solid #d9ece7',
               borderRadius: '14px',
               padding: '6px',
-              boxShadow: '0 10px 28px rgba(75, 68, 57, 0.12)',
+              boxShadow: '0 10px 24px rgba(20, 60, 55, 0.10)',
               zIndex: 100,
               maxHeight: '260px',
               overflowY: 'auto',
+              fontFamily: "'Space Grotesk', sans-serif",
             }}
           >
             {normalizedOptions.map(opt => {
@@ -204,8 +208,8 @@ export const CustomSelect: React.FC<CustomSelectProps> = ({
                     padding: '8px 12px',
                     borderRadius: '8px',
                     border: 'none',
-                    backgroundColor: isSelected ? '#faf7f1' : 'transparent',
-                    color: isSelected ? '#785b47' : '#1a110a',
+                    backgroundColor: isSelected ? '#eaf6f2' : 'transparent',
+                    color: isSelected ? '#0f766e' : '#0b3f3a',
                     fontWeight: isSelected ? 600 : 400,
                     fontSize: '13px',
                     textAlign: 'left',
@@ -216,19 +220,19 @@ export const CustomSelect: React.FC<CustomSelectProps> = ({
                   }}
                   onMouseEnter={e => {
                     if (!isSelected) {
-                      e.currentTarget.style.backgroundColor = '#faf7f1';
-                      e.currentTarget.style.color = '#785b47';
+                      e.currentTarget.style.backgroundColor = '#eaf6f2';
+                      e.currentTarget.style.color = '#0f766e';
                     }
                   }}
                   onMouseLeave={e => {
                     if (!isSelected) {
                       e.currentTarget.style.backgroundColor = 'transparent';
-                      e.currentTarget.style.color = '#1a110a';
+                      e.currentTarget.style.color = '#0b3f3a';
                     }
                   }}
                 >
                   <span style={{ whiteSpace: 'nowrap' }}>{opt.label}</span>
-                  {isSelected && <Check size={14} color="#785b47" style={{ flexShrink: 0 }} />}
+                  {isSelected && <Check size={14} color="#0f766e" style={{ flexShrink: 0 }} />}
                 </button>
               );
             })}

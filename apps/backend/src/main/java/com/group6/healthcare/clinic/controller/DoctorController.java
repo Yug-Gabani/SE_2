@@ -29,9 +29,11 @@ public class DoctorController {
     }
 
     @GetMapping
-    @Operation(summary = "List doctors, optionally filtered by specialty substring")
-    public ApiResponse<List<DoctorResponse>> list(@RequestParam(name = "specialty", required = false) String specialty) {
-        return ApiResponse.ok(doctorService.listDoctors(specialty));
+    @Operation(summary = "List doctors, optionally filtered by specialty substring and/or hospital id")
+    public ApiResponse<List<DoctorResponse>> list(
+            @RequestParam(name = "specialty", required = false) String specialty,
+            @RequestParam(name = "hospitalId", required = false) UUID hospitalId) {
+        return ApiResponse.ok(doctorService.listDoctors(specialty, hospitalId));
     }
 
     @GetMapping("/{id}")

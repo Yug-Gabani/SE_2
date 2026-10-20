@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import {
-  Activity,
   ArrowLeft,
   CheckCircle2,
   Lock,
@@ -36,11 +35,10 @@ export const AuthPage: React.FC<AuthPageProps> = ({ onLoginSuccess, currentUser 
     setIsLogin(!location.pathname.includes('/signup'));
   }, [location.pathname]);
 
-  // Where to land after successful auth. Honours ?next=/some/path (used by the landing-page
-   // "Login/Signup to book" CTA so users return to the hospital they were browsing).
-   const nextParam = new URLSearchParams(location.search).get('next');
-   const landingFor = (role: Role) =>
-     nextParam ? nextParam : role === 'DOCTOR' ? '/doctor' : '/patient';
+  // Where to land after successful auth.
+  const nextParam = new URLSearchParams(location.search).get('next');
+  const landingFor = (role: Role) =>
+    nextParam ? nextParam : role === 'DOCTOR' ? '/doctor' : '/patient';
 
   // If already logged in, redirect to appropriate landing
   useEffect(() => {
@@ -120,7 +118,7 @@ export const AuthPage: React.FC<AuthPageProps> = ({ onLoginSuccess, currentUser 
     }
   };
 
-  // 1-Click Quick Demo Login (Uses the registered test users)
+  // 1-Click Quick Demo Login (Uses registered test users)
   const handleQuickDemo = async (demoRole: 'PATIENT' | 'DOCTOR') => {
     setError(null);
     setLoading(true);
@@ -155,11 +153,11 @@ export const AuthPage: React.FC<AuthPageProps> = ({ onLoginSuccess, currentUser 
       <div
         style={{
           minHeight: '100vh',
-          backgroundColor: '#f8f3eb',
+          backgroundColor: '#eaf6f2',
           display: 'flex',
           flexDirection: 'column',
-          color: '#1a110a',
-          fontFamily: 'Inter, system-ui, -apple-system, sans-serif',
+          color: '#0b3f3a',
+          fontFamily: "'Space Grotesk', system-ui, -apple-system, sans-serif",
         }}
       >
         {/* Top mini-bar with Back to Home only */}
@@ -182,455 +180,464 @@ export const AuthPage: React.FC<AuthPageProps> = ({ onLoginSuccess, currentUser 
               display: 'inline-flex',
               alignItems: 'center',
               gap: '8px',
-              color: '#785b47',
+              color: '#0f766e',
               textDecoration: 'none',
               fontSize: '14px',
               fontWeight: 600,
               padding: '8px 16px',
               borderRadius: '9999px',
               backgroundColor: '#ffffff',
-              border: '1px solid #eae3d8',
-              boxShadow: '0 2px 6px rgba(75, 68, 57, 0.04)',
+              border: '1px solid #d9ece7',
+              boxShadow: '0 2px 10px rgba(20, 60, 55, 0.08)',
+              transition: 'all 0.15s ease',
             }}
-          onMouseEnter={e => {
-            e.currentTarget.style.backgroundColor = '#f5efe6';
-            e.currentTarget.style.color = '#543b2a';
-          }}
-          onMouseLeave={e => {
-            e.currentTarget.style.backgroundColor = '#ffffff';
-            e.currentTarget.style.color = '#785b47';
-          }}
-        >
-          <ArrowLeft size={16} />
-          Back to Home
-        </Link>
-      </div>
-
-      {/* Main Container - Centered Single Form Card */}
-      <div
-        style={{
-          flex: 1,
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          padding: '24px 20px 60px 20px',
-        }}
-      >
-        <div
-          style={{
-            maxWidth: '480px',
-            width: '100%',
-            backgroundColor: '#ffffff',
-            borderRadius: '24px',
-            boxShadow: '0 20px 50px rgba(75, 68, 57, 0.08)',
-            border: '1px solid #eae3d8',
-            padding: '40px 36px',
-            boxSizing: 'border-box',
-          }}
-        >
-          {/* Logo & Header */}
-          <div style={{ textAlign: 'center', marginBottom: '28px' }}>
-            <div
-              style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '8px',
-                marginBottom: '16px',
-              }}
-            >
-              <div
-                style={{
-                  width: '36px',
-                  height: '36px',
-                  borderRadius: '10px',
-                  backgroundColor: '#785b47',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  color: '#ffffff',
-                }}
-              >
-                <Activity size={20} />
-              </div>
-              <span style={{ fontSize: '22px', fontWeight: 700, letterSpacing: '-0.02em', color: '#1a110a' }}>
-                PulseCare
-              </span>
-            </div>
-
-            <h1
-              style={{
-                fontSize: '24px',
-                fontWeight: 700,
-                color: '#1a110a',
-                margin: '0 0 6px 0',
-                letterSpacing: '-0.02em',
-              }}
-            >
-              {isLogin ? 'Sign In to PulseCare' : 'Create an Account'}
-            </h1>
-            <p style={{ fontSize: '14px', color: '#706b63', margin: 0, lineHeight: 1.5 }}>
-              {isLogin
-                ? 'Enter your credentials to access your health portal'
-                : 'Get started with smart healthcare triage & consultations'}
-            </p>
-          </div>
-
-          {/* Toggle Switch */}
-          <div
-            style={{
-              display: 'flex',
-              backgroundColor: '#f5efe6',
-              borderRadius: '12px',
-              padding: '4px',
-              marginBottom: '26px',
+            onMouseEnter={e => {
+              e.currentTarget.style.backgroundColor = '#def0eb';
+            }}
+            onMouseLeave={e => {
+              e.currentTarget.style.backgroundColor = '#ffffff';
             }}
           >
-            <button
-              type="button"
-              onClick={() => switchMode(true)}
-              style={{
-                flex: 1,
-                padding: '9px',
-                borderRadius: '9px',
-                border: 'none',
-                fontSize: '14px',
-                fontWeight: 600,
-                cursor: 'pointer',
-                backgroundColor: isLogin ? '#ffffff' : 'transparent',
-                color: isLogin ? '#1a110a' : '#706b63',
-                boxShadow: isLogin ? '0 2px 8px rgba(75, 68, 57, 0.08)' : 'none',
-                transition: 'all 0.2s ease',
-              }}
-            >
-              Sign In
-            </button>
-            <button
-              type="button"
-              onClick={() => switchMode(false)}
-              style={{
-                flex: 1,
-                padding: '9px',
-                borderRadius: '9px',
-                border: 'none',
-                fontSize: '14px',
-                fontWeight: 600,
-                cursor: 'pointer',
-                backgroundColor: !isLogin ? '#ffffff' : 'transparent',
-                color: !isLogin ? '#1a110a' : '#706b63',
-                boxShadow: !isLogin ? '0 2px 8px rgba(75, 68, 57, 0.08)' : 'none',
-                transition: 'all 0.2s ease',
-              }}
-            >
-              Create Account
-            </button>
-          </div>
+            <ArrowLeft size={16} />
+            Back to Home
+          </Link>
+        </div>
 
-          {/* Error Message */}
-          {error && (
-            <div
-              style={{
-                backgroundColor: '#fef2f2',
-                border: '1px solid #fecaca',
-                borderRadius: '12px',
-                padding: '12px 14px',
-                marginBottom: '18px',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '10px',
-                color: '#991b1b',
-                fontSize: '13px',
-              }}
-            >
-              <AlertCircle size={16} style={{ flexShrink: 0 }} />
-              <span>{error}</span>
-            </div>
-          )}
-
-          {/* Success Message */}
-          {successMsg && (
-            <div
-              style={{
-                backgroundColor: '#f0fdf4',
-                border: '1px solid #bbf7d0',
-                borderRadius: '12px',
-                padding: '12px 14px',
-                marginBottom: '18px',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '10px',
-                color: '#166534',
-                fontSize: '13px',
-              }}
-            >
-              <CheckCircle2 size={16} style={{ flexShrink: 0 }} />
-              <span>{successMsg}</span>
-            </div>
-          )}
-
-          <form onSubmit={handleSubmit}>
-            {/* Role Selection (Only shown when Creating Account) */}
-            {!isLogin && (
-              <div style={{ marginBottom: '20px' }}>
-                <label
+        {/* Main Container - Centered Single Form Card */}
+        <div
+          style={{
+            flex: 1,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: '24px 20px 60px 20px',
+          }}
+        >
+          <div
+            style={{
+              maxWidth: '480px',
+              width: '100%',
+              backgroundColor: '#ffffff',
+              borderRadius: '20px',
+              boxShadow: '0 10px 24px rgba(20, 60, 55, 0.10)',
+              border: '1px solid #d9ece7',
+              padding: '40px 36px',
+              boxSizing: 'border-box',
+            }}
+          >
+            {/* Logo & Header */}
+            <div style={{ textAlign: 'center', marginBottom: '28px' }}>
+              <div
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '10px',
+                  marginBottom: '16px',
+                }}
+              >
+                <div
                   style={{
-                    display: 'block',
-                    fontSize: '13px',
-                    fontWeight: 600,
-                    color: '#443e37',
-                    marginBottom: '8px',
+                    width: '32px',
+                    height: '32px',
+                    borderRadius: '50%',
+                    backgroundColor: '#0f766e',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    boxShadow: '0 2px 8px rgba(15, 118, 110, 0.24)',
                   }}
                 >
-                  I am registering as:
-                </label>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
-                  <div
-                    onClick={() => setRole('PATIENT')}
-                    style={{
-                      padding: '10px 12px',
-                      borderRadius: '12px',
-                      border: `2px solid ${role === 'PATIENT' ? '#785b47' : '#eae3d8'}`,
-                      backgroundColor: role === 'PATIENT' ? '#faf8f5' : '#ffffff',
-                      cursor: 'pointer',
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '8px',
-                      transition: 'all 0.15s ease',
-                    }}
-                  >
-                    <UserIcon size={16} color={role === 'PATIENT' ? '#785b47' : '#9ca3af'} />
-                    <div>
-                      <div style={{ fontSize: '13px', fontWeight: 600, color: '#1a110a' }}>Patient</div>
-                      <div style={{ fontSize: '11px', color: '#706b63' }}>Seek medical care</div>
-                    </div>
-                  </div>
-
-                  <div
-                    onClick={() => setRole('DOCTOR')}
-                    style={{
-                      padding: '10px 12px',
-                      borderRadius: '12px',
-                      border: `2px solid ${role === 'DOCTOR' ? '#0d9488' : '#eae3d8'}`,
-                      backgroundColor: role === 'DOCTOR' ? '#f0fdfa' : '#ffffff',
-                      cursor: 'pointer',
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '8px',
-                      transition: 'all 0.15s ease',
-                    }}
-                  >
-                    <Stethoscope size={16} color={role === 'DOCTOR' ? '#0d9488' : '#9ca3af'} />
-                    <div>
-                      <div style={{ fontSize: '13px', fontWeight: 600, color: '#1a110a' }}>Doctor</div>
-                      <div style={{ fontSize: '11px', color: '#706b63' }}>Clinical provider</div>
-                    </div>
-                  </div>
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#ffffff" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M2 12h4l3-7 4 14 3-7h6" />
+                  </svg>
                 </div>
+                <span style={{ fontSize: '22px', fontWeight: 700, letterSpacing: '-0.02em', color: '#0b3f3a' }}>
+                  pulsecare
+                </span>
+              </div>
+
+              <h1
+                style={{
+                  fontSize: '26px',
+                  fontWeight: 700,
+                  color: '#0b3f3a',
+                  margin: '0 0 6px 0',
+                  letterSpacing: '-0.02em',
+                  lineHeight: 1.1,
+                }}
+              >
+                {isLogin ? 'Sign In to pulsecare' : 'Create an Account'}
+              </h1>
+              <p style={{ fontSize: '14px', color: '#52736d', margin: 0, lineHeight: 1.5 }}>
+                {isLogin
+                  ? 'Enter your credentials to access your health portal'
+                  : 'Get started with smart healthcare triage & consultations'}
+              </p>
+            </div>
+
+            {/* Toggle Switch */}
+            <div
+              style={{
+                display: 'flex',
+                backgroundColor: '#eaf6f2',
+                borderRadius: '12px',
+                padding: '4px',
+                marginBottom: '26px',
+              }}
+            >
+              <button
+                type="button"
+                onClick={() => switchMode(true)}
+                style={{
+                  flex: 1,
+                  padding: '9px',
+                  borderRadius: '9px',
+                  border: 'none',
+                  fontSize: '14px',
+                  fontWeight: 600,
+                  cursor: 'pointer',
+                  backgroundColor: isLogin ? '#ffffff' : 'transparent',
+                  color: isLogin ? '#0b3f3a' : '#52736d',
+                  boxShadow: isLogin ? '0 2px 8px rgba(20, 60, 55, 0.08)' : 'none',
+                  transition: 'all 0.2s ease',
+                  fontFamily: "'Space Grotesk', sans-serif",
+                }}
+              >
+                Sign In
+              </button>
+              <button
+                type="button"
+                onClick={() => switchMode(false)}
+                style={{
+                  flex: 1,
+                  padding: '9px',
+                  borderRadius: '9px',
+                  border: 'none',
+                  fontSize: '14px',
+                  fontWeight: 600,
+                  cursor: 'pointer',
+                  backgroundColor: !isLogin ? '#ffffff' : 'transparent',
+                  color: !isLogin ? '#0b3f3a' : '#52736d',
+                  boxShadow: !isLogin ? '0 2px 8px rgba(20, 60, 55, 0.08)' : 'none',
+                  transition: 'all 0.2s ease',
+                  fontFamily: "'Space Grotesk', sans-serif",
+                }}
+              >
+                Create Account
+              </button>
+            </div>
+
+            {/* Error Message */}
+            {error && (
+              <div
+                style={{
+                  backgroundColor: '#fef2f2',
+                  border: '1px solid #fecaca',
+                  borderRadius: '12px',
+                  padding: '12px 14px',
+                  marginBottom: '18px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '10px',
+                  color: '#dc2626',
+                  fontSize: '13px',
+                }}
+              >
+                <AlertCircle size={16} style={{ flexShrink: 0 }} />
+                <span>{error}</span>
               </div>
             )}
 
-            {/* Full Name Field (Registration only) */}
-            {!isLogin && (
-              <WaveInput
-                id="fullName"
-                label="Full Legal Name"
-                type="text"
-                required
-                value={fullName}
-                onChange={setFullName}
-                icon={<UserIcon size={17} />}
-              />
+            {/* Success Message */}
+            {successMsg && (
+              <div
+                style={{
+                  backgroundColor: '#eaf6f2',
+                  border: '1px solid #d9ece7',
+                  borderRadius: '12px',
+                  padding: '12px 14px',
+                  marginBottom: '18px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '10px',
+                  color: '#0f766e',
+                  fontSize: '13px',
+                }}
+              >
+                <CheckCircle2 size={16} style={{ flexShrink: 0 }} />
+                <span>{successMsg}</span>
+              </div>
             )}
 
-            {/* Email Field */}
-            <WaveInput
-              id="email"
-              label="Email Address"
-              type="email"
-              required
-              value={email}
-              onChange={setEmail}
-              icon={<Mail size={17} />}
-            />
-
-            {/* Phone Field (Optional, Registration only) */}
-            {!isLogin && (
-              <WaveInput
-                id="phone"
-                label="Phone Number (Optional)"
-                type="tel"
-                value={phone}
-                onChange={setPhone}
-                icon={<Phone size={17} />}
-              />
-            )}
-
-            {/* Password Field */}
-            <div style={{ marginBottom: '8px' }}>
-              {isLogin && (
-                <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '-6px' }}>
-                  <a
-                    href="#forgot"
-                    onClick={e => {
-                      e.preventDefault();
-                      alert('Password reset instructions will be sent to your registered email.');
+            <form onSubmit={handleSubmit}>
+              {/* Role Selection (Only shown when Creating Account) */}
+              {!isLogin && (
+                <div style={{ marginBottom: '20px' }}>
+                  <label
+                    style={{
+                      display: 'block',
+                      fontSize: '13px',
+                      fontWeight: 600,
+                      color: '#0b3f3a',
+                      marginBottom: '8px',
                     }}
-                    style={{ fontSize: '12px', color: '#785b47', textDecoration: 'none', fontWeight: 500 }}
                   >
-                    Forgot password?
-                  </a>
+                    I am registering as:
+                  </label>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+                    <div
+                      onClick={() => setRole('PATIENT')}
+                      style={{
+                        padding: '10px 12px',
+                        borderRadius: '14px',
+                        border: `2px solid ${role === 'PATIENT' ? '#0f766e' : '#d9ece7'}`,
+                        backgroundColor: role === 'PATIENT' ? '#eaf6f2' : '#ffffff',
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '8px',
+                        transition: 'all 0.15s ease',
+                      }}
+                    >
+                      <UserIcon size={16} color={role === 'PATIENT' ? '#0f766e' : '#8aa39d'} />
+                      <div>
+                        <div style={{ fontSize: '13px', fontWeight: 600, color: '#0b3f3a' }}>Patient</div>
+                        <div style={{ fontSize: '11px', color: '#52736d' }}>Seek medical care</div>
+                      </div>
+                    </div>
+
+                    <div
+                      onClick={() => setRole('DOCTOR')}
+                      style={{
+                        padding: '10px 12px',
+                        borderRadius: '14px',
+                        border: `2px solid ${role === 'DOCTOR' ? '#0f766e' : '#d9ece7'}`,
+                        backgroundColor: role === 'DOCTOR' ? '#eaf6f2' : '#ffffff',
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '8px',
+                        transition: 'all 0.15s ease',
+                      }}
+                    >
+                      <Stethoscope size={16} color={role === 'DOCTOR' ? '#0f766e' : '#8aa39d'} />
+                      <div>
+                        <div style={{ fontSize: '13px', fontWeight: 600, color: '#0b3f3a' }}>Doctor</div>
+                        <div style={{ fontSize: '11px', color: '#52736d' }}>Clinical provider</div>
+                      </div>
+                    </div>
+                  </div>
                 </div>
               )}
+
+              {/* Full Name Field (Registration only) */}
+              {!isLogin && (
+                <WaveInput
+                  id="fullName"
+                  label="Full Legal Name"
+                  type="text"
+                  required
+                  value={fullName}
+                  onChange={setFullName}
+                  icon={<UserIcon size={17} color="#0f766e" />}
+                />
+              )}
+
+              {/* Email Field */}
               <WaveInput
-                id="password"
-                label={isLogin ? 'Password' : 'Password (min 8 characters)'}
-                type={showPassword ? 'text' : 'password'}
+                id="email"
+                label="Email Address"
+                type="email"
                 required
-                value={password}
-                onChange={setPassword}
-                icon={<Lock size={17} />}
-                rightElement={
+                value={email}
+                onChange={setEmail}
+                icon={<Mail size={17} color="#0f766e" />}
+              />
+
+              {/* Phone Field (Optional, Registration only) */}
+              {!isLogin && (
+                <WaveInput
+                  id="phone"
+                  label="Phone Number (Optional)"
+                  type="tel"
+                  value={phone}
+                  onChange={setPhone}
+                  icon={<Phone size={17} color="#0f766e" />}
+                />
+              )}
+
+              {/* Password Field */}
+              <div style={{ marginBottom: '8px' }}>
+                {isLogin && (
+                  <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '-6px' }}>
+                    <a
+                      href="#forgot"
+                      onClick={e => {
+                        e.preventDefault();
+                        alert('Password reset instructions will be sent to your registered email.');
+                      }}
+                      style={{ fontSize: '12px', color: '#0f766e', textDecoration: 'none', fontWeight: 600 }}
+                    >
+                      Forgot password?
+                    </a>
+                  </div>
+                )}
+                <WaveInput
+                  id="password"
+                  label={isLogin ? 'Password' : 'Password (min 8 characters)'}
+                  type={showPassword ? 'text' : 'password'}
+                  required
+                  value={password}
+                  onChange={setPassword}
+                  icon={<Lock size={17} color="#0f766e" />}
+                  rightElement={
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      style={{
+                        background: 'none',
+                        border: 'none',
+                        color: '#8aa39d',
+                        cursor: 'pointer',
+                        padding: '4px',
+                        display: 'flex',
+                        alignItems: 'center',
+                      }}
+                    >
+                      {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                    </button>
+                  }
+                />
+              </div>
+
+              {/* Submit Button */}
+              <button
+                type="submit"
+                disabled={loading}
+                className="hover-lift"
+                style={{
+                  width: '100%',
+                  backgroundColor: '#0f766e',
+                  color: '#ffffff',
+                  border: 'none',
+                  borderRadius: '14px',
+                  padding: '13px',
+                  fontSize: '15px',
+                  fontWeight: 600,
+                  cursor: loading ? 'not-allowed' : 'pointer',
+                  opacity: loading ? 0.7 : 1,
+                  boxShadow: '0 2px 10px rgba(20, 60, 55, 0.08)',
+                  fontFamily: "'Space Grotesk', sans-serif",
+                  transition: 'background-color 0.15s ease',
+                  marginTop: '12px',
+                }}
+                onMouseEnter={e => {
+                  if (!loading) e.currentTarget.style.backgroundColor = '#0d655e';
+                }}
+                onMouseLeave={e => {
+                  if (!loading) e.currentTarget.style.backgroundColor = '#0f766e';
+                }}
+              >
+                {loading
+                  ? 'Processing...'
+                  : isLogin
+                  ? 'Sign In to pulsecare'
+                  : 'Create pulsecare Account'}
+              </button>
+
+              {/* Alternate switch text */}
+              <div style={{ textAlign: 'center', marginTop: '20px', fontSize: '13px', color: '#52736d' }}>
+                {isLogin ? (
+                  <>
+                    Don&apos;t have an account yet?{' '}
+                    <span
+                      onClick={() => switchMode(false)}
+                      style={{ color: '#ff6b5b', fontWeight: 600, cursor: 'pointer', textDecoration: 'underline' }}
+                    >
+                      Register now
+                    </span>
+                  </>
+                ) : (
+                  <>
+                    Already have an account?{' '}
+                    <span
+                      onClick={() => switchMode(true)}
+                      style={{ color: '#ff6b5b', fontWeight: 600, cursor: 'pointer', textDecoration: 'underline' }}
+                    >
+                      Sign in here
+                    </span>
+                  </>
+                )}
+              </div>
+
+              {/* Subtle Demo Logins */}
+              <div
+                style={{
+                  marginTop: '24px',
+                  paddingTop: '18px',
+                  borderTop: '1px solid #d9ece7',
+                  textAlign: 'center',
+                }}
+              >
+                <div style={{ fontSize: '11px', fontWeight: 600, color: '#8aa39d', marginBottom: '10px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                  Quick 1-Click Demo
+                </div>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
                   <button
                     type="button"
-                    onClick={() => setShowPassword(!showPassword)}
+                    onClick={() => handleQuickDemo('PATIENT')}
+                    disabled={loading}
+                    className="hover-lift"
                     style={{
-                      background: 'none',
-                      border: 'none',
-                      color: '#9ca3af',
+                      padding: '8px 12px',
+                      borderRadius: '10px',
+                      backgroundColor: '#eaf6f2',
+                      border: '1px solid #d9ece7',
+                      fontSize: '12px',
+                      fontWeight: 600,
+                      color: '#0b3f3a',
                       cursor: 'pointer',
-                      padding: '4px',
                       display: 'flex',
                       alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: '6px',
+                      fontFamily: "'Space Grotesk', sans-serif",
                     }}
                   >
-                    {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                    <UserIcon size={13} color="#0f766e" />
+                    Patient Demo
                   </button>
-                }
-              />
-            </div>
 
-            {/* Submit Button */}
-            <button
-              type="submit"
-              disabled={loading}
-              className="hover-lift"
-              style={{
-                width: '100%',
-                backgroundColor: '#785b47',
-                color: '#ffffff',
-                border: 'none',
-                borderRadius: '12px',
-                padding: '13px',
-                fontSize: '15px',
-                fontWeight: 600,
-                cursor: loading ? 'not-allowed' : 'pointer',
-                opacity: loading ? 0.7 : 1,
-                boxShadow: '0 4px 12px rgba(120, 91, 71, 0.2)',
-              }}
-              onMouseEnter={e => {
-                if (!loading) e.currentTarget.style.backgroundColor = '#644b39';
-              }}
-              onMouseLeave={e => {
-                if (!loading) e.currentTarget.style.backgroundColor = '#785b47';
-              }}
-            >
-              {loading
-                ? 'Processing...'
-                : isLogin
-                ? 'Sign In to PulseCare'
-                : 'Create PulseCare Account'}
-            </button>
-
-            {/* Alternate switch text */}
-            <div style={{ textAlign: 'center', marginTop: '20px', fontSize: '13px', color: '#706b63' }}>
-              {isLogin ? (
-                <>
-                  Don&apos;t have an account yet?{' '}
-                  <span
-                    onClick={() => switchMode(false)}
-                    style={{ color: '#785b47', fontWeight: 600, cursor: 'pointer', textDecoration: 'underline' }}
+                  <button
+                    type="button"
+                    onClick={() => handleQuickDemo('DOCTOR')}
+                    disabled={loading}
+                    className="hover-lift"
+                    style={{
+                      padding: '8px 12px',
+                      borderRadius: '10px',
+                      backgroundColor: '#eaf6f2',
+                      border: '1px solid #d9ece7',
+                      fontSize: '12px',
+                      fontWeight: 600,
+                      color: '#0b3f3a',
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: '6px',
+                      fontFamily: "'Space Grotesk', sans-serif",
+                    }}
                   >
-                    Register now
-                  </span>
-                </>
-              ) : (
-                <>
-                  Already have an account?{' '}
-                  <span
-                    onClick={() => switchMode(true)}
-                    style={{ color: '#785b47', fontWeight: 600, cursor: 'pointer', textDecoration: 'underline' }}
-                  >
-                    Sign in here
-                  </span>
-                </>
-              )}
-            </div>
-
-            {/* Subtle Demo Logins */}
-            <div
-              style={{
-                marginTop: '24px',
-                paddingTop: '18px',
-                borderTop: '1px solid #eae3d8',
-                textAlign: 'center',
-              }}
-            >
-              <div style={{ fontSize: '11px', fontWeight: 600, color: '#948c80', marginBottom: '10px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                Quick 1-Click Demo
+                    <Stethoscope size={13} color="#0f766e" />
+                    Doctor Demo
+                  </button>
+                </div>
               </div>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
-                <button
-                  type="button"
-                  onClick={() => handleQuickDemo('PATIENT')}
-                  disabled={loading}
-                  className="hover-lift"
-                  style={{
-                    padding: '8px 12px',
-                    borderRadius: '8px',
-                    backgroundColor: '#faf8f5',
-                    border: '1px solid #eae3d8',
-                    fontSize: '12px',
-                    fontWeight: 600,
-                    color: '#443e37',
-                    cursor: 'pointer',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    gap: '6px',
-                  }}
-                >
-                  <UserIcon size={13} color="#785b47" />
-                  Patient Demo
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => handleQuickDemo('DOCTOR')}
-                  disabled={loading}
-                  className="hover-lift"
-                  style={{
-                    padding: '8px 12px',
-                    borderRadius: '8px',
-                    backgroundColor: '#faf8f5',
-                    border: '1px solid #eae3d8',
-                    fontSize: '12px',
-                    fontWeight: 600,
-                    color: '#443e37',
-                    cursor: 'pointer',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    gap: '6px',
-                  }}
-                >
-                  <Stethoscope size={13} color="#0d9488" />
-                  Doctor Demo
-                </button>
-              </div>
-            </div>
-          </form>
+            </form>
+          </div>
         </div>
       </div>
-    </div>
     </PageTransition>
   );
 };

@@ -1,5 +1,6 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
+import { motion, AnimatePresence, useReducedMotion, LayoutGroup, useScroll, useSpring } from 'framer-motion';
 import {
   Bell,
   ChevronDown,
@@ -15,6 +16,9 @@ interface HeaderProps {
   onGoHome: () => void;
 }
 
+const EASE_HEADER = [0.2, 0.65, 0.3, 0.9] as const;
+const CUBIC_BEZIER_STR = 'cubic-bezier(0.2, 0.65, 0.3, 0.9)';
+
 export const Header: React.FC<HeaderProps> = ({
   currentUser,
   onOpenAuth,
@@ -25,14 +29,83 @@ export const Header: React.FC<HeaderProps> = ({
 }) => {
   const navigate = useNavigate();
   const location = useLocation();
+  const reduced = useReducedMotion();
+
   const isDoctor = currentUser?.role === 'DOCTOR';
   const isPatient = currentUser?.role === 'PATIENT';
 
-  // Active tab detection for Guest
-  const isGuestHome = !currentUser && location.pathname === '/' && (!location.hash || location.hash === '' || location.hash === '#home');
-  const isGuestFindDoctors = !currentUser && location.hash === '#find-doctors';
-  const isGuestVideoConsult = !currentUser && location.hash === '#video-consult';
-  const isGuestHospitals = !currentUser && (location.pathname.startsWith('/hospitals') || location.hash === '#for-hospitals' || location.hash === '#hospitals');
+  // Smooth scroll tracking via Framer Motion
+  const { scrollY, scrollYProgress } = useScroll();
+  const smoothScaleX = useSpring(scrollYProgress, {
+    stiffness: 90,
+    damping: 26,
+    mass: 0.25,
+    restDelta: 0.0001,
+  });
+
+  const [isScrolled, setIsScrolled] = useState(false);
+
+  useEffect(() => {
+    return scrollY.on('change', (latest) => {
+      setIsScrolled(latest > 24);
+    });
+  }, [scrollY]);
+
+  // Logo hover bounce & line redraw trigger
+  const [isLogoHovered, setIsLogoHovered] = useState(false);
+  const [hoverRedrawKey, setHoverRedrawKey] = useState(0);
+
+  // Mobile menu
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [isMobile, setIsMobile] = useState(() =>
+    typeof window !== 'undefined' ? window.innerWidth < 860 : false
+  );
+
+  useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth < 860);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  // Section-anchor active state tracking (Scroll Spy for Guest Landing)
+  const [activeSection, setActiveSection] = useState<'home' | 'find-care' | 'specialties' | 'how-it-works' | 'for-hospitals'>('home');
+
+  useEffect(() => {
+    if (currentUser || (location.pathname !== '/' && location.pathname !== '')) {
+      return;
+    }
+
+    const checkActiveSection = () => {
+      const scrollY = window.scrollY || window.pageYOffset;
+      const offset = 140; // Offset for header + margin
+
+      const findCareEl = document.getElementById('find-care') || document.getElementById('find-doctors');
+      const howItWorksEl = document.getElementById('how-it-works');
+      const specialtiesEl = document.getElementById('specialties');
+      const forHospitalsEl = document.getElementById('for-hospitals');
+
+      const findCareTop = findCareEl ? findCareEl.offsetTop - offset : 400;
+      const howItWorksTop = howItWorksEl ? howItWorksEl.offsetTop - offset : 1100;
+      const specialtiesTop = specialtiesEl ? specialtiesEl.offsetTop - offset : 1800;
+      const forHospitalsTop = forHospitalsEl ? forHospitalsEl.offsetTop - offset : 2400;
+
+      if (scrollY >= forHospitalsTop) {
+        setActiveSection('for-hospitals');
+      } else if (scrollY >= specialtiesTop) {
+        setActiveSection('specialties');
+      } else if (scrollY >= howItWorksTop) {
+        setActiveSection('how-it-works');
+      } else if (scrollY >= findCareTop) {
+        setActiveSection('find-care');
+      } else {
+        setActiveSection('home');
+      }
+    };
+
+    window.addEventListener('scroll', checkActiveSection, { passive: true });
+    checkActiveSection();
+    return () => window.removeEventListener('scroll', checkActiveSection);
+  }, [currentUser, location.pathname]);
 
   // Active tab detection for Patient
   const isPatientDashboard = isPatient && (location.pathname === '/patient' || location.pathname === '/');
@@ -50,463 +123,848 @@ export const Header: React.FC<HeaderProps> = ({
   const isDoctorPrescriptions = isDoctor && ((location.pathname.startsWith('/doctor') && doctorHash === '#prescriptions') || location.pathname.startsWith('/prescriptions'));
   const isDoctorTranscripts = isDoctor && location.pathname.startsWith('/doctor') && doctorHash === '#transcripts';
 
-  const getNavLinkStyle = (isActive: boolean): React.CSSProperties => ({
-    color: isActive ? '#1a110a' : '#6b6359',
-    fontWeight: isActive ? 600 : 500,
-    textDecoration: 'none',
-    cursor: 'pointer',
-    height: '72px',
-    display: 'inline-flex',
-    alignItems: 'center',
-    padding: '0 4px',
-    borderBottom: isActive ? '3px solid #785b47' : '3px solid transparent',
-    transition: 'color 0.15s ease, border-color 0.15s ease',
-    boxSizing: 'border-box',
-    userSelect: 'none',
-    whiteSpace: 'nowrap',
-  });
+  const wordmarkChars = ['p', 'u', 'l', 's', 'e', 'c', 'a', 'r', 'e'];
 
-  const handleMouseEnter = (e: React.MouseEvent<HTMLAnchorElement>, isActive: boolean) => {
-    if (!isActive) {
-      e.currentTarget.style.color = '#1a110a';
-      e.currentTarget.style.borderBottom = '3px solid #dfd7cc';
-    }
-  };
-
-  const handleMouseLeave = (e: React.MouseEvent<HTMLAnchorElement>, isActive: boolean) => {
-    if (!isActive) {
-      e.currentTarget.style.color = '#6b6359';
-      e.currentTarget.style.borderBottom = '3px solid transparent';
-    }
-  };
+  const guestNavItems = [
+    {
+      id: 'home',
+      label: 'Home',
+      href: '/',
+      onClick: (e: React.MouseEvent) => {
+        e.preventDefault();
+        navigate('/');
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+        setActiveSection('home');
+      },
+      isActive: activeSection === 'home' && (!location.hash || location.hash === '#home' || location.hash === ''),
+    },
+    {
+      id: 'find-care',
+      label: 'Find care',
+      href: '#find-care',
+      onClick: (e: React.MouseEvent) => {
+        e.preventDefault();
+        const el = document.getElementById('find-care') || document.getElementById('find-doctors');
+        if (el) el.scrollIntoView({ behavior: 'smooth' });
+        else onGetCare();
+        setActiveSection('find-care');
+      },
+      isActive: activeSection === 'find-care',
+    },
+    {
+      id: 'specialties',
+      label: 'Specialties',
+      href: '#specialties',
+      onClick: (e: React.MouseEvent) => {
+        e.preventDefault();
+        const el = document.getElementById('specialties');
+        if (el) el.scrollIntoView({ behavior: 'smooth' });
+        else onGetCare();
+        setActiveSection('specialties');
+      },
+      isActive: activeSection === 'specialties',
+    },
+    {
+      id: 'how-it-works',
+      label: 'How it works',
+      href: '#how-it-works',
+      onClick: (e: React.MouseEvent) => {
+        e.preventDefault();
+        const el = document.getElementById('how-it-works');
+        if (el) el.scrollIntoView({ behavior: 'smooth' });
+        setActiveSection('how-it-works');
+      },
+      isActive: activeSection === 'how-it-works',
+    },
+    {
+      id: 'for-hospitals',
+      label: 'For Hospitals',
+      href: '#for-hospitals',
+      onClick: (e: React.MouseEvent) => {
+        e.preventDefault();
+        const el = document.getElementById('for-hospitals');
+        if (el) el.scrollIntoView({ behavior: 'smooth' });
+        else onGetCare();
+        setActiveSection('for-hospitals');
+      },
+      isActive: activeSection === 'for-hospitals',
+    },
+  ];
 
   return (
-    <header style={{
-      position: 'sticky',
-      top: 0,
-      zIndex: 50,
-      backgroundColor: '#ffffff',
-      borderBottom: '1px solid #eae3d8',
-      boxShadow: '0 2px 10px rgba(75, 68, 57, 0.04)',
-      width: '100%',
-    }}>
-      {/* Main Single-Line Header */}
-      <div style={{
-        maxWidth: '1200px',
-        margin: '0 auto',
-        padding: '0 24px',
-        height: '72px',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        flexWrap: 'nowrap',
-        boxSizing: 'border-box',
-      }}>
-        {/* Left Brand: ● PulseCare */}
+    <>
+      <header
+        style={{
+          position: 'sticky',
+          top: 0,
+          zIndex: 50,
+          width: '100%',
+          backgroundColor: isScrolled ? 'rgba(255, 255, 255, 0.92)' : '#eaf6f2',
+          backdropFilter: isScrolled ? 'blur(10px) saturate(1.4)' : 'none',
+          WebkitBackdropFilter: isScrolled ? 'blur(10px) saturate(1.4)' : 'none',
+          borderBottom: isScrolled ? '1px solid #d9ece7' : '1px solid transparent',
+          boxShadow: isScrolled ? '0 2px 10px rgba(20, 60, 55, 0.06)' : 'none',
+          height: isScrolled ? '56px' : '72px',
+          transition: `height 220ms ${CUBIC_BEZIER_STR}, background-color 220ms ${CUBIC_BEZIER_STR}, border-color 220ms ${CUBIC_BEZIER_STR}, box-shadow 220ms ${CUBIC_BEZIER_STR}`,
+        }}
+      >
+        {/* Main Header Inner Content */}
         <div
-          onClick={onGoHome}
           style={{
+            maxWidth: '1200px',
+            margin: '0 auto',
+            padding: '0 24px',
+            height: '100%',
             display: 'flex',
             alignItems: 'center',
-            gap: '8px',
-            cursor: 'pointer',
-            flexShrink: 0,
-            userSelect: 'none',
+            justifyContent: 'space-between',
+            flexWrap: 'nowrap',
+            boxSizing: 'border-box',
+            position: 'relative',
           }}
-          title="PulseCare Home"
         >
-          <span style={{
-            width: '10px',
-            height: '10px',
-            borderRadius: '50%',
-            backgroundColor: '#785b47',
-            display: 'inline-block',
-          }} />
-          <span style={{
-            fontSize: '22px',
-            fontWeight: 700,
-            color: '#1a110a',
-            letterSpacing: '-0.02em',
-          }}>
-            PulseCare
-          </span>
-        </div>
+          {/* LEFT: Logo mark (disc + ECG line) & wordmark ("pulsecare") */}
+          <div
+            onClick={onGoHome}
+            onMouseEnter={() => {
+              if (!reduced) {
+                setIsLogoHovered(true);
+                setHoverRedrawKey(k => k + 1);
+              }
+            }}
+            onMouseLeave={() => setIsLogoHovered(false)}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: isScrolled ? '8px' : '10px',
+              cursor: 'pointer',
+              flexShrink: 0,
+              userSelect: 'none',
+              transform: isScrolled ? 'translateX(-2px)' : 'translateX(0)',
+              transition: `transform 220ms ${CUBIC_BEZIER_STR}, gap 220ms ${CUBIC_BEZIER_STR}`,
+            }}
+            title="pulsecare Home"
+          >
+            {/* Logo Mark: scale 0.8->1, opacity 0->1, 400ms */}
+            <motion.div
+              initial={reduced ? false : { scale: 0.8, opacity: 0 }}
+              animate={{
+                scale: 1,
+                opacity: 1,
+                rotate: isLogoHovered ? [0, -3, 1, 0] : 0,
+              }}
+              transition={{
+                scale: { duration: 0.4, ease: 'easeOut' },
+                opacity: { duration: 0.4, ease: 'easeOut' },
+                rotate: { duration: 0.38, ease: [0.34, 1.56, 0.64, 1] },
+              }}
+              style={{
+                width: isScrolled ? '24px' : '30px',
+                height: isScrolled ? '24px' : '30px',
+                borderRadius: '50%',
+                backgroundColor: '#0f766e',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                flexShrink: 0,
+                position: 'relative',
+                boxShadow: '0 2px 8px rgba(15, 118, 110, 0.24)',
+                transition: `width 220ms ${CUBIC_BEZIER_STR}, height 220ms ${CUBIC_BEZIER_STR}`,
+              }}
+            >
+              {/* Primary ECG line SVG with load draw-in and hover redraw */}
+              <svg
+                width={isScrolled ? 14 : 17}
+                height={isScrolled ? 14 : 17}
+                viewBox="0 0 24 24"
+                fill="none"
+                style={{
+                  transition: `width 220ms ${CUBIC_BEZIER_STR}, height 220ms ${CUBIC_BEZIER_STR}`,
+                  overflow: 'visible',
+                }}
+              >
+                {/* Main ECG Path (draws stroke-dashoffset: pathLength -> 0 in 700ms, 100ms after mark lands) */}
+                <motion.path
+                  key={`ecg-${hoverRedrawKey}`}
+                  d="M2 12h4l3-7 4 14 3-7h6"
+                  stroke="#ffffff"
+                  strokeWidth="2.5"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  initial={reduced ? false : { pathLength: 0 }}
+                  animate={{ pathLength: 1 }}
+                  transition={{
+                    duration: hoverRedrawKey > 0 ? 0.3 : 0.7,
+                    delay: hoverRedrawKey > 0 ? 0 : (reduced ? 0 : 0.5),
+                    ease: 'easeOut',
+                  }}
+                />
 
-        {/* Middle Navigation Links */}
-        <nav style={{
-          display: 'flex',
-          alignItems: 'center',
-          gap: '28px',
-          height: '100%',
-          fontSize: '14px',
-          fontWeight: 500,
-        }}>
-          {!currentUser && (
-            <>
-              <a
-                href="/"
-                onClick={e => {
-                  e.preventDefault();
-                  navigate('/');
-                  window.scrollTo({ top: 0, behavior: 'smooth' });
+                {/* Idle Traveling Highlight: soft white glow sliding left->right across trace every 6s */}
+                {!reduced && (
+                  <path
+                    d="M2 12h4l3-7 4 14 3-7h6"
+                    stroke="#ffffff"
+                    strokeWidth="3.2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    className="ecg-travel-highlight"
+                    style={{
+                      fill: 'none',
+                      strokeDasharray: '8 36',
+                      pointerEvents: 'none',
+                    }}
+                  />
+                )}
+              </svg>
+            </motion.div>
+
+            {/* Wordmark: letters fade/rise in, 20ms stagger per character */}
+            <div
+              style={{
+                fontFamily: "'Space Grotesk', sans-serif",
+                fontSize: isScrolled ? '17px' : '20px',
+                fontWeight: 700,
+                color: '#0b3f3a',
+                letterSpacing: '-0.02em',
+                lineHeight: 1,
+                display: 'inline-flex',
+                transition: `font-size 220ms ${CUBIC_BEZIER_STR}`,
+              }}
+            >
+              {wordmarkChars.map((char, idx) => (
+                <motion.span
+                  key={idx}
+                  initial={reduced ? false : { opacity: 0, y: 6 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{
+                    duration: 0.32,
+                    delay: reduced ? 0 : 0.15 + idx * 0.02,
+                    ease: 'easeOut',
+                  }}
+                  style={{ display: 'inline-block' }}
+                >
+                  {char}
+                </motion.span>
+              ))}
+            </div>
+          </div>
+
+          {/* MIDDLE: Desktop Navigation Links with sliding coral 2px underline */}
+          {!isMobile && (
+            <LayoutGroup id="headerNavUnderline">
+              <nav
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: isScrolled ? '24px' : '28px',
+                  height: '100%',
+                  transition: `gap 220ms ${CUBIC_BEZIER_STR}`,
                 }}
-                style={getNavLinkStyle(isGuestHome)}
-                onMouseEnter={e => handleMouseEnter(e, isGuestHome)}
-                onMouseLeave={e => handleMouseLeave(e, isGuestHome)}
               >
-                Home
-              </a>
-              <a
-                href="#find-doctors"
-                onClick={e => {
-                  e.preventDefault();
-                  navigate('/#find-doctors');
-                  const el = document.getElementById('find-doctors');
-                  if (el) el.scrollIntoView({ behavior: 'smooth' });
-                  else onGetCare();
-                }}
-                style={getNavLinkStyle(isGuestFindDoctors)}
-                onMouseEnter={e => handleMouseEnter(e, isGuestFindDoctors)}
-                onMouseLeave={e => handleMouseLeave(e, isGuestFindDoctors)}
-              >
-                Find Doctors
-              </a>
-              <a
-                href="#video-consult"
-                onClick={e => {
-                  e.preventDefault();
-                  navigate('/#video-consult');
-                  const el = document.getElementById('video-consult');
-                  if (el) el.scrollIntoView({ behavior: 'smooth' });
-                  else onGetCare();
-                }}
-                style={getNavLinkStyle(isGuestVideoConsult)}
-                onMouseEnter={e => handleMouseEnter(e, isGuestVideoConsult)}
-                onMouseLeave={e => handleMouseLeave(e, isGuestVideoConsult)}
-              >
-                Video Consult
-              </a>
-              <a
-                href="#for-hospitals"
-                onClick={e => {
-                  e.preventDefault();
-                  navigate('/#for-hospitals');
-                  const el = document.getElementById('for-hospitals');
-                  if (el) el.scrollIntoView({ behavior: 'smooth' });
-                  else onGetCare();
-                }}
-                style={getNavLinkStyle(isGuestHospitals)}
-                onMouseEnter={e => handleMouseEnter(e, isGuestHospitals)}
-                onMouseLeave={e => handleMouseLeave(e, isGuestHospitals)}
-              >
-                For Hospitals
-              </a>
-            </>
+                {!currentUser && guestNavItems.map((item, idx) => (
+                  <motion.div
+                    key={item.id}
+                    initial={reduced ? false : { opacity: 0, y: -4 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{
+                      duration: 0.35,
+                      delay: reduced ? 0 : 0.25 + idx * 0.04,
+                      ease: 'easeOut',
+                    }}
+                    style={{ height: '100%', display: 'flex', alignItems: 'center' }}
+                  >
+                    <a
+                      href={item.href}
+                      onClick={item.onClick}
+                      style={{
+                        position: 'relative',
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        height: '100%',
+                        padding: '0 4px',
+                        textDecoration: 'none',
+                        cursor: 'pointer',
+                        fontSize: isScrolled ? '13px' : '14px',
+                        fontWeight: item.isActive ? 600 : 500,
+                        color: item.isActive ? '#0b3f3a' : '#52736d',
+                        fontFamily: "'Space Grotesk', sans-serif",
+                        transition: `color 150ms ease, font-size 220ms ${CUBIC_BEZIER_STR}`,
+                        whiteSpace: 'nowrap',
+                      }}
+                      onMouseEnter={e => {
+                        if (!item.isActive) e.currentTarget.style.color = '#0b3f3a';
+                      }}
+                      onMouseLeave={e => {
+                        if (!item.isActive) e.currentTarget.style.color = '#52736d';
+                      }}
+                    >
+                      {item.label}
+
+                      {/* Sliding coral 2px continuous underline */}
+                      {item.isActive && (
+                        <motion.span
+                          layoutId="navActiveUnderline"
+                          transition={{
+                            type: 'spring',
+                            stiffness: 280,
+                            damping: 28,
+                          }}
+                          style={{
+                            position: 'absolute',
+                            bottom: 0,
+                            left: 0,
+                            right: 0,
+                            height: '2px',
+                            backgroundColor: '#ff6b5b',
+                            borderRadius: '2px',
+                          }}
+                        />
+                      )}
+                    </a>
+                  </motion.div>
+                ))}
+
+                {/* Patient Navigation */}
+                {isPatient && [
+                  { id: 'dashboard', label: 'Dashboard', href: '/patient', active: isPatientDashboard, onClick: () => navigate('/patient') },
+                  { id: 'book', label: 'Book Visit', href: '/book', active: isBookVisit, onClick: () => navigate('/book') },
+                  { id: 'appointments', label: 'My Appointments', href: '/appointments', active: isMyAppointments, onClick: () => navigate('/appointments') },
+                  { id: 'prescriptions', label: 'Prescriptions', href: '/prescriptions', active: isPrescriptions, onClick: () => navigate('/prescriptions') },
+                  { id: 'hospitals', label: 'Hospitals', href: '/hospitals', active: isHospitals, onClick: () => navigate('/hospitals') },
+                  { id: 'profile', label: 'Profile', href: '/profile', active: isProfile, onClick: () => navigate('/profile') },
+                ].map((item, idx) => (
+                  <motion.div
+                    key={item.id}
+                    initial={reduced ? false : { opacity: 0, y: -4 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{
+                      duration: 0.35,
+                      delay: reduced ? 0 : 0.25 + idx * 0.04,
+                      ease: 'easeOut',
+                    }}
+                    style={{ height: '100%', display: 'flex', alignItems: 'center' }}
+                  >
+                    <a
+                      href={item.href}
+                      onClick={e => { e.preventDefault(); item.onClick(); }}
+                      style={{
+                        position: 'relative',
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        height: '100%',
+                        padding: '0 4px',
+                        textDecoration: 'none',
+                        cursor: 'pointer',
+                        fontSize: isScrolled ? '13px' : '14px',
+                        fontWeight: item.active ? 600 : 500,
+                        color: item.active ? '#0b3f3a' : '#52736d',
+                        fontFamily: "'Space Grotesk', sans-serif",
+                        transition: `color 150ms ease, font-size 220ms ${CUBIC_BEZIER_STR}`,
+                        whiteSpace: 'nowrap',
+                      }}
+                    >
+                      {item.label}
+                      {item.active && (
+                        <motion.span
+                          layoutId="navActiveUnderline"
+                          transition={{
+                            type: 'spring',
+                            stiffness: 280,
+                            damping: 28,
+                          }}
+                          style={{
+                            position: 'absolute',
+                            bottom: 0,
+                            left: 0,
+                            right: 0,
+                            height: '2px',
+                            backgroundColor: '#ff6b5b',
+                            borderRadius: '2px',
+                          }}
+                        />
+                      )}
+                    </a>
+                  </motion.div>
+                ))}
+
+                {/* Doctor Navigation */}
+                {isDoctor && [
+                  { id: 'queue', label: 'My Queue', href: '/doctor#my-queue', active: isDoctorQueue, onClick: () => navigate('/doctor#my-queue') },
+                  { id: 'avail', label: 'Availability', href: '/doctor#availability', active: isDoctorAvailability, onClick: () => navigate('/doctor#availability') },
+                  { id: 'patients', label: 'Patients', href: '/doctor#patients', active: isDoctorPatients, onClick: () => navigate('/doctor#patients') },
+                  { id: 'prescriptions', label: 'Prescriptions', href: '/doctor#prescriptions', active: isDoctorPrescriptions, onClick: () => navigate('/doctor#prescriptions') },
+                  { id: 'transcripts', label: 'Transcripts', href: '/doctor#transcripts', active: isDoctorTranscripts, onClick: () => navigate('/doctor#transcripts') },
+                ].map((item, idx) => (
+                  <motion.div
+                    key={item.id}
+                    initial={reduced ? false : { opacity: 0, y: -4 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{
+                      duration: 0.35,
+                      delay: reduced ? 0 : 0.25 + idx * 0.04,
+                      ease: 'easeOut',
+                    }}
+                    style={{ height: '100%', display: 'flex', alignItems: 'center' }}
+                  >
+                    <a
+                      href={item.href}
+                      onClick={e => { e.preventDefault(); item.onClick(); }}
+                      style={{
+                        position: 'relative',
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        height: '100%',
+                        padding: '0 4px',
+                        textDecoration: 'none',
+                        cursor: 'pointer',
+                        fontSize: isScrolled ? '13px' : '14px',
+                        fontWeight: item.active ? 600 : 500,
+                        color: item.active ? '#0b3f3a' : '#52736d',
+                        fontFamily: "'Space Grotesk', sans-serif",
+                        transition: `color 150ms ease, font-size 220ms ${CUBIC_BEZIER_STR}`,
+                        whiteSpace: 'nowrap',
+                      }}
+                    >
+                      {item.label}
+                      {item.active && (
+                        <motion.span
+                          layoutId="navActiveUnderline"
+                          transition={{
+                            type: 'spring',
+                            stiffness: 280,
+                            damping: 28,
+                          }}
+                          style={{
+                            position: 'absolute',
+                            bottom: 0,
+                            left: 0,
+                            right: 0,
+                            height: '2px',
+                            backgroundColor: '#ff6b5b',
+                            borderRadius: '2px',
+                          }}
+                        />
+                      )}
+                    </a>
+                  </motion.div>
+                ))}
+              </nav>
+            </LayoutGroup>
           )}
 
-          {isPatient && (
-            <>
-              <a
-                href="/patient"
-                onClick={e => { e.preventDefault(); navigate('/patient'); }}
-                style={getNavLinkStyle(isPatientDashboard)}
-                onMouseEnter={e => handleMouseEnter(e, isPatientDashboard)}
-                onMouseLeave={e => handleMouseLeave(e, isPatientDashboard)}
-              >
-                Dashboard
-              </a>
-              <a
-                href="/book"
-                onClick={e => { e.preventDefault(); navigate('/book'); }}
-                style={getNavLinkStyle(isBookVisit)}
-                onMouseEnter={e => handleMouseEnter(e, isBookVisit)}
-                onMouseLeave={e => handleMouseLeave(e, isBookVisit)}
-              >
-                Book Visit
-              </a>
-              <a
-                href="/appointments"
-                onClick={e => { e.preventDefault(); navigate('/appointments'); }}
-                style={getNavLinkStyle(isMyAppointments)}
-                onMouseEnter={e => handleMouseEnter(e, isMyAppointments)}
-                onMouseLeave={e => handleMouseLeave(e, isMyAppointments)}
-              >
-                My Appointments
-              </a>
-              <a
-                href="/prescriptions"
-                onClick={e => { e.preventDefault(); navigate('/prescriptions'); }}
-                style={getNavLinkStyle(isPrescriptions)}
-                onMouseEnter={e => handleMouseEnter(e, isPrescriptions)}
-                onMouseLeave={e => handleMouseLeave(e, isPrescriptions)}
-              >
-                Prescriptions
-              </a>
-              <a
-                href="/hospitals"
-                onClick={e => { e.preventDefault(); navigate('/hospitals'); }}
-                style={getNavLinkStyle(isHospitals)}
-                onMouseEnter={e => handleMouseEnter(e, isHospitals)}
-                onMouseLeave={e => handleMouseLeave(e, isHospitals)}
-              >
-                Hospitals
-              </a>
-              <a
-                href="/profile"
-                onClick={e => { e.preventDefault(); navigate('/profile'); }}
-                style={getNavLinkStyle(isProfile)}
-                onMouseEnter={e => handleMouseEnter(e, isProfile)}
-                onMouseLeave={e => handleMouseLeave(e, isProfile)}
-              >
-                Profile
-              </a>
-            </>
-          )}
+          {/* RIGHT: Action Buttons (Sign in / Sign up / "Book now" CTA) & Profile */}
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: isScrolled ? '14px' : '18px',
+              transition: `gap 220ms ${CUBIC_BEZIER_STR}`,
+            }}
+          >
+            {!currentUser && (
+              <>
+                {!isMobile && (
+                  <>
+                    <button
+                      onClick={onOpenAuth}
+                      style={{
+                        background: 'transparent',
+                        border: 'none',
+                        fontSize: isScrolled ? '13px' : '14px',
+                        fontWeight: 500,
+                        color: '#52736d',
+                        cursor: 'pointer',
+                        padding: '6px 10px',
+                        fontFamily: "'Space Grotesk', sans-serif",
+                        transition: `color 150ms ease, font-size 220ms ${CUBIC_BEZIER_STR}`,
+                      }}
+                      onMouseEnter={e => (e.currentTarget.style.color = '#0b3f3a')}
+                      onMouseLeave={e => (e.currentTarget.style.color = '#52736d')}
+                    >
+                      Sign in
+                    </button>
+                    <button
+                      onClick={onOpenRegister || onOpenAuth}
+                      className="hover-lift"
+                      style={{
+                        backgroundColor: '#0f766e',
+                        color: '#ffffff',
+                        border: 'none',
+                        borderRadius: '14px',
+                        padding: isScrolled ? '6px 14px' : '8px 18px',
+                        fontSize: isScrolled ? '13px' : '14px',
+                        fontWeight: 600,
+                        cursor: 'pointer',
+                        fontFamily: "'Space Grotesk', sans-serif",
+                        transition: `background-color 150ms ease, padding 220ms ${CUBIC_BEZIER_STR}, font-size 220ms ${CUBIC_BEZIER_STR}`,
+                        boxShadow: '0 2px 10px rgba(20, 60, 55, 0.08)',
+                      }}
+                      onMouseEnter={e => (e.currentTarget.style.backgroundColor = '#0d655e')}
+                      onMouseLeave={e => (e.currentTarget.style.backgroundColor = '#0f766e')}
+                    >
+                      Sign up
+                    </button>
+                  </>
+                )}
 
-          {isDoctor && (
-            <>
-              <a
-                href="/doctor#my-queue"
-                onClick={e => { e.preventDefault(); navigate('/doctor#my-queue'); }}
-                style={getNavLinkStyle(isDoctorQueue)}
-                onMouseEnter={e => handleMouseEnter(e, isDoctorQueue)}
-                onMouseLeave={e => handleMouseLeave(e, isDoctorQueue)}
-              >
-                My Queue
-              </a>
-              <a
-                href="/doctor#availability"
-                onClick={e => { e.preventDefault(); navigate('/doctor#availability'); }}
-                style={getNavLinkStyle(isDoctorAvailability)}
-                onMouseEnter={e => handleMouseEnter(e, isDoctorAvailability)}
-                onMouseLeave={e => handleMouseLeave(e, isDoctorAvailability)}
-              >
-                Availability
-              </a>
-              <a
-                href="/doctor#patients"
-                onClick={e => { e.preventDefault(); navigate('/doctor#patients'); }}
-                style={getNavLinkStyle(isDoctorPatients)}
-                onMouseEnter={e => handleMouseEnter(e, isDoctorPatients)}
-                onMouseLeave={e => handleMouseLeave(e, isDoctorPatients)}
-              >
-                Patients
-              </a>
-              <a
-                href="/doctor#prescriptions"
-                onClick={e => { e.preventDefault(); navigate('/doctor#prescriptions'); }}
-                style={getNavLinkStyle(isDoctorPrescriptions)}
-                onMouseEnter={e => handleMouseEnter(e, isDoctorPrescriptions)}
-                onMouseLeave={e => handleMouseLeave(e, isDoctorPrescriptions)}
-              >
-                Prescriptions
-              </a>
-              <a
-                href="/doctor#transcripts"
-                onClick={e => { e.preventDefault(); navigate('/doctor#transcripts'); }}
-                style={getNavLinkStyle(isDoctorTranscripts)}
-                onMouseEnter={e => handleMouseEnter(e, isDoctorTranscripts)}
-                onMouseLeave={e => handleMouseLeave(e, isDoctorTranscripts)}
-              >
-                Transcripts
-              </a>
-            </>
-          )}
-        </nav>
+                {/* Coral "Book now" CTA: fade + scale 0.95->1, 200ms delay + 4s breathing shadow + shrink compression */}
+                <motion.button
+                  onClick={onGetCare}
+                  className="coral-book-btn"
+                  initial={reduced ? false : { opacity: 0, scale: 0.95 }}
+                  animate={{
+                    opacity: 1,
+                    scale: isScrolled ? 0.96 : 1,
+                  }}
+                  transition={{
+                    opacity: { duration: 0.35, delay: reduced ? 0 : 0.5, ease: 'easeOut' },
+                    scale: { duration: 0.22, ease: EASE_HEADER },
+                  }}
+                  style={{
+                    backgroundColor: '#ff6b5b',
+                    color: '#ffffff',
+                    border: 'none',
+                    borderRadius: isScrolled ? '10px' : '14px',
+                    padding: isScrolled ? '7px 16px' : '10px 22px',
+                    fontSize: isScrolled ? '13px' : '14px',
+                    fontWeight: 600,
+                    cursor: 'pointer',
+                    fontFamily: "'Space Grotesk', sans-serif",
+                    transition: `background-color 150ms ease, border-radius 220ms ${CUBIC_BEZIER_STR}, padding 220ms ${CUBIC_BEZIER_STR}`,
+                    whiteSpace: 'nowrap',
+                  }}
+                  onMouseEnter={e => (e.currentTarget.style.backgroundColor = '#e85949')}
+                  onMouseLeave={e => (e.currentTarget.style.backgroundColor = '#ff6b5b')}
+                >
+                  Book now
+                </motion.button>
+              </>
+            )}
 
-        {/* Right Section */}
-        <div style={{
-          display: 'flex',
-          alignItems: 'center',
-          gap: '18px',
-        }}>
+            {isPatient && (
+              <>
+                {/* Notification Bell */}
+                <div className="icon-pop" style={{ position: 'relative', cursor: 'pointer', display: 'flex', alignItems: 'center' }}>
+                  <Bell size={isScrolled ? 17 : 19} color="#0b3f3a" style={{ transition: `all 220ms ${CUBIC_BEZIER_STR}` }} />
+                  <span style={{
+                    position: 'absolute',
+                    top: '-4px',
+                    right: '-6px',
+                    backgroundColor: '#ff6b5b',
+                    color: '#ffffff',
+                    fontSize: '10px',
+                    fontWeight: 700,
+                    width: '15px',
+                    height: '15px',
+                    borderRadius: '50%',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                  }}>
+                    2
+                  </span>
+                </div>
 
-          {!currentUser && (
-            <>
+                {/* Patient Profile & Sign Out */}
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                  <div
+                    onClick={onOpenAuth}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '6px',
+                      fontSize: isScrolled ? '13px' : '14px',
+                      fontWeight: 600,
+                      color: '#0b3f3a',
+                      cursor: 'pointer',
+                      fontFamily: "'Space Grotesk', sans-serif",
+                    }}
+                    title="Switch profile"
+                  >
+                    <span>{currentUser.fullName || 'Avi Patel'}</span>
+                    <ChevronDown size={14} color="#0f766e" />
+                  </div>
+                  <button
+                    onClick={onLogout}
+                    style={{
+                      background: 'none',
+                      border: 'none',
+                      color: '#8aa39d',
+                      fontSize: '12px',
+                      cursor: 'pointer',
+                      textDecoration: 'underline',
+                      padding: '2px 4px',
+                      fontFamily: "'Space Grotesk', sans-serif",
+                    }}
+                    title="Sign Out"
+                  >
+                    Sign out
+                  </button>
+                </div>
+              </>
+            )}
+
+            {isDoctor && (
+              <>
+                {/* Notification Bell */}
+                <div className="icon-pop" style={{ position: 'relative', cursor: 'pointer', display: 'flex', alignItems: 'center' }}>
+                  <Bell size={isScrolled ? 16 : 18} color="#0b3f3a" style={{ transition: `all 220ms ${CUBIC_BEZIER_STR}` }} />
+                  <span style={{
+                    position: 'absolute',
+                    top: '-4px',
+                    right: '-6px',
+                    backgroundColor: '#ff6b5b',
+                    color: '#ffffff',
+                    fontSize: '10px',
+                    fontWeight: 700,
+                    width: '15px',
+                    height: '15px',
+                    borderRadius: '50%',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                  }}>
+                    1
+                  </span>
+                </div>
+
+                {/* Doctor Profile & Sign Out */}
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                  <div
+                    onClick={onOpenAuth}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '6px',
+                      fontSize: isScrolled ? '13px' : '14px',
+                      fontWeight: 600,
+                      color: '#0b3f3a',
+                      cursor: 'pointer',
+                      fontFamily: "'Space Grotesk', sans-serif",
+                    }}
+                    title="Switch profile"
+                  >
+                    <span>{currentUser.fullName || 'Dr. Kavita Shah'}</span>
+                    <ChevronDown size={14} color="#0f766e" />
+                  </div>
+                  <button
+                    onClick={onLogout}
+                    style={{
+                      background: 'none',
+                      border: 'none',
+                      color: '#8aa39d',
+                      fontSize: '12px',
+                      cursor: 'pointer',
+                      textDecoration: 'underline',
+                      padding: '2px 4px',
+                      fontFamily: "'Space Grotesk', sans-serif",
+                    }}
+                    title="Sign Out"
+                  >
+                    Sign out
+                  </button>
+                </div>
+              </>
+            )}
+
+            {/* Mobile Hamburger / Morphing X Button */}
+            {isMobile && (
               <button
-                onClick={onOpenAuth}
+                type="button"
+                onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+                aria-label="Toggle Navigation Menu"
                 style={{
                   background: 'transparent',
                   border: 'none',
-                  fontSize: '14px',
-                  fontWeight: 500,
-                  color: '#443e37',
-                  cursor: 'pointer',
-                  padding: '6px 12px',
-                }}
-              >
-                Sign in
-              </button>
-              <button
-                onClick={onOpenRegister || onOpenAuth}
-                className="hover-lift"
-                style={{
-                  backgroundColor: '#f5efe6',
-                  color: '#785b47',
-                  border: '1px solid #eae3d8',
-                  borderRadius: '9999px',
-                  padding: '8px 18px',
-                  fontSize: '14px',
-                  fontWeight: 600,
-                  cursor: 'pointer',
-                  transition: 'all 0.15s ease',
-                }}
-                onMouseEnter={e => {
-                  e.currentTarget.style.backgroundColor = '#eae3d8';
-                  e.currentTarget.style.color = '#543b2a';
-                }}
-                onMouseLeave={e => {
-                  e.currentTarget.style.backgroundColor = '#f5efe6';
-                  e.currentTarget.style.color = '#785b47';
-                }}
-              >
-                Sign up
-              </button>
-              <button
-                onClick={onGetCare}
-                className="hover-lift"
-                style={{
-                  backgroundColor: '#785b47',
-                  color: '#ffffff',
-                  border: 'none',
-                  borderRadius: '9999px',
-                  padding: '10px 22px',
-                  fontSize: '14px',
-                  fontWeight: 600,
-                  cursor: 'pointer',
-                  transition: 'background-color 0.15s ease',
-                }}
-                onMouseEnter={e => (e.currentTarget.style.backgroundColor = '#644b39')}
-                onMouseLeave={e => (e.currentTarget.style.backgroundColor = '#785b47')}
-              >
-                Get Care
-              </button>
-            </>
-          )}
-
-          {isPatient && (
-            <>
-              {/* Notification Bell with 2 badge */}
-              <div className="icon-pop" style={{ position: 'relative', cursor: 'pointer', display: 'flex', alignItems: 'center' }}>
-                <Bell size={19} color="#443e37" />
-                <span style={{
-                  position: 'absolute',
-                  top: '-4px',
-                  right: '-6px',
-                  backgroundColor: '#785b47',
-                  color: '#ffffff',
-                  fontSize: '10px',
-                  fontWeight: 700,
-                  width: '15px',
-                  height: '15px',
-                  borderRadius: '50%',
+                  padding: '6px',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                }}>
-                  2
-                </span>
-              </div>
-
-              {/* Patient User & Sign Out */}
-              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                <div
-                  onClick={onOpenAuth}
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '6px',
-                    fontSize: '14px',
-                    fontWeight: 600,
-                    color: '#2a241d',
-                    cursor: 'pointer',
-                  }}
-                  title="Switch profile"
-                >
-                  <span>{currentUser.fullName || 'Avi Patel'}</span>
-                  <ChevronDown size={14} color="#785b47" />
-                </div>
-                <button
-                  onClick={onLogout}
-                  style={{
-                    background: 'none',
-                    border: 'none',
-                    color: '#8c857b',
-                    fontSize: '12px',
-                    cursor: 'pointer',
-                    textDecoration: 'underline',
-                    padding: '2px 4px',
-                  }}
-                  title="Sign Out"
-                >
-                  Sign out
-                </button>
-              </div>
-            </>
-          )}
-
-          {isDoctor && (
-            <>
-              {/* Notification Bell with 1 badge */}
-              <div className="icon-pop" style={{ position: 'relative', cursor: 'pointer', display: 'flex', alignItems: 'center' }}>
-                <Bell size={18} color="#1a110a" />
-                <span style={{
-                  position: 'absolute',
-                  top: '-4px',
-                  right: '-6px',
-                  backgroundColor: '#785b47',
-                  color: '#ffffff',
-                  fontSize: '10px',
-                  fontWeight: 700,
-                  width: '15px',
-                  height: '15px',
-                  borderRadius: '50%',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                }}>
-                  1
-                </span>
-              </div>
-
-              {/* Doctor Profile & Sign Out */}
-              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                <div
-                  onClick={onOpenAuth}
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '6px',
-                    fontSize: '14px',
-                    fontWeight: 600,
-                    color: '#1a110a',
-                    cursor: 'pointer',
-                  }}
-                  title="Switch profile"
-                >
-                  <span>{currentUser.fullName || 'Dr. Kavita Shah'}</span>
-                  <ChevronDown size={14} color="#785b47" />
-                </div>
-                <button
-                  onClick={onLogout}
-                  style={{
-                    background: 'none',
-                    border: 'none',
-                    color: '#8c857b',
-                    fontSize: '12px',
-                    cursor: 'pointer',
-                    textDecoration: 'underline',
-                    padding: '2px 4px',
-                  }}
-                  title="Sign Out"
-                >
-                  Sign out
-                </button>
-              </div>
-            </>
-          )}
+                  cursor: 'pointer',
+                }}
+              >
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#0b3f3a" strokeWidth="2.3" strokeLinecap="round">
+                  <motion.line
+                    animate={mobileMenuOpen ? { x1: 5, y1: 5, x2: 19, y2: 19 } : { x1: 4, y1: 7, x2: 20, y2: 7 }}
+                    transition={{ duration: 0.24, ease: EASE_HEADER }}
+                  />
+                  <motion.line
+                    animate={mobileMenuOpen ? { opacity: 0, x: -8 } : { opacity: 1, x: 0 }}
+                    x1="4" y1="12" x2="20" y2="12"
+                    transition={{ duration: 0.18 }}
+                  />
+                  <motion.line
+                    animate={mobileMenuOpen ? { x1: 5, y1: 19, x2: 19, y2: 5 } : { x1: 4, y1: 17, x2: 20, y2: 17 }}
+                    transition={{ duration: 0.24, ease: EASE_HEADER }}
+                  />
+                </svg>
+              </button>
+            )}
+          </div>
         </div>
-      </div>
-    </header>
+
+        {/* 2px Teal Reading Progress Bar at the bottom edge - silky smooth continuous spring transition */}
+        <motion.div
+          style={{
+            position: 'absolute',
+            bottom: 0,
+            left: 0,
+            right: 0,
+            height: '2px',
+            backgroundColor: '#0f766e',
+            scaleX: reduced ? scrollYProgress : smoothScaleX,
+            transformOrigin: '0%',
+            zIndex: 10,
+            pointerEvents: 'none',
+          }}
+        />
+      </header>
+
+      {/* Mobile Slide-Down Panel with Stagger Reveal */}
+      <AnimatePresence>
+        {isMobile && mobileMenuOpen && (
+          <motion.div
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: 'auto', opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.24, ease: EASE_HEADER }}
+            style={{
+              position: 'fixed',
+              top: isScrolled ? '56px' : '72px',
+              left: 0,
+              right: 0,
+              zIndex: 49,
+              backgroundColor: '#ffffff',
+              borderBottom: '1px solid #d9ece7',
+              boxShadow: '0 10px 24px rgba(20, 60, 55, 0.10)',
+              overflow: 'hidden',
+              fontFamily: "'Space Grotesk', sans-serif",
+            }}
+          >
+            <div style={{ padding: '20px 24px 28px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
+              {!currentUser && guestNavItems.map((item, idx) => (
+                <motion.a
+                  key={item.id}
+                  href={item.href}
+                  onClick={(e) => {
+                    item.onClick(e);
+                    setMobileMenuOpen(false);
+                  }}
+                  initial={{ opacity: 0, x: -8 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: idx * 0.03, duration: 0.2 }}
+                  style={{
+                    fontSize: '16px',
+                    fontWeight: item.isActive ? 700 : 500,
+                    color: item.isActive ? '#0f766e' : '#0b3f3a',
+                    textDecoration: 'none',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                  }}
+                >
+                  <span>{item.label}</span>
+                  {item.isActive && (
+                    <span style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: '#ff6b5b' }} />
+                  )}
+                </motion.a>
+              ))}
+
+              {!currentUser && (
+                <div style={{ display: 'flex', gap: '12px', marginTop: '12px', paddingTop: '16px', borderTop: '1px solid #d9ece7' }}>
+                  <button
+                    onClick={() => { onOpenAuth(); setMobileMenuOpen(false); }}
+                    style={{
+                      flex: 1,
+                      padding: '10px 0',
+                      border: '1px solid #d9ece7',
+                      borderRadius: '10px',
+                      backgroundColor: 'transparent',
+                      color: '#0b3f3a',
+                      fontWeight: 600,
+                      fontSize: '14px',
+                      cursor: 'pointer',
+                      fontFamily: "'Space Grotesk', sans-serif",
+                    }}
+                  >
+                    Sign in
+                  </button>
+                  <button
+                    onClick={() => { (onOpenRegister || onOpenAuth)(); setMobileMenuOpen(false); }}
+                    style={{
+                      flex: 1,
+                      padding: '10px 0',
+                      border: 'none',
+                      borderRadius: '10px',
+                      backgroundColor: '#0f766e',
+                      color: '#ffffff',
+                      fontWeight: 600,
+                      fontSize: '14px',
+                      cursor: 'pointer',
+                      fontFamily: "'Space Grotesk', sans-serif",
+                    }}
+                  >
+                    Sign up
+                  </button>
+                </div>
+              )}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Component-scoped Micro-motion Animations & Accessibility Rules */}
+      <style>{`
+        /* Coral "Book now" CTA 4s subtle breathing shadow */
+        @keyframes ctaBreathe {
+          0%, 100% {
+            box-shadow: 0 2px 8px rgba(255, 107, 91, 0.15);
+          }
+          50% {
+            box-shadow: 0 4px 14px rgba(255, 107, 91, 0.35);
+          }
+        }
+
+        .coral-book-btn {
+          animation: ctaBreathe 4s ease-in-out infinite;
+        }
+
+        /* 6s traveling highlight loop across the ECG trace */
+        @keyframes ecgTravelGlow {
+          0% {
+            stroke-dashoffset: 40;
+            opacity: 0;
+          }
+          5% {
+            opacity: 0.95;
+          }
+          32% {
+            stroke-dashoffset: -40;
+            opacity: 0.95;
+          }
+          40%, 100% {
+            stroke-dashoffset: -40;
+            opacity: 0;
+          }
+        }
+
+        .ecg-travel-highlight {
+          animation: ecgTravelGlow 6s ease-in-out infinite;
+        }
+
+        /* Accessibility: Prefers Reduced Motion */
+        @media (prefers-reduced-motion: reduce) {
+          .coral-book-btn {
+            animation: none !important;
+            box-shadow: 0 2px 10px rgba(20, 60, 55, 0.08) !important;
+          }
+          .ecg-travel-highlight {
+            animation: none !important;
+            display: none !important;
+          }
+        }
+      `}</style>
+    </>
   );
 };

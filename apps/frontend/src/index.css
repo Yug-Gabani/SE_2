@@ -1,101 +1,63 @@
 @import './animations.css';
 
 /* ==========================================================================
-   PulseCare Design System — Dual Surface Architecture
-   Reference: PULSECARE_DESIGN.md
-   - Warm Surface (Patient): Cream + Indigo + DM Serif Display + Pill Buttons
-   - Clinical Surface (Doctor/Admin): Slate + Sky + Inter only + 8px Radius
+   PulseCare Design System — "Soft Mint" Theme
+   Palette:
+   - Canvas / section bg: #eaf6f2 (pale mint)
+   - Card / surface:      #ffffff
+   - Border / hairline:   #d9ece7
+   - Ink primary:         #0b3f3a (deep teal)
+   - Ink body:            #52736d
+   - Ink muted:           #8aa39d
+   - Primary action:      #0f766e (teal)
+   - Accent / CTA:        #ff6b5b (warm coral)
+   - Danger:              #dc2626
    ========================================================================== */
 
 :root,
-[data-surface="warm"] {
-  /* Warm Surface Colors (Patient Journey) */
-  --canvas: #f8f3eb;              /* warm-cream */
-  --surface: #ffffff;             /* warm-surface */
+[data-surface="warm"],
+[data-surface="clinical"] {
+  --canvas: #eaf6f2;              /* pale mint */
+  --surface: #ffffff;             /* card / surface */
   --surface-raised: #ffffff;
-  --primary: #4865ff;             /* warm-primary */
-  --primary-hover: #3753e6;
-  --ink: #080331;                 /* warm-ink */
-  --ink-deep: #1b1463;
-  --muted: #6b6778;               /* warm-muted */
-  --border: #e9e3d8;              /* warm soft border */
-  --border-strong: #d8cebf;
+  --primary: #0f766e;             /* teal primary action */
+  --primary-hover: #115e59;
+  --accent: #ff6b5b;              /* warm coral CTA */
+  --accent-hover: #fa5543;
+  --ink: #0b3f3a;                 /* deep teal primary */
+  --ink-primary: #0b3f3a;
+  --ink-body: #52736d;
+  --ink-muted: #8aa39d;
+  --muted: #52736d;
+  --border: #d9ece7;              /* hairline mint */
+  --border-strong: #c2e2db;
 
-  --accent-soft: #a2baff;         /* warm-accent-soft */
-  --accent-warm: #ff6d39;         /* warm-accent-warm */
-  --accent-rose: #f098d7;         /* warm-accent-rose */
-  --success: #328a3b;             /* warm-success */
-  --warning: #ff6d39;             /* warm-warning */
-  --danger: #c0392b;              /* warm-danger */
-  --info: #dce4fb;                /* warm-info */
+  --accent-soft: #ccebe3;
+  --accent-warm: #ff6b5b;
+  --accent-coral: #ff6b5b;
+  --success: #0f766e;
+  --warning: #f59e0b;
+  --danger: #dc2626;              /* keep #dc2626 */
+  --info: #eaf6f2;
 
-  /* Shadows (Warm-tinted browns, never cool gray) */
-  --shadow-sm: 0 2px 4px rgba(75, 68, 57, 0.06), 0 8px 16px rgba(75, 68, 57, 0.04);
-  --shadow-md: 0 4px 12px rgba(75, 68, 57, 0.08), 0 16px 32px rgba(75, 68, 57, 0.06);
-  --shadow-lg: 0 12px 24px rgba(75, 68, 57, 0.10), 0 48px 48px rgba(75, 68, 57, 0.08);
+  /* Shadows: 0 2px 10px rgba(20,60,55,0.08) rest; 0 10px 24px rgba(20,60,55,0.10) hover */
+  --shadow-sm: 0 2px 6px rgba(20, 60, 55, 0.05);
+  --shadow-md: 0 2px 10px rgba(20, 60, 55, 0.08);
+  --shadow-lg: 0 10px 24px rgba(20, 60, 55, 0.10);
 
-  /* Shape (Warm) */
-  --radius-btn: 9999px;           /* Full Pill */
-  --radius-card: 20px;
-  --radius-input: 12px;
+  /* Shape: 10 (inputs/small), 14 (buttons/cards), 16 (large sections), 9999 (pills) */
+  --radius-sm: 10px;
+  --radius-input: 10px;
+  --radius-btn: 14px;
+  --radius-card: 14px;
+  --radius-section: 16px;
+  --radius-pill: 9999px;
   --radius-badge: 9999px;
 
-  /* Fonts */
-  --font-serif: 'DM Serif Display', Georgia, serif;
-  --font-sans: 'Inter', ui-sans-serif, system-ui, -apple-system, sans-serif;
+  /* Single family: Space Grotesk */
+  --font-sans: 'Space Grotesk', ui-sans-serif, system-ui, -apple-system, sans-serif;
+  --font-serif: 'Space Grotesk', ui-sans-serif, system-ui, -apple-system, sans-serif;
   --font-mono: 'JetBrains Mono', monospace;
-}
-
-/* Clinical Surface (Doctor, Admin, Pharmacist) */
-[data-surface="clinical"] {
-  --canvas: #f8fafc;              /* clin-canvas (slate-50) */
-  --surface: #ffffff;             /* clin-surface */
-  --surface-raised: #ffffff;
-  --primary: #0284c7;             /* clin-primary (sky-600) */
-  --primary-hover: #0369a1;
-  --ink: #0f172a;                 /* clin-ink (slate-900) */
-  --muted: #64748b;               /* clin-muted (slate-500) */
-  --border: #e2e8f0;              /* clin-border (slate-200) */
-  --border-strong: #cbd5e1;
-
-  --ai-tint: #ede9fe;             /* clin-ai-tint (violet-100) */
-  --ai-ink: #5b21b6;              /* clin-ai-ink (violet-800) */
-  --urgency-routine: #059669;
-  --urgency-urgent: #d97706;
-  --urgency-emergency: #dc2626;
-
-  /* Shadows (Cool neutrals) */
-  --shadow-sm: 0 1px 2px rgba(15, 23, 42, 0.06);
-  --shadow-md: 0 4px 6px rgba(15, 23, 42, 0.08);
-  --shadow-lg: 0 10px 20px rgba(15, 23, 42, 0.10);
-
-  /* Shape (Clinical: 8px compact) */
-  --radius-btn: 8px;
-  --radius-card: 10px;
-  --radius-input: 8px;
-  --radius-badge: 6px;
-
-  /* No Serif on Clinical */
-  --font-serif: 'Inter', ui-sans-serif, system-ui, sans-serif;
-}
-
-/* Dark Mode Overrides */
-[data-theme="dark"][data-surface="warm"] {
-  --canvas: #1a1612;              /* Warm charcoal */
-  --surface: #262019;
-  --ink: #f0ebe3;
-  --muted: #a69f94;
-  --primary: #8ea4ff;
-  --border: #383025;
-}
-
-[data-theme="dark"][data-surface="clinical"] {
-  --canvas: #0b1120;              /* slate-950 */
-  --surface: #1e293b;             /* slate-800 */
-  --ink: #f1f5f9;
-  --muted: #94a3b8;
-  --primary: #38bdf8;
-  --border: #334155;
 }
 
 * {
@@ -107,12 +69,20 @@
 html, body {
   min-height: 100vh;
   background-color: var(--canvas);
-  color: var(--ink);
+  color: var(--ink-body);
   font-family: var(--font-sans);
   font-size: 15px;
-  line-height: 1.5;
+  line-height: 1.55;
   -webkit-font-smoothing: antialiased;
   transition: background-color 0.25s ease, color 0.25s ease;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  color: var(--ink-primary);
+  font-family: var(--font-sans);
+  font-weight: 700;
+  line-height: 1.05;
+  letter-spacing: -0.025em;
 }
 
 /* Typography Classes */
@@ -221,11 +191,6 @@ html, body {
   border-radius: var(--radius-card);
   border: 1px solid var(--border);
   box-shadow: var(--shadow-sm);
-  transition: box-shadow 0.2s ease, border-color 0.2s ease;
-}
-
-.card:hover {
-  box-shadow: var(--shadow-md);
 }
 
 /* Form Inputs */

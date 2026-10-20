@@ -17,5 +17,16 @@ public interface DoctorRepository extends JpaRepository<Doctor, UUID> {
 
     List<Doctor> findAllByOrderByRatingDescFullNameAsc();
 
+    List<Doctor> findByHospitalIdOrderByRatingDescFullNameAsc(UUID hospitalId);
+
+    @Query("""
+        SELECT d FROM Doctor d
+         WHERE (:specialty IS NULL OR LOWER(d.specialty) LIKE LOWER(CONCAT('%', :specialty, '%')))
+           AND (:hospitalId IS NULL OR d.hospitalId = :hospitalId)
+         ORDER BY d.rating DESC, d.fullName ASC
+        """)
+    List<Doctor> searchByFilters(@Param("specialty") String specialty,
+                                 @Param("hospitalId") UUID hospitalId);
+
     Optional<Doctor> findByUserId(UUID userId);
 }

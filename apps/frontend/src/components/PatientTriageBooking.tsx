@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import {
   Activity,
   AlertTriangle,
@@ -68,18 +68,330 @@ function formatSlot(iso: string): string {
   return `${d.toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' })} ${time}`;
 }
 
+export interface SpotIntakePreset {
+  label: string;
+  chiefComplaint: string;
+  selectedSymptoms: string[];
+  durationDays: number;
+  painLevel: number;
+  fever: boolean;
+  chestPain: boolean;
+  shortnessOfBreath: boolean;
+}
+
+export const SPOT_INTAKE_PRESETS: Record<string, SpotIntakePreset> = {
+  chest: {
+    label: 'Chest & Heart',
+    chiefComplaint: 'Sharp chest tightness, squeezing pressure radiating to arm, and shortness of breath upon exertion',
+    selectedSymptoms: ['Chest Tightness / Pain', 'Shortness of Breath'],
+    durationDays: 1,
+    painLevel: 6,
+    fever: false,
+    chestPain: true,
+    shortnessOfBreath: true,
+  },
+  head: {
+    label: 'Head & Neurological',
+    chiefComplaint: 'Severe throbbing migraine and persistent headache with dizziness, visual sensitivity, and nausea',
+    selectedSymptoms: ['Severe Headache / Migraine', 'Dizziness / Fainting'],
+    durationDays: 2,
+    painLevel: 6,
+    fever: false,
+    chestPain: false,
+    shortnessOfBreath: false,
+  },
+  mental: {
+    label: 'Mental Health',
+    chiefComplaint: 'Persistent anxiety, overwhelming emotional distress, insomnia, and difficulty concentrating',
+    selectedSymptoms: ['Dizziness / Fainting'],
+    durationDays: 7,
+    painLevel: 3,
+    fever: false,
+    chestPain: false,
+    shortnessOfBreath: false,
+  },
+  abdomen: {
+    label: 'Stomach & Digestion',
+    chiefComplaint: 'Persistent abdominal cramping, severe burning sensation in stomach, and nausea after meals',
+    selectedSymptoms: ['Abdominal Cramping / Pain'],
+    durationDays: 3,
+    painLevel: 5,
+    fever: false,
+    chestPain: false,
+    shortnessOfBreath: false,
+  },
+  joints: {
+    label: 'Bones & Joints',
+    chiefComplaint: 'Aching joint stiffness, inflammation, and reduced range of motion in shoulders and elbows',
+    selectedSymptoms: ['Joint Swelling'],
+    durationDays: 4,
+    painLevel: 5,
+    fever: false,
+    chestPain: false,
+    shortnessOfBreath: false,
+  },
+  skin: {
+    label: 'Skin & Allergies',
+    chiefComplaint: 'Spreading itchy red rash, allergic hive flare-up, and localized irritation across skin',
+    selectedSymptoms: ['Skin Rash / Allergic Reaction'],
+    durationDays: 3,
+    painLevel: 4,
+    fever: false,
+    chestPain: false,
+    shortnessOfBreath: false,
+  },
+  reproductive: {
+    label: 'Reproductive & Urinary',
+    chiefComplaint: 'Pelvic cramping, sharp lower abdominal discomfort, and painful urinary irritation for 2 days',
+    selectedSymptoms: ['Abdominal Cramping / Pain'],
+    durationDays: 2,
+    painLevel: 5,
+    fever: false,
+    chestPain: false,
+    shortnessOfBreath: false,
+  },
+  knee: {
+    label: 'Knees',
+    chiefComplaint: 'Acute knee joint pain, noticeable swelling, and tenderness with difficulty bending or bearing weight',
+    selectedSymptoms: ['Joint Swelling'],
+    durationDays: 2,
+    painLevel: 6,
+    fever: false,
+    chestPain: false,
+    shortnessOfBreath: false,
+  },
+  ankle: {
+    label: 'Ankles & Feet',
+    chiefComplaint: 'Twisted ankle injury with sharp throbbing pain, localized swelling, and difficulty walking',
+    selectedSymptoms: ['Joint Swelling'],
+    durationDays: 1,
+    painLevel: 6,
+    fever: false,
+    chestPain: false,
+    shortnessOfBreath: false,
+  },
+  neck_back: {
+    label: 'Neck & Upper Spine',
+    chiefComplaint: 'Stiff neck, sharp radiating muscular spasm when rotating head, and tension headache',
+    selectedSymptoms: ['Severe Headache / Migraine', 'Joint Swelling'],
+    durationDays: 3,
+    painLevel: 5,
+    fever: false,
+    chestPain: false,
+    shortnessOfBreath: false,
+  },
+  upper_back: {
+    label: 'Upper Back & Shoulders',
+    chiefComplaint: 'Severe upper back tightness, postural aching between shoulder blades, and muscular stiffness',
+    selectedSymptoms: ['Joint Swelling'],
+    durationDays: 4,
+    painLevel: 5,
+    fever: false,
+    chestPain: false,
+    shortnessOfBreath: false,
+  },
+  lower_back: {
+    label: 'Lower Back & Spine',
+    chiefComplaint: 'Acute lower back strain, stiffness, and lumbar pain radiating down hip while sitting or bending',
+    selectedSymptoms: ['Joint Swelling'],
+    durationDays: 3,
+    painLevel: 6,
+    fever: false,
+    chestPain: false,
+    shortnessOfBreath: false,
+  },
+  hips_back: {
+    label: 'Hips & Glutes',
+    chiefComplaint: 'Deep hip joint discomfort, pelvic muscle stiffness, and mobility ache while standing or walking',
+    selectedSymptoms: ['Joint Swelling'],
+    durationDays: 4,
+    painLevel: 5,
+    fever: false,
+    chestPain: false,
+    shortnessOfBreath: false,
+  },
+  calf: {
+    label: 'Calves & Hamstrings',
+    chiefComplaint: 'Sudden calf muscle cramping, tenderness, and hamstring tightness after physical activity',
+    selectedSymptoms: ['Joint Swelling'],
+    durationDays: 2,
+    painLevel: 5,
+    fever: false,
+    chestPain: false,
+    shortnessOfBreath: false,
+  },
+};
+
+const DEFAULT_PRESET: SpotIntakePreset = {
+  label: '',
+  chiefComplaint: 'Persistent high fever and dry cough for 3 days',
+  selectedSymptoms: ['Fever / Chills', 'Persistent Cough'],
+  durationDays: 3,
+  painLevel: 4,
+  fever: true,
+  chestPain: false,
+  shortnessOfBreath: false,
+};
+
+function resolveSpotKey(input: string): string | null {
+  if (!input) return null;
+  const clean = input.toLowerCase().trim().replace(/[^a-z0-9_]/g, '');
+  if (SPOT_INTAKE_PRESETS[clean]) return clean;
+  if (clean.includes('chest') || clean.includes('heart') || clean.includes('cardiac')) return 'chest';
+  if (clean.includes('head') || clean.includes('migraine') || clean.includes('neuro')) return 'head';
+  if (clean.includes('mental') || clean.includes('anxiety') || clean.includes('psych')) return 'mental';
+  if (clean.includes('stomach') || clean.includes('abdom') || clean.includes('digest')) return 'abdomen';
+  if (clean.includes('joint') || clean.includes('bone')) return 'joints';
+  if (clean.includes('skin') || clean.includes('rash') || clean.includes('allergy')) return 'skin';
+  if (clean.includes('reproductive') || clean.includes('urinary') || clean.includes('pelvic')) return 'reproductive';
+  if (clean.includes('knee')) return 'knee';
+  if (clean.includes('ankle') || clean.includes('foot') || clean.includes('feet')) return 'ankle';
+  if (clean.includes('neck')) return 'neck_back';
+  if (clean.includes('upperback') || clean.includes('shoulder')) return 'upper_back';
+  if (clean.includes('lowerback') || clean.includes('lumbar') || clean.includes('sciatica')) return 'lower_back';
+  if (clean.includes('hip') || clean.includes('glute')) return 'hips_back';
+  if (clean.includes('calf') || clean.includes('calves') || clean.includes('hamstring')) return 'calf';
+  return null;
+}
+
+function inferPresetFromComplaint(text: string): SpotIntakePreset {
+  const lower = text.toLowerCase();
+  const symptoms: string[] = [];
+  let fever = false;
+  let chestPain = false;
+  let shortnessOfBreath = false;
+  let painLevel = 4;
+  let durationDays = 3;
+
+  if (lower.includes('chest') || lower.includes('heart') || lower.includes('cardiac') || lower.includes('angina')) {
+    symptoms.push('Chest Tightness / Pain');
+    chestPain = true;
+    painLevel = 6;
+    durationDays = 1;
+  }
+  if (lower.includes('breath') || lower.includes('dyspnea') || lower.includes('suffocat')) {
+    symptoms.push('Shortness of Breath');
+    shortnessOfBreath = true;
+    painLevel = Math.max(painLevel, 6);
+  }
+  if (lower.includes('head') || lower.includes('migraine')) {
+    symptoms.push('Severe Headache / Migraine');
+    painLevel = Math.max(painLevel, 5);
+  }
+  if (lower.includes('fever') || lower.includes('chill') || lower.includes('temperature')) {
+    symptoms.push('Fever / Chills');
+    fever = true;
+  }
+  if (lower.includes('cough')) {
+    symptoms.push('Persistent Cough');
+  }
+  if (lower.includes('stomach') || lower.includes('abdom') || lower.includes('cramp') || lower.includes('belly') || lower.includes('nausea') || lower.includes('digest') || lower.includes('bloat')) {
+    symptoms.push('Abdominal Cramping / Pain');
+    painLevel = Math.max(painLevel, 5);
+  }
+  if (lower.includes('dizzy') || lower.includes('faint') || lower.includes('vertigo') || lower.includes('lighthead') || lower.includes('fatigue') || lower.includes('weakness') || lower.includes('insomnia') || lower.includes('sleep')) {
+    symptoms.push('Dizziness / Fainting');
+  }
+  if (lower.includes('rash') || lower.includes('allergy') || lower.includes('allergic') || lower.includes('hive') || lower.includes('itch') || lower.includes('skin')) {
+    symptoms.push('Skin Rash / Allergic Reaction');
+  }
+  if (lower.includes('joint') || lower.includes('swell') || lower.includes('knee') || lower.includes('ankle') || lower.includes('back') || lower.includes('neck') || lower.includes('muscle')) {
+    symptoms.push('Joint Swelling');
+  }
+  if (lower.includes('throat')) {
+    symptoms.push('Sore Throat');
+  }
+
+  return {
+    label: text.length > 30 ? text.substring(0, 28) + '...' : text,
+    chiefComplaint: text,
+    selectedSymptoms: symptoms.length > 0 ? symptoms : ['Fever / Chills'],
+    durationDays,
+    painLevel,
+    fever,
+    chestPain,
+    shortnessOfBreath,
+  };
+}
+
 export const PatientTriageBooking: React.FC<PatientTriageBookingProps> = ({ currentUser }) => {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const [step, setStep] = useState<1 | 2 | 3>(1);
 
+  const resolveInitialPreset = (): SpotIntakePreset => {
+    let hotspotKey = searchParams.get('hotspot') || '';
+    let complaintText = searchParams.get('complaint') || '';
+
+    try {
+      if (!hotspotKey) {
+        const storedSpot = sessionStorage.getItem('pulsecare_pending_hotspot');
+        if (storedSpot) {
+          hotspotKey = storedSpot;
+          sessionStorage.removeItem('pulsecare_pending_hotspot');
+        }
+      }
+      if (!complaintText) {
+        const storedComplaint = sessionStorage.getItem('pulsecare_pending_complaint');
+        if (storedComplaint) {
+          complaintText = storedComplaint;
+          sessionStorage.removeItem('pulsecare_pending_complaint');
+        }
+      }
+    } catch {}
+
+    const resolved = resolveSpotKey(hotspotKey);
+    if (resolved && SPOT_INTAKE_PRESETS[resolved]) {
+      return SPOT_INTAKE_PRESETS[resolved];
+    }
+    if (complaintText) {
+      return inferPresetFromComplaint(complaintText);
+    }
+    return DEFAULT_PRESET;
+  };
+
+  const initialPreset = useMemo(resolveInitialPreset, []);
+
   // Step 1 — intake
-  const [chiefComplaint, setChiefComplaint] = useState('Persistent high fever and dry cough for 3 days');
-  const [selectedSymptoms, setSelectedSymptoms] = useState<string[]>(['Fever / Chills', 'Persistent Cough']);
-  const [durationDays, setDurationDays] = useState<number>(3);
-  const [painLevel, setPainLevel] = useState<number>(4);
-  const [fever, setFever] = useState<boolean>(true);
-  const [chestPain, setChestPain] = useState<boolean>(false);
-  const [shortnessOfBreath, setShortnessOfBreath] = useState<boolean>(false);
+  const [activePresetLabel, setActivePresetLabel] = useState<string>(initialPreset.label);
+  const [chiefComplaint, setChiefComplaint] = useState<string>(initialPreset.chiefComplaint);
+  const [selectedSymptoms, setSelectedSymptoms] = useState<string[]>(initialPreset.selectedSymptoms);
+  const [durationDays, setDurationDays] = useState<number>(initialPreset.durationDays);
+  const [painLevel, setPainLevel] = useState<number>(initialPreset.painLevel);
+  const [fever, setFever] = useState<boolean>(initialPreset.fever);
+  const [chestPain, setChestPain] = useState<boolean>(initialPreset.chestPain);
+  const [shortnessOfBreath, setShortnessOfBreath] = useState<boolean>(initialPreset.shortnessOfBreath);
+
+  useEffect(() => {
+    const rawSpot = searchParams.get('hotspot');
+    const rawComplaint = searchParams.get('complaint');
+    if (rawSpot) {
+      const resolved = resolveSpotKey(rawSpot);
+      if (resolved && SPOT_INTAKE_PRESETS[resolved]) {
+        const p = SPOT_INTAKE_PRESETS[resolved];
+        setActivePresetLabel(p.label);
+        setChiefComplaint(p.chiefComplaint);
+        setSelectedSymptoms(p.selectedSymptoms);
+        setDurationDays(p.durationDays);
+        setPainLevel(p.painLevel);
+        setFever(p.fever);
+        setChestPain(p.chestPain);
+        setShortnessOfBreath(p.shortnessOfBreath);
+        return;
+      }
+    }
+    if (rawComplaint) {
+      const p = inferPresetFromComplaint(rawComplaint);
+      setActivePresetLabel(p.label);
+      setChiefComplaint(p.chiefComplaint);
+      setSelectedSymptoms(p.selectedSymptoms);
+      setDurationDays(p.durationDays);
+      setPainLevel(p.painLevel);
+      setFever(p.fever);
+      setChestPain(p.chestPain);
+      setShortnessOfBreath(p.shortnessOfBreath);
+    }
+  }, [searchParams]);
 
   // Step 2 — triage result (from backend)
   const [assessment, setAssessment] = useState<TriageAssessment | null>(null);
@@ -294,6 +606,27 @@ export const PatientTriageBooking: React.FC<PatientTriageBookingProps> = ({ curr
                   <div style={{ fontSize: '13px', color: 'var(--muted)' }}>Step 1 of 3 · Pre-visit intake</div>
                 </div>
               </div>
+
+              {activePresetLabel && (
+                <div style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px',
+                  padding: '9px 14px',
+                  borderRadius: '12px',
+                  backgroundColor: '#eaf6f2',
+                  border: '1px solid #d9ece7',
+                  color: '#0f766e',
+                  fontSize: '13px',
+                  fontWeight: 500,
+                  marginBottom: '20px',
+                }}>
+                  <Sparkles size={16} color="#0f766e" style={{ flexShrink: 0 }} />
+                  <span>
+                    Auto-filled for <strong>{activePresetLabel}</strong> based on your selection. You can customize symptoms anytime.
+                  </span>
+                </div>
+              )}
 
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
                 <div className="form-group">

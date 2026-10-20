@@ -7,6 +7,7 @@ import com.group6.healthcare.clinic.entity.DoctorSlot;
 import com.group6.healthcare.clinic.repository.DoctorRepository;
 import com.group6.healthcare.clinic.repository.DoctorSlotRepository;
 import com.group6.healthcare.common.exception.ResourceNotFoundException;
+import java.util.UUID;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -27,12 +28,19 @@ public class DoctorService {
     }
 
     @Transactional(readOnly = true)
-    public List<DoctorResponse> listDoctors(String specialtyQuery) {
-        List<Doctor> doctors = (specialtyQuery == null || specialtyQuery.isBlank())
+    public List<DoctorResponse> listDoctors(String specialtyQuery, UUID hospitalId) {
+        String spec = (specialtyQuery == null || specialtyQuery.isBlank()) ? null : specialtyQuery;
+        List<Doctor> doctors = (spec == null && hospitalId == null)
                 ? doctorRepository.findAllByOrderByRatingDescFullNameAsc()
-                : doctorRepository.searchBySpecialty(specialtyQuery);
+                : doctorRepository.searchByFilters(spec, hospitalId);
         OffsetDateTime now = OffsetDateTime.now();
         return doctors.stream().map(d -> toResponse(d, now, 3)).toList();
+    }
+
+    /** Backwards-compatible single-arg overload. */
+    @Transactional(readOnly = true)
+    public List<DoctorResponse> listDoctors(String specialtyQuery) {
+        return listDoctors(specialtyQuery, null);
     }
 
     @Transactional(readOnly = true)
@@ -63,6 +71,7 @@ public class DoctorService {
                 d.getFullName(),
                 d.getSpecialty(),
                 d.getHospital(),
+                d.getHospitalId(),
                 d.getAvatarUrl(),
                 d.getRating(),
                 d.getBio(),

@@ -32,7 +32,7 @@ export const HospitalDetail: React.FC = () => {
         onClick={() => navigate(-1)}
         className="hover-lift"
         style={{
-          background: 'transparent', border: 'none', color: '#785b47',
+          background: 'transparent', border: 'none', color: '#0f766e',
           fontSize: '14px', fontWeight: 600, cursor: 'pointer',
           padding: '6px 0', marginBottom: '16px',
           display: 'inline-flex', alignItems: 'center', gap: '6px',
@@ -42,7 +42,7 @@ export const HospitalDetail: React.FC = () => {
       </button>
 
       {loading && (
-        <div style={{ padding: '48px', textAlign: 'center', color: '#706b63' }}>
+        <div style={{ padding: '48px', textAlign: 'center', color: '#52736d' }}>
           <Loader2 size={22} className="animate-spin" style={{ display: 'inline', marginRight: 6 }} />
           Loading…
         </div>
@@ -63,17 +63,17 @@ export const HospitalDetail: React.FC = () => {
             <div style={{ display: 'flex', alignItems: 'flex-start', gap: '14px' }}>
               <div style={{
                 width: '48px', height: '48px', borderRadius: '12px',
-                backgroundColor: '#f5efe6', color: '#785b47',
+                backgroundColor: '#eaf6f2', color: '#0f766e',
                 display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
               }}>
                 <Building2 size={22} />
               </div>
               <div style={{ flex: 1 }}>
-                <h1 style={{ fontSize: '22px', fontWeight: 700, color: '#1a110a', margin: 0 }}>
+                <h1 style={{ fontSize: '22px', fontWeight: 700, color: '#0b3f3a', margin: 0 }}>
                   {hospital.name}
                 </h1>
                 {hospital.address && (
-                  <div style={{ fontSize: '13px', color: '#706b63', marginTop: '4px', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                  <div style={{ fontSize: '13px', color: '#52736d', marginTop: '4px', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
                     <MapPin size={13} /> {hospital.address}
                     {[hospital.city, hospital.state, hospital.pincode].filter(Boolean).length > 0 && (
                       <span>, {[hospital.city, hospital.state, hospital.pincode].filter(Boolean).join(', ')}</span>
@@ -81,7 +81,7 @@ export const HospitalDetail: React.FC = () => {
                   </div>
                 )}
                 {hospital.phone && (
-                  <div style={{ fontSize: '13px', color: '#706b63', marginTop: '2px', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                  <div style={{ fontSize: '13px', color: '#52736d', marginTop: '2px', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
                     <Phone size={13} /> {hospital.phone}
                   </div>
                 )}
@@ -96,8 +96,8 @@ export const HospitalDetail: React.FC = () => {
                     className="chip"
                     style={{
                       padding: '3px 10px', borderRadius: '9999px',
-                      fontSize: '12px', color: '#443e37',
-                      backgroundColor: '#faf7f1', border: '1px solid #eae3d8',
+                      fontSize: '12px', color: '#0b3f3a',
+                      backgroundColor: '#eaf6f2', border: '1px solid #d9ece7',
                     }}
                   >{s}</span>
                 ))}
@@ -105,17 +105,17 @@ export const HospitalDetail: React.FC = () => {
             )}
           </div>
 
-          <h2 style={{ fontSize: '18px', fontWeight: 700, color: '#1a110a', margin: '28px 0 12px 0' }}>
+          <h2 style={{ fontSize: '18px', fontWeight: 700, color: '#0b3f3a', margin: '28px 0 12px 0' }}>
             Doctors at this hospital
           </h2>
 
           {doctors.length === 0 ? (
             <div className="card card-hover" style={{ padding: '28px', textAlign: 'center' }}>
-              <Stethoscope size={24} color="#b8b0a5" style={{ marginBottom: 8 }} />
-              <div style={{ fontSize: '14px', color: '#443f38', fontWeight: 600 }}>
+              <Stethoscope size={24} color="#8aa39d" style={{ marginBottom: 8 }} />
+              <div style={{ fontSize: '14px', color: '#0b3f3a', fontWeight: 600 }}>
                 No doctors onboarded here yet
               </div>
-              <div style={{ fontSize: '12px', color: '#7a736a', marginTop: 4 }}>
+              <div style={{ fontSize: '12px', color: '#52736d', marginTop: 4 }}>
                 Try booking via symptom triage — we'll suggest the best match across all hospitals.
               </div>
             </div>
@@ -132,13 +132,13 @@ export const HospitalDetail: React.FC = () => {
                     ) : (
                       <div style={{
                         width: '44px', height: '44px', borderRadius: '50%',
-                        backgroundColor: '#f5efe6', color: '#785b47',
+                        backgroundColor: '#eaf6f2', color: '#0f766e',
                         display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700,
                       }}>{d.fullName.split(' ').map(s => s[0]).join('').slice(0, 2)}</div>
                     )}
                     <div>
-                      <div style={{ fontWeight: 700, color: '#1a110a' }}>{d.fullName}</div>
-                      <div style={{ fontSize: '12px', color: '#706b63' }}>
+                      <div style={{ fontWeight: 700, color: '#0b3f3a' }}>{d.fullName}</div>
+                      <div style={{ fontSize: '12px', color: '#52736d' }}>
                         {d.specialty} · ★ {Number(d.rating).toFixed(2)} · {d.openSlotCount} slots
                       </div>
                     </div>
@@ -147,7 +147,7 @@ export const HospitalDetail: React.FC = () => {
                     onClick={() => navigate('/book')}
                     className="hover-lift"
                     style={{
-                      backgroundColor: '#785b47', color: '#ffffff', border: 'none',
+                      backgroundColor: '#0f766e', color: '#ffffff', border: 'none',
                       borderRadius: '9999px', padding: '8px 16px',
                       fontSize: '13px', fontWeight: 600, cursor: 'pointer',
                     }}

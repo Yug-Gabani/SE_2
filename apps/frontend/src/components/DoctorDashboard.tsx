@@ -286,8 +286,8 @@ export const DoctorDashboard: React.FC = () => {
       maxWidth: '1200px',
       margin: '0 auto',
       padding: '36px 20px 64px 20px',
-      fontFamily: "'Inter', ui-sans-serif, system-ui, sans-serif",
-      color: '#1a110a',
+      fontFamily: "'Space Grotesk', ui-sans-serif, system-ui, sans-serif",
+      color: '#0b3f3a',
     }}>
       {currentSection === 'queue' && (
       <>
@@ -304,13 +304,13 @@ export const DoctorDashboard: React.FC = () => {
           <h1 style={{
             fontSize: '28px',
             fontWeight: 700,
-            color: '#1a110a',
+            color: '#0b3f3a',
             margin: 0,
             letterSpacing: '-0.025em',
           }}>
             Today's queue
           </h1>
-          <div style={{ fontSize: '14px', color: '#706b63', marginTop: '4px' }}>
+          <div style={{ fontSize: '14px', color: '#52736d', marginTop: '4px' }}>
             Live queue · updates automatically
           </div>
           <div style={{
@@ -318,7 +318,7 @@ export const DoctorDashboard: React.FC = () => {
             alignItems: 'center',
             gap: '6px',
             fontSize: '12px',
-            color: loadError ? '#dc2626' : loading ? '#785b47' : '#059669',
+            color: loadError ? '#dc2626' : loading ? '#0f766e' : '#059669',
             marginTop: '4px',
             fontWeight: 500,
           }}>
@@ -338,7 +338,7 @@ export const DoctorDashboard: React.FC = () => {
               className="icon-pop"
               style={{
                 background: 'transparent', border: 'none', cursor: 'pointer',
-                color: '#785b47', padding: '0 4px', display: 'inline-flex', alignItems: 'center',
+                color: '#0f766e', padding: '0 4px', display: 'inline-flex', alignItems: 'center',
               }}
             >
               <RefreshCw size={13} />
@@ -348,7 +348,7 @@ export const DoctorDashboard: React.FC = () => {
 
         <div style={{
           fontSize: '13px',
-          color: '#706b63',
+          color: '#52736d',
           fontWeight: 500,
         }}>
           {todayLabel}
@@ -369,17 +369,17 @@ export const DoctorDashboard: React.FC = () => {
             backgroundColor: '#ffffff',
             borderRadius: '16px',
             padding: '18px 22px',
-            border: '1px solid #eae3d8',
-            boxShadow: '0 4px 16px rgba(75, 68, 57, 0.04)',
+            border: '1px solid #d9ece7',
+            boxShadow: '0 4px 16px rgba(20, 60, 55, 0.05)',
           }}
         >
-          <div style={{ fontSize: '12px', color: '#706b63', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+          <div style={{ fontSize: '12px', color: '#52736d', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em' }}>
             Active
           </div>
-          <div style={{ fontSize: '28px', fontWeight: 700, color: '#1a110a', margin: '4px 0' }}>
+          <div style={{ fontSize: '28px', fontWeight: 700, color: '#0b3f3a', margin: '4px 0' }}>
             {kpiTotal}
           </div>
-          <div style={{ fontSize: '13px', color: '#706b63' }}>
+          <div style={{ fontSize: '13px', color: '#52736d' }}>
             booked + confirmed
           </div>
         </div>
@@ -443,17 +443,17 @@ export const DoctorDashboard: React.FC = () => {
             backgroundColor: '#ffffff',
             borderRadius: '16px',
             padding: '18px 22px',
-            border: '1px solid #eae3d8',
-            boxShadow: '0 4px 16px rgba(75, 68, 57, 0.04)',
+            border: '1px solid #d9ece7',
+            boxShadow: '0 4px 16px rgba(20, 60, 55, 0.05)',
           }}
         >
-          <div style={{ fontSize: '12px', color: '#706b63', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+          <div style={{ fontSize: '12px', color: '#52736d', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em' }}>
             Routine
           </div>
-          <div style={{ fontSize: '28px', fontWeight: 700, color: '#1a110a', margin: '4px 0' }}>
+          <div style={{ fontSize: '28px', fontWeight: 700, color: '#0b3f3a', margin: '4px 0' }}>
             {Math.max(0, activeQueue.length - kpiEmergency - kpiUrgent)}
           </div>
-          <div style={{ fontSize: '13px', color: '#706b63' }}>
+          <div style={{ fontSize: '13px', color: '#52736d' }}>
             scheduled visits
           </div>
         </div>
@@ -462,7 +462,7 @@ export const DoctorDashboard: React.FC = () => {
       {/* TAB STRIP: Active queue vs past appointments */}
       <section style={{
         display: 'flex', gap: '4px',
-        borderBottom: '1px solid #eae3d8',
+        borderBottom: '1px solid #d9ece7',
         marginBottom: '22px',
       }}>
         {([
@@ -477,9 +477,9 @@ export const DoctorDashboard: React.FC = () => {
               style={{
                 padding: '10px 20px', fontSize: '14px',
                 fontWeight: active ? 700 : 500,
-                color: active ? '#1a110a' : '#706b63',
+                color: active ? '#0b3f3a' : '#52736d',
                 background: 'transparent', border: 'none',
-                borderBottom: active ? '2px solid #785b47' : '2px solid transparent',
+                borderBottom: active ? '2px solid #0f766e' : '2px solid transparent',
                 marginBottom: '-1px', cursor: 'pointer',
               }}
             >
@@ -542,7 +542,7 @@ export const DoctorDashboard: React.FC = () => {
         marginBottom: '20px',
       }}>
         {/* Left Filter selects */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', fontSize: '13px', color: '#554e46' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', fontSize: '13px', color: '#52736d' }}>
           <span style={{ fontWeight: 600, marginRight: '4px' }}>Filter:</span>
 
           {/* All Urgency Filter */}
@@ -597,17 +597,17 @@ export const DoctorDashboard: React.FC = () => {
             onChange={e => setSearchQuery(e.target.value)}
             style={{
               backgroundColor: '#ffffff',
-              border: '1px solid #eae3d8',
+              border: '1px solid #d9ece7',
               borderRadius: '9999px',
               padding: '7px 14px 7px 32px',
               fontSize: '13px',
-              color: '#1a110a',
+              color: '#0b3f3a',
               outline: 'none',
               width: '210px',
-              boxShadow: '0 2px 6px rgba(75, 68, 57, 0.03)',
+              boxShadow: '0 2px 6px rgba(20, 60, 55, 0.03)',
             }}
           />
-          <Search size={14} color="#785b47" style={{ position: 'absolute', left: '12px' }} />
+          <Search size={14} color="#0f766e" style={{ position: 'absolute', left: '12px' }} />
         </div>
       </section>
 
@@ -615,9 +615,9 @@ export const DoctorDashboard: React.FC = () => {
       <section style={{
         backgroundColor: '#ffffff',
         borderRadius: '20px',
-        border: '1px solid #eae3d8',
+        border: '1px solid #d9ece7',
         overflow: 'hidden',
-        boxShadow: '0 4px 16px rgba(75, 68, 57, 0.05)',
+        boxShadow: '0 4px 16px rgba(20, 60, 55, 0.05)',
       }}>
         <div style={{ overflowX: 'auto' }}>
           <table style={{
@@ -628,9 +628,9 @@ export const DoctorDashboard: React.FC = () => {
           }}>
             <thead>
               <tr style={{
-                borderBottom: '2px solid #eae3d8',
+                borderBottom: '2px solid #d9ece7',
                 backgroundColor: '#ffffff',
-                color: '#706b63',
+                color: '#52736d',
                 fontSize: '11px',
                 fontWeight: 700,
                 letterSpacing: '0.05em',
@@ -648,7 +648,7 @@ export const DoctorDashboard: React.FC = () => {
             <tbody>
               {loading && (
                 <tr>
-                  <td colSpan={7} style={{ padding: '48px', textAlign: 'center', color: '#706b63' }}>
+                  <td colSpan={7} style={{ padding: '48px', textAlign: 'center', color: '#52736d' }}>
                     <Loader2 size={20} className="animate-spin" style={{ display: 'inline', marginRight: 8, verticalAlign: 'middle' }} />
                     Fetching your queue…
                   </td>
@@ -663,8 +663,8 @@ export const DoctorDashboard: React.FC = () => {
               )}
               {!loading && !loadError && filteredQueue.length === 0 && (
                 <tr>
-                  <td colSpan={7} style={{ padding: '48px', textAlign: 'center', color: '#706b63' }}>
-                    <div style={{ fontSize: '15px', fontWeight: 600, color: '#1a110a', marginBottom: '6px' }}>
+                  <td colSpan={7} style={{ padding: '48px', textAlign: 'center', color: '#52736d' }}>
+                    <div style={{ fontSize: '15px', fontWeight: 600, color: '#0b3f3a', marginBottom: '6px' }}>
                       {queue.length === 0 ? 'No patients in your queue yet' : 'No rows match the current filters'}
                     </div>
                     <div style={{ fontSize: '13px' }}>
@@ -697,13 +697,13 @@ export const DoctorDashboard: React.FC = () => {
                       exit={{ opacity: 0, y: -6, transition: { duration: 0.18, ease: EASE_EXIT } }}
                       transition={isNew ? { duration: 1.0, ease: EASE_ENTER } : undefined}
                       style={{
-                        borderBottom: '1px solid #f2ece2',
+                        borderBottom: '1px solid #d9ece7',
                         backgroundColor: isEmergency ? '#fffbfb' : '#ffffff',
                         borderLeft: isEmergency ? '3px solid #dc2626' : '3px solid transparent',
                         height: '50px',
                       }}
                       onMouseEnter={e => {
-                        if (!isEmergency) e.currentTarget.style.backgroundColor = '#faf6f0';
+                        if (!isEmergency) e.currentTarget.style.backgroundColor = '#eaf6f2';
                       }}
                       onMouseLeave={e => {
                         if (!isEmergency) e.currentTarget.style.backgroundColor = '#ffffff';
@@ -744,27 +744,27 @@ export const DoctorDashboard: React.FC = () => {
                       </td>
 
                       {/* Slot */}
-                      <td style={{ padding: '12px 20px', fontWeight: 600, color: '#3a332a' }}>
+                      <td style={{ padding: '12px 20px', fontWeight: 600, color: '#0b3f3a' }}>
                         {item.slot}
                       </td>
 
                       {/* Patient */}
-                      <td style={{ padding: '12px 20px', fontWeight: 700, color: '#1a110a' }}>
+                      <td style={{ padding: '12px 20px', fontWeight: 700, color: '#0b3f3a' }}>
                         {item.patientId}
                       </td>
 
                       {/* Mode */}
-                      <td style={{ padding: '12px 20px', color: '#706b63', fontSize: '12px' }}>
+                      <td style={{ padding: '12px 20px', color: '#52736d', fontSize: '12px' }}>
                         {item.mode}
                       </td>
 
                       {/* AI Rationale */}
-                      <td style={{ padding: '12px 20px', color: '#2c251f' }}>
+                      <td style={{ padding: '12px 20px', color: '#0b3f3a' }}>
                         {item.rationale}
                       </td>
 
                       {/* Confidence */}
-                      <td style={{ padding: '12px 20px', color: '#706b63', fontSize: '12px' }}>
+                      <td style={{ padding: '12px 20px', color: '#52736d', fontSize: '12px' }}>
                         {item.confidence}%
                       </td>
 
@@ -775,24 +775,24 @@ export const DoctorDashboard: React.FC = () => {
                           className="hover-lift"
                           style={{
                             backgroundColor: 'transparent',
-                            border: '1px solid #dcd4c7',
+                            border: '1px solid #d9ece7',
                             borderRadius: '9999px',
                             padding: '5px 16px',
                             fontSize: '12px',
                             fontWeight: 600,
-                            color: '#2b2520',
+                            color: '#0b3f3a',
                             cursor: 'pointer',
                             transition: 'all 0.15s ease',
                           }}
                           onMouseEnter={e => {
-                            e.currentTarget.style.backgroundColor = '#785b47';
+                            e.currentTarget.style.backgroundColor = '#0f766e';
                             e.currentTarget.style.color = '#ffffff';
-                            e.currentTarget.style.borderColor = '#785b47';
+                            e.currentTarget.style.borderColor = '#0f766e';
                           }}
                           onMouseLeave={e => {
                             e.currentTarget.style.backgroundColor = 'transparent';
-                            e.currentTarget.style.color = '#2b2520';
-                            e.currentTarget.style.borderColor = '#dcd4c7';
+                            e.currentTarget.style.color = '#0b3f3a';
+                            e.currentTarget.style.borderColor = '#d9ece7';
                           }}
                         >
                           Open
@@ -812,33 +812,33 @@ export const DoctorDashboard: React.FC = () => {
           justifyContent: 'space-between',
           alignItems: 'center',
           padding: '16px 20px',
-          borderTop: '1px solid #eae3d8',
+          borderTop: '1px solid #d9ece7',
           fontSize: '12px',
-          color: '#706b63',
+          color: '#52736d',
           flexWrap: 'wrap',
           gap: '12px',
         }}>
-          <div style={{ color: '#8c857b' }}>
+          <div style={{ color: '#8aa39d' }}>
             Showing {filteredQueue.length} of {queue.length}
           </div>
 
           <button
             style={{
               backgroundColor: 'transparent',
-              border: '1px solid #dcd4c7',
+              border: '1px solid #d9ece7',
               borderRadius: '9999px',
               padding: '6px 18px',
               fontSize: '12px',
               fontWeight: 600,
-              color: '#332b24',
+              color: '#0b3f3a',
               cursor: 'pointer',
               display: 'inline-flex',
               alignItems: 'center',
               gap: '6px',
               transition: 'border-color 0.15s ease',
             }}
-            onMouseEnter={e => (e.currentTarget.style.borderColor = '#785b47')}
-            onMouseLeave={e => (e.currentTarget.style.borderColor = '#dcd4c7')}
+            onMouseEnter={e => (e.currentTarget.style.borderColor = '#0f766e')}
+            onMouseLeave={e => (e.currentTarget.style.borderColor = '#d9ece7')}
           >
             <Download size={13} />
             <span>Export CSV</span>
@@ -852,47 +852,47 @@ export const DoctorDashboard: React.FC = () => {
       {currentSection === 'availability' && (
         <div>
           <section style={{ marginBottom: '28px' }}>
-            <h1 style={{ fontSize: '28px', fontWeight: 700, color: '#1a110a', margin: 0, letterSpacing: '-0.025em' }}>
+            <h1 style={{ fontSize: '28px', fontWeight: 700, color: '#0b3f3a', margin: 0, letterSpacing: '-0.025em' }}>
               Clinical Availability & Slot Inventory
             </h1>
-            <div style={{ fontSize: '14px', color: '#706b63', marginTop: '4px' }}>
+            <div style={{ fontSize: '14px', color: '#52736d', marginTop: '4px' }}>
               Set consultation hours, review your forward 7-day slot inventory, and manage booking availability.
             </div>
           </section>
 
           {/* Availability Overview Cards */}
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '20px', marginBottom: '28px' }}>
-            <div style={{ backgroundColor: '#ffffff', borderRadius: '16px', padding: '18px 22px', border: '1px solid #eae3d8', boxShadow: '0 4px 16px rgba(75, 68, 57, 0.04)' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#785b47', marginBottom: '8px' }}>
+            <div style={{ backgroundColor: '#ffffff', borderRadius: '16px', padding: '18px 22px', border: '1px solid #d9ece7', boxShadow: '0 4px 16px rgba(20, 60, 55, 0.05)' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#0f766e', marginBottom: '8px' }}>
                 <Clock size={16} />
                 <span style={{ fontSize: '12px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em' }}>Consultation Hours</span>
               </div>
-              <div style={{ fontSize: '20px', fontWeight: 700, color: '#1a110a' }}>09:30 AM – 05:30 PM</div>
-              <div style={{ fontSize: '13px', color: '#706b63', marginTop: '4px' }}>Mon – Sat · 30 min per visit</div>
+              <div style={{ fontSize: '20px', fontWeight: 700, color: '#0b3f3a' }}>09:30 AM – 05:30 PM</div>
+              <div style={{ fontSize: '13px', color: '#52736d', marginTop: '4px' }}>Mon – Sat · 30 min per visit</div>
             </div>
 
-            <div style={{ backgroundColor: '#ffffff', borderRadius: '16px', padding: '18px 22px', border: '1px solid #eae3d8', boxShadow: '0 4px 16px rgba(75, 68, 57, 0.04)' }}>
+            <div style={{ backgroundColor: '#ffffff', borderRadius: '16px', padding: '18px 22px', border: '1px solid #d9ece7', boxShadow: '0 4px 16px rgba(20, 60, 55, 0.05)' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#059669', marginBottom: '8px' }}>
                 <CheckCircle2 size={16} />
                 <span style={{ fontSize: '12px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em' }}>Forward Inventory</span>
               </div>
-              <div style={{ fontSize: '20px', fontWeight: 700, color: '#1a110a' }}>7-Day Rolling Window</div>
-              <div style={{ fontSize: '13px', color: '#706b63', marginTop: '4px' }}>6 slots / day · Auto-regenerated</div>
+              <div style={{ fontSize: '20px', fontWeight: 700, color: '#0b3f3a' }}>7-Day Rolling Window</div>
+              <div style={{ fontSize: '13px', color: '#52736d', marginTop: '4px' }}>6 slots / day · Auto-regenerated</div>
             </div>
 
-            <div style={{ backgroundColor: '#ffffff', borderRadius: '16px', padding: '18px 22px', border: '1px solid #eae3d8', boxShadow: '0 4px 16px rgba(75, 68, 57, 0.04)' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#785b47', marginBottom: '8px' }}>
+            <div style={{ backgroundColor: '#ffffff', borderRadius: '16px', padding: '18px 22px', border: '1px solid #d9ece7', boxShadow: '0 4px 16px rgba(20, 60, 55, 0.05)' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#0f766e', marginBottom: '8px' }}>
                 <Calendar size={16} />
                 <span style={{ fontSize: '12px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em' }}>Telehealth & In-Person</span>
               </div>
               <div style={{ fontSize: '20px', fontWeight: 700, color: '#059669' }}>● Online & Active</div>
-              <div style={{ fontSize: '13px', color: '#706b63', marginTop: '4px' }}>Accepting both video & clinic visits</div>
+              <div style={{ fontSize: '13px', color: '#52736d', marginTop: '4px' }}>Accepting both video & clinic visits</div>
             </div>
           </div>
 
           {/* 7-Day Rolling Calendar View */}
-          <div style={{ backgroundColor: '#ffffff', borderRadius: '18px', border: '1px solid #eae3d8', padding: '24px', boxShadow: '0 4px 16px rgba(75, 68, 57, 0.04)' }}>
-            <h2 style={{ fontSize: '18px', fontWeight: 700, color: '#1a110a', marginBottom: '16px' }}>Upcoming 7 Days Slots</h2>
+          <div style={{ backgroundColor: '#ffffff', borderRadius: '18px', border: '1px solid #d9ece7', padding: '24px', boxShadow: '0 4px 16px rgba(20, 60, 55, 0.05)' }}>
+            <h2 style={{ fontSize: '18px', fontWeight: 700, color: '#0b3f3a', marginBottom: '16px' }}>Upcoming 7 Days Slots</h2>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: '14px' }}>
               {Array.from({ length: 7 }).map((_, idx) => {
                 const d = new Date();
@@ -900,12 +900,12 @@ export const DoctorDashboard: React.FC = () => {
                 const dayName = idx === 0 ? 'Today' : idx === 1 ? 'Tomorrow' : d.toLocaleDateString(undefined, { weekday: 'short' });
                 const dateStr = d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
                 return (
-                  <div key={idx} style={{ backgroundColor: idx === 0 ? '#faf6f0' : '#fcfbfa', border: idx === 0 ? '1px solid #785b47' : '1px solid #eae3d8', borderRadius: '14px', padding: '14px 12px' }}>
-                    <div style={{ fontWeight: 700, fontSize: '14px', color: idx === 0 ? '#785b47' : '#1a110a' }}>{dayName}</div>
-                    <div style={{ fontSize: '12px', color: '#706b63', marginBottom: '10px' }}>{dateStr}</div>
+                  <div key={idx} style={{ backgroundColor: idx === 0 ? '#eaf6f2' : '#ffffff', border: idx === 0 ? '1px solid #0f766e' : '1px solid #d9ece7', borderRadius: '14px', padding: '14px 12px' }}>
+                    <div style={{ fontWeight: 700, fontSize: '14px', color: idx === 0 ? '#0f766e' : '#0b3f3a' }}>{dayName}</div>
+                    <div style={{ fontSize: '12px', color: '#52736d', marginBottom: '10px' }}>{dateStr}</div>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
                       {['09:30 AM', '10:30 AM', '11:30 AM', '02:00 PM', '03:30 PM', '05:00 PM'].map((time, tIdx) => (
-                        <div key={tIdx} style={{ fontSize: '11px', fontWeight: 600, padding: '4px 6px', borderRadius: '6px', backgroundColor: '#ffffff', border: '1px solid #eae3d8', color: '#443e37', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <div key={tIdx} style={{ fontSize: '11px', fontWeight: 600, padding: '4px 6px', borderRadius: '6px', backgroundColor: '#ffffff', border: '1px solid #d9ece7', color: '#0b3f3a', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                           <span>{time}</span>
                           <span style={{ color: '#059669', fontSize: '9px', fontWeight: 700 }}>OPEN</span>
                         </div>
@@ -923,17 +923,17 @@ export const DoctorDashboard: React.FC = () => {
       {currentSection === 'patients' && (
         <div>
           <section style={{ marginBottom: '28px' }}>
-            <h1 style={{ fontSize: '28px', fontWeight: 700, color: '#1a110a', margin: 0, letterSpacing: '-0.025em' }}>
+            <h1 style={{ fontSize: '28px', fontWeight: 700, color: '#0b3f3a', margin: 0, letterSpacing: '-0.025em' }}>
               Patient Directory
             </h1>
-            <div style={{ fontSize: '14px', color: '#706b63', marginTop: '4px' }}>
+            <div style={{ fontSize: '14px', color: '#52736d', marginTop: '4px' }}>
               Review clinical profiles, previous diagnoses, and appointment histories for patients under your care.
             </div>
           </section>
 
-          <div style={{ backgroundColor: '#ffffff', borderRadius: '18px', border: '1px solid #eae3d8', overflow: 'hidden', boxShadow: '0 4px 16px rgba(75, 68, 57, 0.04)' }}>
-            <div style={{ padding: '18px 24px', borderBottom: '1px solid #eae3d8', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px' }}>
-              <div style={{ fontWeight: 700, fontSize: '16px', color: '#1a110a' }}>
+          <div style={{ backgroundColor: '#ffffff', borderRadius: '18px', border: '1px solid #d9ece7', overflow: 'hidden', boxShadow: '0 4px 16px rgba(20, 60, 55, 0.05)' }}>
+            <div style={{ padding: '18px 24px', borderBottom: '1px solid #d9ece7', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px' }}>
+              <div style={{ fontWeight: 700, fontSize: '16px', color: '#0b3f3a' }}>
                 All Patients ({[...activeQueue, ...pastQueue].length > 0 ? [...activeQueue, ...pastQueue].length : 3})
               </div>
             </div>
@@ -941,7 +941,7 @@ export const DoctorDashboard: React.FC = () => {
             <div style={{ overflowX: 'auto' }}>
               <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '13px' }}>
                 <thead>
-                  <tr style={{ backgroundColor: '#faf7f2', borderBottom: '1px solid #eae3d8', color: '#706b63', fontWeight: 600 }}>
+                  <tr style={{ backgroundColor: '#eaf6f2', borderBottom: '1px solid #d9ece7', color: '#52736d', fontWeight: 600 }}>
                     <th style={{ padding: '12px 20px' }}>Patient</th>
                     <th style={{ padding: '12px 20px' }}>Patient ID</th>
                     <th style={{ padding: '12px 20px' }}>Latest Complaint</th>
@@ -956,17 +956,17 @@ export const DoctorDashboard: React.FC = () => {
                     { id: '2', patientName: 'Sarah Jenkins', patientId: '#4500', chiefComplaint: 'Follow-up for asthma and bronchial review', urgency: 'RTN' as const, slot: 'Yesterday · 11:30 AM' },
                     { id: '3', patientName: 'Avi Patel', patientId: '#3a21', chiefComplaint: 'Acute chest tightness during exertion', urgency: 'EMG' as const, slot: '2 days ago · 09:30 AM' },
                   ]).map((p, idx) => (
-                    <tr key={idx} style={{ borderBottom: '1px solid #f2ece2' }}>
-                      <td style={{ padding: '14px 20px', fontWeight: 600, color: '#1a110a' }}>
+                    <tr key={idx} style={{ borderBottom: '1px solid #d9ece7' }}>
+                      <td style={{ padding: '14px 20px', fontWeight: 600, color: '#0b3f3a' }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                          <div style={{ width: '32px', height: '32px', borderRadius: '50%', backgroundColor: '#f0ebe1', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#785b47', fontWeight: 700 }}>
+                          <div style={{ width: '32px', height: '32px', borderRadius: '50%', backgroundColor: '#eaf6f2', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#0f766e', fontWeight: 700 }}>
                             {p.patientName.charAt(0)}
                           </div>
                           <span>{p.patientName}</span>
                         </div>
                       </td>
-                      <td style={{ padding: '14px 20px', color: '#706b63', fontFamily: 'monospace' }}>{p.patientId}</td>
-                      <td style={{ padding: '14px 20px', color: '#332b24' }}>{p.chiefComplaint || 'Consultation follow-up'}</td>
+                      <td style={{ padding: '14px 20px', color: '#52736d', fontFamily: 'monospace' }}>{p.patientId}</td>
+                      <td style={{ padding: '14px 20px', color: '#0b3f3a' }}>{p.chiefComplaint || 'Consultation follow-up'}</td>
                       <td style={{ padding: '14px 20px' }}>
                         <span style={{
                           padding: '3px 8px', borderRadius: '9999px', fontSize: '11px', fontWeight: 700,
@@ -976,14 +976,14 @@ export const DoctorDashboard: React.FC = () => {
                           {p.urgency === 'EMG' ? 'Emergency' : p.urgency === 'URG' ? 'Urgent' : 'Routine'}
                         </span>
                       </td>
-                      <td style={{ padding: '14px 20px', color: '#706b63' }}>{p.slot}</td>
+                      <td style={{ padding: '14px 20px', color: '#52736d' }}>{p.slot}</td>
                       <td style={{ padding: '14px 20px', textAlign: 'right' }}>
                         <button
                           onClick={() => {
                             if ('rationale' in p) handleOpenItem(p as QueueItem);
                             window.location.hash = '#my-queue';
                           }}
-                          style={{ backgroundColor: '#f5efe6', border: '1px solid #eae3d8', borderRadius: '9999px', padding: '6px 14px', fontSize: '12px', fontWeight: 600, color: '#785b47', cursor: 'pointer' }}
+                          style={{ backgroundColor: '#eaf6f2', border: '1px solid #d9ece7', borderRadius: '9999px', padding: '6px 14px', fontSize: '12px', fontWeight: 600, color: '#0f766e', cursor: 'pointer' }}
                         >
                           View Case
                         </button>
@@ -1001,10 +1001,10 @@ export const DoctorDashboard: React.FC = () => {
       {currentSection === 'transcripts' && (
         <div>
           <section style={{ marginBottom: '28px' }}>
-            <h1 style={{ fontSize: '28px', fontWeight: 700, color: '#1a110a', margin: 0, letterSpacing: '-0.025em' }}>
+            <h1 style={{ fontSize: '28px', fontWeight: 700, color: '#0b3f3a', margin: 0, letterSpacing: '-0.025em' }}>
               Consultation Transcripts & Clinical Notes
             </h1>
-            <div style={{ fontSize: '14px', color: '#706b63', marginTop: '4px' }}>
+            <div style={{ fontSize: '14px', color: '#52736d', marginTop: '4px' }}>
               Deepgram speech-to-text transcripts, AI-generated advisory summaries, and verified clinician notes (DR-11, DR-15).
             </div>
           </section>
@@ -1030,30 +1030,30 @@ export const DoctorDashboard: React.FC = () => {
                 consent: 'Explicit In-Clinic Transcription Consent Verified',
               },
             ].map(item => (
-              <div key={item.id} style={{ backgroundColor: '#ffffff', borderRadius: '16px', border: '1px solid #eae3d8', padding: '22px 24px', boxShadow: '0 4px 16px rgba(75, 68, 57, 0.04)' }}>
+              <div key={item.id} style={{ backgroundColor: '#ffffff', borderRadius: '16px', border: '1px solid #d9ece7', padding: '22px 24px', boxShadow: '0 4px 16px rgba(20, 60, 55, 0.05)' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px', flexWrap: 'wrap', gap: '8px' }}>
                   <div>
-                    <span style={{ fontSize: '16px', fontWeight: 700, color: '#1a110a' }}>{item.patient}</span>
-                    <span style={{ fontSize: '13px', color: '#706b63', marginLeft: '10px' }}>{item.date} · {item.mode}</span>
+                    <span style={{ fontSize: '16px', fontWeight: 700, color: '#0b3f3a' }}>{item.patient}</span>
+                    <span style={{ fontSize: '13px', color: '#52736d', marginLeft: '10px' }}>{item.date} · {item.mode}</span>
                   </div>
                   <span style={{ fontSize: '11px', fontWeight: 700, padding: '4px 10px', borderRadius: '9999px', backgroundColor: '#ecfdf5', color: '#059669', border: '1px solid #a7f3d0' }}>
                     ✓ {item.status}
                   </span>
                 </div>
-                <div style={{ backgroundColor: '#faf7f2', borderRadius: '12px', padding: '14px 16px', fontSize: '13px', lineHeight: '1.6', color: '#2b251f', marginBottom: '12px', border: '1px solid #ede7de' }}>
-                  <div style={{ fontSize: '11px', fontWeight: 700, color: '#785b47', textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: '4px' }}>
+                <div style={{ backgroundColor: '#eaf6f2', borderRadius: '12px', padding: '14px 16px', fontSize: '13px', lineHeight: '1.6', color: '#0b3f3a', marginBottom: '12px', border: '1px solid #d9ece7' }}>
+                  <div style={{ fontSize: '11px', fontWeight: 700, color: '#0f766e', textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: '4px' }}>
                     AI Clinical Summary (Advisory Only)
                   </div>
                   {item.summary}
                 </div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '12px', color: '#706b63', flexWrap: 'wrap', gap: '8px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '12px', color: '#52736d', flexWrap: 'wrap', gap: '8px' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: '#059669' }}>
                     <ShieldCheck size={14} />
                     <span>{item.consent}</span>
                   </div>
                   <button
                     onClick={() => alert('Transcript and clinical summary ready for export.')}
-                    style={{ background: 'none', border: 'none', color: '#785b47', fontWeight: 600, cursor: 'pointer', textDecoration: 'underline' }}
+                    style={{ background: 'none', border: 'none', color: '#0f766e', fontWeight: 600, cursor: 'pointer', textDecoration: 'underline' }}
                   >
                     Export / Print Notes →
                   </button>
@@ -1078,7 +1078,7 @@ export const DoctorDashboard: React.FC = () => {
               style={{
                 position: 'fixed',
                 inset: 0,
-                backgroundColor: '#1a110a',
+                backgroundColor: 'rgba(11, 63, 58, 0.45)',
                 zIndex: 99,
               }}
             />
@@ -1096,27 +1096,27 @@ export const DoctorDashboard: React.FC = () => {
                 width: '480px',
                 maxWidth: '100vw',
                 backgroundColor: '#ffffff',
-                boxShadow: '-8px 0 32px rgba(75, 68, 57, 0.15)',
+                boxShadow: '-8px 0 32px rgba(20, 60, 55, 0.12)',
                 zIndex: 100,
                 display: 'flex',
                 flexDirection: 'column',
-                borderLeft: '1px solid #eae3d8',
-                fontFamily: "'Inter', sans-serif",
+                borderLeft: '1px solid #d9ece7',
+                fontFamily: "'Space Grotesk', sans-serif",
               }}
             >
               {/* Drawer Header */}
               <div style={{
                 padding: '20px 24px',
-                borderBottom: '1px solid #eae3d8',
+                borderBottom: '1px solid #d9ece7',
                 display: 'flex',
                 justifyContent: 'space-between',
                 alignItems: 'flex-start',
               }}>
                 <div>
-                  <div style={{ fontSize: '18px', fontWeight: 700, color: '#1a110a' }}>
+                  <div style={{ fontSize: '18px', fontWeight: 700, color: '#0b3f3a' }}>
                     Patient {selectedItem.patientId} · {selectedItem.age} {selectedItem.gender}
                   </div>
-                  <div style={{ fontSize: '13px', color: '#706b63', marginTop: '2px' }}>
+                  <div style={{ fontSize: '13px', color: '#52736d', marginTop: '2px' }}>
                     Appointment {selectedItem.slot} · {selectedItem.mode === 'VID' ? 'Video consult' : 'In-person consult'}
                   </div>
                 </div>
@@ -1127,7 +1127,7 @@ export const DoctorDashboard: React.FC = () => {
                     background: 'transparent',
                     border: 'none',
                     cursor: 'pointer',
-                    color: '#706b63',
+                    color: '#52736d',
                     padding: '4px',
                   }}
                 >
@@ -1168,8 +1168,8 @@ export const DoctorDashboard: React.FC = () => {
 
                 {/* AI Advisory Box */}
                 <div style={{
-                  backgroundColor: '#faf6f0',
-                  border: '1px solid #eae3d8',
+                  backgroundColor: '#eaf6f2',
+                  border: '1px solid #d9ece7',
                   borderRadius: '16px',
                   padding: '18px',
                 }}>
@@ -1177,7 +1177,7 @@ export const DoctorDashboard: React.FC = () => {
                     fontSize: '11px',
                     fontWeight: 700,
                     letterSpacing: '0.08em',
-                    color: '#785b47',
+                    color: '#0f766e',
                     marginBottom: '10px',
                     textTransform: 'uppercase',
                   }}>
@@ -1193,18 +1193,18 @@ export const DoctorDashboard: React.FC = () => {
                     marginBottom: '16px',
                   }}>
                     <span>Urgency: {selectedItem.urgency === 'EMG' ? 'EMERGENCY' : selectedItem.urgency === 'URG' ? 'URGENT' : 'ROUTINE'}</span>
-                    <span style={{ color: '#706b63', fontWeight: 400 }}>· {selectedItem.confidence}% confidence</span>
+                    <span style={{ color: '#52736d', fontWeight: 400 }}>· {selectedItem.confidence}% confidence</span>
                   </div>
 
                   {/* Override Controls */}
                   <div style={{
                     paddingTop: '12px',
-                    borderTop: '1px solid #eae3d8',
+                    borderTop: '1px solid #d9ece7',
                     display: 'flex',
                     flexDirection: 'column',
                     gap: '10px',
                   }}>
-                    <div style={{ fontSize: '12px', fontWeight: 600, color: '#332b24' }}>
+                    <div style={{ fontSize: '12px', fontWeight: 600, color: '#0b3f3a' }}>
                       Override Urgency:
                     </div>
                     <div style={{ display: 'flex', gap: '8px' }}>
@@ -1214,11 +1214,11 @@ export const DoctorDashboard: React.FC = () => {
                         style={{
                           flex: 1,
                           backgroundColor: '#ffffff',
-                          border: '1px solid #eae3d8',
+                          border: '1px solid #d9ece7',
                           borderRadius: '8px',
                           padding: '7px 10px',
                           fontSize: '13px',
-                          color: '#1a110a',
+                          color: '#0b3f3a',
                           outline: 'none',
                         }}
                       >
@@ -1231,7 +1231,7 @@ export const DoctorDashboard: React.FC = () => {
                         disabled={actionBusy === 'OVERRIDE_URGENCY'}
                         className="hover-lift"
                         style={{
-                          backgroundColor: '#785b47',
+                          backgroundColor: '#0f766e',
                           color: '#ffffff',
                           border: 'none',
                           borderRadius: '8px',
@@ -1252,11 +1252,11 @@ export const DoctorDashboard: React.FC = () => {
                       onChange={e => setOverrideReason(e.target.value)}
                       style={{
                         backgroundColor: '#ffffff',
-                        border: '1px solid #eae3d8',
+                        border: '1px solid #d9ece7',
                         borderRadius: '8px',
                         padding: '7px 10px',
                         fontSize: '12px',
-                        color: '#1a110a',
+                        color: '#0b3f3a',
                         outline: 'none',
                       }}
                     />
@@ -1274,14 +1274,14 @@ export const DoctorDashboard: React.FC = () => {
 
                 {/* Why Section */}
                 <div>
-                  <div style={{ fontSize: '13px', fontWeight: 700, color: '#1a110a', marginBottom: '8px' }}>
+                  <div style={{ fontSize: '13px', fontWeight: 700, color: '#0b3f3a', marginBottom: '8px' }}>
                     Why
                   </div>
                   <ul style={{
                     margin: 0,
                     paddingLeft: '18px',
                     fontSize: '13px',
-                    color: '#332b24',
+                    color: '#0b3f3a',
                     lineHeight: '1.7',
                   }}>
                     {selectedItem.symptoms.map((sym, idx) => (
@@ -1292,19 +1292,19 @@ export const DoctorDashboard: React.FC = () => {
 
                 {/* Questionnaire responses */}
                 <div style={{
-                  border: '1px solid #eae3d8',
+                  border: '1px solid #d9ece7',
                   borderRadius: '16px',
                   padding: '16px',
                   backgroundColor: '#ffffff',
                 }}>
-                  <div style={{ fontSize: '13px', fontWeight: 700, color: '#1a110a', marginBottom: '8px' }}>
+                  <div style={{ fontSize: '13px', fontWeight: 700, color: '#0b3f3a', marginBottom: '8px' }}>
                     Questionnaire responses
                   </div>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', fontSize: '12px' }}>
                     {selectedItem.questionnaire.map((q, idx) => (
-                      <div key={idx} style={{ borderBottom: '1px solid #f2ece2', paddingBottom: '6px' }}>
-                        <div style={{ color: '#706b63' }}>{q.q}</div>
-                        <div style={{ fontWeight: 600, color: '#1a110a', marginTop: '2px' }}>{q.a}</div>
+                      <div key={idx} style={{ borderBottom: '1px solid #d9ece7', paddingBottom: '6px' }}>
+                        <div style={{ color: '#52736d' }}>{q.q}</div>
+                        <div style={{ fontWeight: 600, color: '#0b3f3a', marginTop: '2px' }}>{q.a}</div>
                       </div>
                     ))}
                   </div>
@@ -1312,19 +1312,19 @@ export const DoctorDashboard: React.FC = () => {
 
                 {/* Past Visits */}
                 <div style={{
-                  border: '1px solid #eae3d8',
+                  border: '1px solid #d9ece7',
                   borderRadius: '16px',
                   padding: '16px',
                   backgroundColor: '#ffffff',
                 }}>
-                  <div style={{ fontSize: '13px', fontWeight: 700, color: '#1a110a', marginBottom: '8px' }}>
+                  <div style={{ fontSize: '13px', fontWeight: 700, color: '#0b3f3a', marginBottom: '8px' }}>
                     Past visits ({selectedItem.pastVisits.length})
                   </div>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', fontSize: '12px' }}>
                     {selectedItem.pastVisits.map((pv, idx) => (
-                      <div key={idx} style={{ display: 'flex', justifyContent: 'space-between', color: '#332b24' }}>
+                      <div key={idx} style={{ display: 'flex', justifyContent: 'space-between', color: '#0b3f3a' }}>
                         <span>{pv.date} · {pv.doctor}</span>
-                        <span style={{ color: '#706b63' }}>{pv.diagnosis}</span>
+                        <span style={{ color: '#52736d' }}>{pv.diagnosis}</span>
                       </div>
                     ))}
                   </div>
@@ -1332,7 +1332,7 @@ export const DoctorDashboard: React.FC = () => {
 
                 {/* Attached Images */}
                 <div>
-                  <div style={{ fontSize: '13px', fontWeight: 700, color: '#1a110a', marginBottom: '8px' }}>
+                  <div style={{ fontSize: '13px', fontWeight: 700, color: '#0b3f3a', marginBottom: '8px' }}>
                     Attached images (2)
                   </div>
                   <div style={{ display: 'flex', gap: '10px' }}>
@@ -1340,13 +1340,13 @@ export const DoctorDashboard: React.FC = () => {
                       width: '60px',
                       height: '60px',
                       borderRadius: '10px',
-                      backgroundColor: '#ede7de',
-                      border: '1px solid #dfd6c8',
+                      backgroundColor: '#d9ece7',
+                      border: '1px solid #d9ece7',
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
                       fontSize: '11px',
-                      color: '#706b63',
+                      color: '#52736d',
                       fontWeight: 600,
                     }}>
                       ECG
@@ -1355,13 +1355,13 @@ export const DoctorDashboard: React.FC = () => {
                       width: '60px',
                       height: '60px',
                       borderRadius: '10px',
-                      backgroundColor: '#ede7de',
-                      border: '1px solid #dfd6c8',
+                      backgroundColor: '#d9ece7',
+                      border: '1px solid #d9ece7',
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
                       fontSize: '11px',
-                      color: '#706b63',
+                      color: '#52736d',
                       fontWeight: 600,
                     }}>
                       Vitals
@@ -1373,21 +1373,21 @@ export const DoctorDashboard: React.FC = () => {
               {/* Drawer Footer: read-only banner on past tab, actions on active */}
               {tab === 'past' ? (
                 <div style={{
-                  padding: '18px 24px', borderTop: '1px solid #eae3d8',
+                  padding: '18px 24px', borderTop: '1px solid #d9ece7',
                   display: 'flex', justifyContent: 'space-between', alignItems: 'center',
                   gap: '10px', flexWrap: 'wrap',
-                  backgroundColor: '#faf7f1',
+                  backgroundColor: '#eaf6f2',
                 }}>
-                  <div style={{ fontSize: '13px', color: '#706b63' }}>
+                  <div style={{ fontSize: '13px', color: '#52736d' }}>
                     Read-only · final status:{' '}
-                    <strong style={{ color: '#1a110a' }}>{queueStatus[selectedItem.id] ?? '—'}</strong>
+                    <strong style={{ color: '#0b3f3a' }}>{queueStatus[selectedItem.id] ?? '—'}</strong>
                   </div>
                   <div style={{ display: 'flex', gap: '10px' }}>
                     <button
                       onClick={() => setRxEditorFor(selectedItem)}
                       className="hover-lift"
                       style={{
-                        backgroundColor: '#785b47', color: '#ffffff',
+                        backgroundColor: '#0f766e', color: '#ffffff',
                         border: 'none', borderRadius: '9999px',
                         padding: '8px 18px', fontSize: '13px', fontWeight: 600,
                         cursor: 'pointer',
@@ -1398,8 +1398,8 @@ export const DoctorDashboard: React.FC = () => {
                     <button
                       onClick={() => setSelectedItem(null)}
                       style={{
-                        backgroundColor: 'transparent', color: '#2b2520',
-                        border: '1px solid #dcd4c7', borderRadius: '9999px',
+                        backgroundColor: 'transparent', color: '#0b3f3a',
+                        border: '1px solid #d9ece7', borderRadius: '9999px',
                         padding: '8px 18px', fontSize: '13px', fontWeight: 500,
                         cursor: 'pointer',
                       }}
@@ -1411,7 +1411,7 @@ export const DoctorDashboard: React.FC = () => {
               ) : (
               <div style={{
                 padding: '18px 24px',
-                borderTop: '1px solid #eae3d8',
+                borderTop: '1px solid #d9ece7',
                 display: 'flex',
                 gap: '10px',
                 flexWrap: 'wrap',
@@ -1422,7 +1422,7 @@ export const DoctorDashboard: React.FC = () => {
                   className="hover-lift"
                   style={{
                     flex: 1, minWidth: '140px',
-                    backgroundColor: '#785b47',
+                    backgroundColor: '#0f766e',
                     color: '#ffffff',
                     border: 'none',
                     borderRadius: '9999px',

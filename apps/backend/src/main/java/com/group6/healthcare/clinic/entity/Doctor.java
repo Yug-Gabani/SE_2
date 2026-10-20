@@ -47,6 +47,10 @@ public class Doctor {
     @Column(name = "avatar_url", length = 512)
     private String avatarUrl;
 
+    /** Linked hospital row. Nullable in the schema but every seeded doctor is required to match. */
+    @Column(name = "hospital_id")
+    private UUID hospitalId;
+
     @Column(name = "rating", nullable = false, precision = 3, scale = 2)
     private BigDecimal rating;
 

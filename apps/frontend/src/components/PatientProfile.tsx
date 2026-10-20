@@ -67,7 +67,7 @@ export const PatientProfile: React.FC = () => {
         onClick={() => navigate(-1)}
         className="hover-lift"
         style={{
-          background: 'transparent', border: 'none', color: '#785b47',
+          background: 'transparent', border: 'none', color: '#0f766e',
           fontSize: '14px', fontWeight: 600, cursor: 'pointer',
           padding: '6px 0', marginBottom: '16px',
           display: 'inline-flex', alignItems: 'center', gap: '6px',
@@ -76,15 +76,15 @@ export const PatientProfile: React.FC = () => {
         <ArrowLeft size={16} /> Back
       </button>
 
-      <h1 style={{ fontSize: '28px', fontWeight: 700, color: '#1a110a', margin: 0, letterSpacing: '-0.02em' }}>
+      <h1 style={{ fontSize: '28px', fontWeight: 700, color: '#0b3f3a', margin: 0, letterSpacing: '-0.02em' }}>
         My profile
       </h1>
-      <p style={{ color: '#706b63', margin: '6px 0 24px 0' }}>
+      <p style={{ color: '#52736d', margin: '6px 0 24px 0' }}>
         Keeping this up to date helps your doctor provide the best care and lets us reach your emergency contact if needed.
       </p>
 
       {loading && (
-        <div style={{ padding: '48px', textAlign: 'center', color: '#706b63' }}>
+        <div style={{ padding: '48px', textAlign: 'center', color: '#52736d' }}>
           <Loader2 size={22} className="animate-spin" style={{ display: 'inline', marginRight: 6 }} /> Loading…
         </div>
       )}
@@ -207,7 +207,7 @@ export const PatientProfile: React.FC = () => {
               onClick={handleSave} disabled={saving}
               className="hover-lift"
               style={{
-                backgroundColor: '#785b47', color: '#ffffff', border: 'none',
+                backgroundColor: '#0f766e', color: '#ffffff', border: 'none',
                 borderRadius: '9999px', padding: '10px 22px',
                 fontSize: '14px', fontWeight: 600, cursor: saving ? 'wait' : 'pointer',
                 display: 'inline-flex', alignItems: 'center', gap: '8px',
@@ -225,10 +225,10 @@ export const PatientProfile: React.FC = () => {
 const SectionHeading: React.FC<{ icon?: React.ReactNode; label: string }> = ({ icon, label }) => (
   <div style={{
     display: 'flex', alignItems: 'center', gap: '8px',
-    fontSize: '11px', fontWeight: 700, color: '#8c857b',
+    fontSize: '11px', fontWeight: 700, color: '#8aa39d',
     textTransform: 'uppercase', letterSpacing: '0.08em',
     margin: '20px 0 10px 0', paddingTop: '12px',
-    borderTop: '1px solid #eae3d8',
+    borderTop: '1px solid #d9ece7',
   }}>
     {icon}{label}
   </div>
@@ -242,7 +242,7 @@ const Row: React.FC<{ children: React.ReactNode }> = ({ children }) => (
 
 const Field: React.FC<{ label: string; children: React.ReactNode }> = ({ label, children }) => (
   <div>
-    <div style={{ fontSize: '11px', fontWeight: 700, color: '#8c857b', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '4px' }}>
+    <div style={{ fontSize: '11px', fontWeight: 700, color: '#8aa39d', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '4px' }}>
       {label}
     </div>
     {children}

@@ -52,16 +52,24 @@ export const App: React.FC = () => {
     navigate('/');
   };
 
-  const handleGetCare = () => {
+  const handleGetCare = (targetOrSpecialty?: string) => {
+    let target = '/book';
+    if (typeof targetOrSpecialty === 'string' && targetOrSpecialty) {
+      if (targetOrSpecialty.startsWith('/')) {
+        target = targetOrSpecialty;
+      } else {
+        target = `/book?hotspot=${encodeURIComponent(targetOrSpecialty)}`;
+      }
+    }
     if (!currentUser) {
-      navigate('/login?next=/book');
+      navigate(`/login?next=${encodeURIComponent(target)}`);
       return;
     }
     if (currentUser.role === 'DOCTOR') {
       navigate('/doctor');
       return;
     }
-    navigate('/book');
+    navigate(target);
   };
 
   const isAuthRoute = location.pathname === '/login' || location.pathname === '/signup';
@@ -74,8 +82,9 @@ export const App: React.FC = () => {
         minHeight: '100vh',
         display: 'flex',
         flexDirection: 'column',
-        backgroundColor: '#f8f3eb',
-        color: '#1a110a',
+        backgroundColor: '#eaf6f2',
+        color: '#0b3f3a',
+        fontFamily: "'Space Grotesk', ui-sans-serif, system-ui, sans-serif",
       }}
     >
       {!isAuthRoute && (

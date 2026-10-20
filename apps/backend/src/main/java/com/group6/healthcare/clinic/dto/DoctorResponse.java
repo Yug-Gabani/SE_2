@@ -10,6 +10,7 @@ public record DoctorResponse(
         String fullName,
         String specialty,
         String hospital,
+        UUID hospitalId,
         String avatarUrl,
         BigDecimal rating,
         String bio,
