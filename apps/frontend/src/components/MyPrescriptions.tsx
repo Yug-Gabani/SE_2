@@ -3,10 +3,19 @@ import { useNavigate } from 'react-router-dom';
 import { AnimatePresence, motion } from 'framer-motion';
 import { PageTransition } from '../motion/PageTransition';
 import { listItem } from '../motion/presets';
-import { Download, FileText, Loader2, Pill } from 'lucide-react';
-import type { Prescription } from '../types';
+import { Download, FileText, Loader2, Package, Pill, ShoppingBag } from 'lucide-react';
+import type { PharmacyOrder, PharmacyOrderStatus, Prescription } from '../types';
 import { describePrescriptionItem } from '../types';
-import { prescriptionsApi } from '../services/api';
+import { patientOrdersApi, prescriptionsApi } from '../services/api';
+
+function orderStatusLabel(s: PharmacyOrderStatus): string {
+  switch (s) {
+    case 'NEW':       return 'Received';
+    case 'DISPENSED': return 'Ready to pick up';
+    case 'PICKED_UP': return 'Picked up';
+    case 'CANCELLED': return 'Cancelled';
+  }
+}
 
 function formatDate(iso?: string): string {
   if (!iso) return '—';
@@ -19,18 +28,48 @@ function formatDate(iso?: string): string {
 export const MyPrescriptions: React.FC = () => {
   const navigate = useNavigate();
   const [rxList, setRxList] = useState<Prescription[]>([]);
+  const [orders, setOrders] = useState<PharmacyOrder[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [ordering, setOrdering] = useState<string | null>(null);  // prescriptionId being ordered
 
-  useEffect(() => {
+  const loadAll = () => {
     setLoading(true);
     setError(null);
-    prescriptionsApi
-      .mine()
-      .then(setRxList)
+    Promise.all([
+      prescriptionsApi.mine(),
+      patientOrdersApi.listMine().catch(() => [] as PharmacyOrder[]),
+    ])
+      .then(([rx, o]) => { setRxList(rx); setOrders(o); })
       .catch(e => setError(e?.message || 'Failed to load prescriptions'))
       .finally(() => setLoading(false));
-  }, []);
+  };
+
+  useEffect(() => { loadAll(); }, []);
+
+  // Map prescriptionId → latest ACTIVE order status (non-CANCELLED). If multiple orders exist for a
+  // prescription, pick the most recent non-CANCELLED one so the button hides correctly.
+  const activeOrderByRx = React.useMemo(() => {
+    const m = new Map<string, PharmacyOrder>();
+    for (const o of orders) {
+      if (o.status === 'CANCELLED') continue;
+      const prev = m.get(o.prescriptionId);
+      if (!prev || new Date(o.createdAt).getTime() > new Date(prev.createdAt).getTime()) {
+        m.set(o.prescriptionId, o);
+      }
+    }
+    return m;
+  }, [orders]);
+
+  const placeOrder = async (prescriptionId: string) => {
+    setOrdering(prescriptionId); setError(null);
+    try {
+      await patientOrdersApi.create(prescriptionId);
+      await loadAll();
+    } catch (e: any) {
+      setError(e?.message || 'Could not place order');
+    } finally { setOrdering(null); }
+  };
 
   const downloadPdf = (id: string) => {
     const token = localStorage.getItem('pulsecare_token');
@@ -211,14 +250,58 @@ export const MyPrescriptions: React.FC = () => {
                     </div>
                   )}
 
-                  <div style={{ marginTop: '14px', display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
+                  <div style={{ marginTop: '14px', display: 'flex', gap: '10px', flexWrap: 'wrap', alignItems: 'center' }}>
                     <button onClick={() => downloadPdf(rx.id)} className="btn btn-secondary hover-lift">
                       <Download size={14} /> PDF
                     </button>
                     <button onClick={() => navigate(`/appointments/${rx.appointmentId}`)} className="btn btn-secondary hover-lift">
                       <FileText size={14} /> View appointment
                     </button>
+
+                    {/* Order via pharmacy — only on SIGNED non-superseded prescriptions */}
+                    {!voided && !isSupersededSigned && (() => {
+                      const activeOrder = activeOrderByRx.get(rx.id);
+                      if (activeOrder) {
+                        return (
+                          <button
+                            onClick={() => navigate('/orders')}
+                            className="btn hover-lift"
+                            style={{
+                              background: '#f3faf8', color: '#0f766e',
+                              border: '1px solid #d7e8e5', fontSize: 13, fontWeight: 600,
+                              padding: '8px 14px', borderRadius: 9999, cursor: 'pointer',
+                              display: 'inline-flex', alignItems: 'center', gap: 6,
+                            }}
+                          >
+                            <Package size={14} /> Order placed · {orderStatusLabel(activeOrder.status)}
+                          </button>
+                        );
+                      }
+                      return (
+                        <button
+                          onClick={() => placeOrder(rx.id)}
+                          disabled={ordering === rx.id}
+                          className="hover-lift"
+                          style={{
+                            background: 'transparent', color: '#0f766e',
+                            border: '1px solid #0f766e', fontSize: 13, fontWeight: 600,
+                            padding: '8px 14px', borderRadius: 9999,
+                            cursor: ordering === rx.id ? 'not-allowed' : 'pointer',
+                            display: 'inline-flex', alignItems: 'center', gap: 6,
+                          }}
+                        >
+                          {ordering === rx.id
+                            ? <><Loader2 size={14} className="animate-spin" /> Placing…</>
+                            : <><ShoppingBag size={14} /> Order through PulseCare pharmacy</>}
+                        </button>
+                      );
+                    })()}
                   </div>
+                  {!voided && !isSupersededSigned && !activeOrderByRx.get(rx.id) && (
+                    <div style={{ fontSize: 11, color: '#8aa39d', marginTop: 8 }}>
+                      Optional — you can also take this prescription to any pharmacy.
+                    </div>
+                  )}
                 </motion.div>
               );
             })}
