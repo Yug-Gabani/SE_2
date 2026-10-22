@@ -79,6 +79,12 @@ public class User {
     @Column(name = "emergency_contact_phone", length = 50)
     private String emergencyContactPhone;
 
+    @Column(name = "is_deleted", nullable = false)
+    private boolean isDeleted;
+
+    @Column(name = "deleted_at")
+    private OffsetDateTime deletedAt;
+
     @Column(name = "created_at", nullable = false, updatable = false)
     private OffsetDateTime createdAt;
 

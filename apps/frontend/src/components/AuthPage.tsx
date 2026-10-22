@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import {
   ArrowLeft,
+  Building2,
   CheckCircle2,
+  FileText,
   Lock,
   Mail,
   Phone,
@@ -13,9 +15,10 @@ import {
 } from 'lucide-react';
 import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { authApi } from '../services/api';
-import type { Role, User } from '../types';
+import { COMMON_SPECIALTIES, type Role, type User } from '../types';
 import { PageTransition } from '../motion/PageTransition';
 import { WaveInput } from './WaveInput';
+import { CustomSelect } from './CustomSelect';
 
 interface AuthPageProps {
   onLoginSuccess: (user: User, token: string) => void;
@@ -38,7 +41,11 @@ export const AuthPage: React.FC<AuthPageProps> = ({ onLoginSuccess, currentUser 
   // Where to land after successful auth.
   const nextParam = new URLSearchParams(location.search).get('next');
   const landingFor = (role: Role) =>
-    nextParam ? nextParam : role === 'DOCTOR' ? '/doctor' : '/patient';
+    nextParam ? nextParam
+      : role === 'ADMIN'      ? '/admin/doctors'
+      : role === 'PHARMACIST' ? '/pharmacy'
+      : role === 'DOCTOR'     ? '/doctor'
+                              : '/patient';
 
   // If already logged in, redirect to appropriate landing
   useEffect(() => {
@@ -55,6 +62,11 @@ export const AuthPage: React.FC<AuthPageProps> = ({ onLoginSuccess, currentUser 
   const [phone, setPhone] = useState('');
   const [role, setRole] = useState<Role>('PATIENT');
   const [showPassword, setShowPassword] = useState(false);
+
+  // Doctor-only sign-up fields
+  const [specialty, setSpecialty] = useState('');
+  const [hospitalName, setHospitalName] = useState('');
+  const [registrationNumber, setRegistrationNumber] = useState('');
 
   // Status State
   const [loading, setLoading] = useState(false);
@@ -94,6 +106,11 @@ export const AuthPage: React.FC<AuthPageProps> = ({ onLoginSuccess, currentUser 
           throw new Error('Password must be at least 8 characters');
         }
 
+        if (role === 'DOCTOR') {
+          if (!specialty.trim()) throw new Error('Please pick a specialty');
+          if (!registrationNumber.trim()) throw new Error('Medical registration number is required');
+        }
+
         const normalizedEmail = email.trim().toLowerCase();
         const data = await authApi.register({
           email: normalizedEmail,
@@ -101,6 +118,9 @@ export const AuthPage: React.FC<AuthPageProps> = ({ onLoginSuccess, currentUser 
           fullName: fullName.trim(),
           phone: phone.trim() || undefined,
           role,
+          specialty: role === 'DOCTOR' ? specialty.trim() : undefined,
+          hospitalName: role === 'DOCTOR' ? (hospitalName.trim() || undefined) : undefined,
+          registrationNumber: role === 'DOCTOR' ? registrationNumber.trim() : undefined,
         });
 
         authApi.saveAuth(data);
@@ -464,6 +484,64 @@ export const AuthPage: React.FC<AuthPageProps> = ({ onLoginSuccess, currentUser 
                   onChange={setPhone}
                   icon={<Phone size={17} color="#0f766e" />}
                 />
+              )}
+
+              {/* Doctor-specific fields (Registration + role=DOCTOR) */}
+              {!isLogin && role === 'DOCTOR' && (
+                <div style={{
+                  padding: '14px 14px 2px', borderRadius: 14,
+                  border: '1px solid #d9ece7', background: '#f3faf8',
+                  marginBottom: 16,
+                }}>
+                  <div style={{
+                    fontSize: 12, fontWeight: 700, color: '#0f766e',
+                    textTransform: 'uppercase', letterSpacing: '0.04em',
+                    marginBottom: 10,
+                  }}>
+                    Clinical details
+                  </div>
+
+                  <div style={{ marginBottom: 12 }}>
+                    <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: '#5e7b76', marginBottom: 6 }}>
+                      Specialty
+                    </label>
+                    <CustomSelect
+                      value={specialty}
+                      onChange={setSpecialty}
+                      options={COMMON_SPECIALTIES.map(s => ({ value: s, label: s }))}
+                      placeholder="Select your specialty"
+                      variant="input"
+                    />
+                  </div>
+
+                  <WaveInput
+                    id="hospital"
+                    label="Hospital / clinic name (optional)"
+                    type="text"
+                    value={hospitalName}
+                    onChange={setHospitalName}
+                    icon={<Building2 size={17} color="#0f766e" />}
+                  />
+
+                  <WaveInput
+                    id="registration"
+                    label="Medical registration number"
+                    type="text"
+                    required
+                    value={registrationNumber}
+                    onChange={setRegistrationNumber}
+                    icon={<FileText size={17} color="#0f766e" />}
+                  />
+
+                  <div style={{
+                    marginTop: 2, padding: '8px 10px',
+                    background: '#fff', border: '1px solid #d9ece7',
+                    borderRadius: 10, fontSize: 11, color: '#5e7b76', lineHeight: 1.4,
+                  }}>
+                    Doctor accounts are reviewed by an admin before they appear in patient search.
+                    You can log in right after signing up to track your verification status.
+                  </div>
+                </div>
               )}
 
               {/* Password Field */}

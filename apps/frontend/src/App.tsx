@@ -11,6 +11,10 @@ import { MyPrescriptions } from './components/MyPrescriptions';
 import { Hospitals } from './components/Hospitals';
 import { HospitalDetail } from './components/HospitalDetail';
 import { PatientProfile } from './components/PatientProfile';
+import { DoctorProfile } from './components/DoctorProfile';
+import { AdminDoctors } from './components/AdminDoctors';
+import { PharmacyDashboard } from './components/PharmacyDashboard';
+import { PatientOrders } from './components/PatientOrders';
 import { AuthPage } from './components/AuthPage';
 import { ProtectedRoute } from './components/ProtectedRoute';
 import { authApi } from './services/api';
@@ -104,7 +108,11 @@ export const App: React.FC = () => {
           <Route
             path="/"
             element={
-              currentUser?.role === 'DOCTOR' ? (
+              currentUser?.role === 'ADMIN' ? (
+                <Navigate to="/admin/doctors" replace />
+              ) : currentUser?.role === 'PHARMACIST' ? (
+                <Navigate to="/pharmacy" replace />
+              ) : currentUser?.role === 'DOCTOR' ? (
                 <Navigate to="/doctor" replace />
               ) : currentUser?.role === 'PATIENT' ? (
                 <Navigate to="/patient" replace />
@@ -210,13 +218,59 @@ export const App: React.FC = () => {
             }
           />
 
-          {/* Doctor route (still backed by its internal mock queue) */}
+          {/* Doctor routes */}
           <Route
             path="/doctor"
             element={
               sessionReady ? (
                 <ProtectedRoute user={currentUser} roles={['DOCTOR']}>
                   <DoctorDashboard />
+                </ProtectedRoute>
+              ) : null
+            }
+          />
+          <Route
+            path="/doctor/profile"
+            element={
+              sessionReady ? (
+                <ProtectedRoute user={currentUser} roles={['DOCTOR']}>
+                  <DoctorProfile />
+                </ProtectedRoute>
+              ) : null
+            }
+          />
+
+          {/* Admin routes */}
+          <Route
+            path="/admin/doctors"
+            element={
+              sessionReady ? (
+                <ProtectedRoute user={currentUser} roles={['ADMIN']}>
+                  <AdminDoctors />
+                </ProtectedRoute>
+              ) : null
+            }
+          />
+
+          {/* Pharmacist routes */}
+          <Route
+            path="/pharmacy"
+            element={
+              sessionReady ? (
+                <ProtectedRoute user={currentUser} roles={['PHARMACIST']}>
+                  <PharmacyDashboard />
+                </ProtectedRoute>
+              ) : null
+            }
+          />
+
+          {/* Patient-side pharmacy orders */}
+          <Route
+            path="/orders"
+            element={
+              sessionReady ? (
+                <ProtectedRoute user={currentUser} roles={['PATIENT']}>
+                  <PatientOrders />
                 </ProtectedRoute>
               ) : null
             }

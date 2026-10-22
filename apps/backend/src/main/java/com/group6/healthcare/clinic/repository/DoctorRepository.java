@@ -21,12 +21,35 @@ public interface DoctorRepository extends JpaRepository<Doctor, UUID> {
 
     @Query("""
         SELECT d FROM Doctor d
-         WHERE (:specialty IS NULL OR LOWER(d.specialty) LIKE LOWER(CONCAT('%', :specialty, '%')))
+         WHERE d.status = com.group6.healthcare.clinic.entity.DoctorStatus.APPROVED
+           AND (:specialty IS NULL OR LOWER(d.specialty) LIKE LOWER(CONCAT('%', :specialty, '%')))
            AND (:hospitalId IS NULL OR d.hospitalId = :hospitalId)
          ORDER BY d.rating DESC, d.fullName ASC
         """)
     List<Doctor> searchByFilters(@Param("specialty") String specialty,
                                  @Param("hospitalId") UUID hospitalId);
+
+    @Query("""
+        SELECT d FROM Doctor d
+         WHERE d.status = com.group6.healthcare.clinic.entity.DoctorStatus.APPROVED
+         ORDER BY d.rating DESC, d.fullName ASC
+        """)
+    List<Doctor> findApprovedOrderByRatingDescFullNameAsc();
+
+    @Query("""
+        SELECT d FROM Doctor d
+         WHERE d.status = com.group6.healthcare.clinic.entity.DoctorStatus.APPROVED
+           AND d.hospitalId = :hospitalId
+         ORDER BY d.rating DESC, d.fullName ASC
+        """)
+    List<Doctor> findApprovedByHospitalId(@Param("hospitalId") UUID hospitalId);
+
+    @Query("""
+        SELECT d FROM Doctor d
+         WHERE d.status = :status
+         ORDER BY d.submittedAt ASC NULLS LAST, d.createdAt ASC
+        """)
+    List<Doctor> findByStatus(@Param("status") com.group6.healthcare.clinic.entity.DoctorStatus status);
 
     Optional<Doctor> findByUserId(UUID userId);
 }

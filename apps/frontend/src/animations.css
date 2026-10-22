@@ -26,13 +26,11 @@
 .card,
 .card-hover {
   position: relative;
-  overflow: hidden;
 }
 
 .card > *,
 .card-hover > * {
   position: relative;
-  z-index: 1;
 }
 
 .card::before,

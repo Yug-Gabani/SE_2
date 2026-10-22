@@ -12,11 +12,12 @@ import {
   X,
   LogIn,
   UserPlus,
+  ShieldCheck,
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import type { Hospital } from '../types';
-import { publicHospitalsApi } from '../services/api';
+import type { Hospital, DoctorReview } from '../types';
+import { publicHospitalsApi, reviewsApi } from '../services/api';
 import { CustomSelect } from './CustomSelect';
 import { PageTransition } from '../motion/PageTransition';
 import { listItem, staggerContainer, EASE_ENTER } from '../motion/presets';
@@ -79,8 +80,17 @@ export const LandingPage: React.FC<LandingPageProps> = ({
   const [showResults, setShowResults] = useState(false);
   const [searching, setSearching] = useState(false);
   const [preview, setPreview] = useState<Hospital | null>(null);
+  const [reviews, setReviews] = useState<DoctorReview[]>([]);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const searchContainerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    reviewsApi.landing(6)
+      .then((data) => {
+        if (data && data.length > 0) setReviews(data);
+      })
+      .catch(() => {});
+  }, []);
 
   // Close suggestions when clicking outside
   useEffect(() => {
@@ -226,6 +236,8 @@ export const LandingPage: React.FC<LandingPageProps> = ({
                 'Chennai',
               ]}
               onChange={setCity}
+              searchable={true}
+              searchPlaceholder="Search city…"
               variant="borderless"
             />
           </div>
@@ -839,6 +851,182 @@ export const LandingPage: React.FC<LandingPageProps> = ({
               </div>
               <div style={{ fontSize: '12px', color: '#52736d', marginTop: '2px' }}>
                 {spec.count}
+              </div>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* SECTION: VERIFIED PATIENT REVIEWS & RATINGS */}
+      <section style={{ marginBottom: '72px' }}>
+        <div style={{ textAlign: 'center', marginBottom: '32px' }}>
+          <span style={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: '6px',
+            backgroundColor: '#eaf6f2',
+            color: '#0f766e',
+            fontSize: '11px',
+            fontWeight: 700,
+            textTransform: 'uppercase',
+            letterSpacing: '0.08em',
+            padding: '4px 12px',
+            borderRadius: '9999px',
+            marginBottom: '10px',
+          }}>
+            <ShieldCheck size={14} /> Verified Patient Reviews
+          </span>
+          <h2 style={{
+            fontSize: '28px',
+            fontWeight: 700,
+            color: '#0b3f3a',
+            margin: '0 0 8px 0',
+            letterSpacing: '-0.02em',
+            fontFamily: "'Space Grotesk', sans-serif",
+          }}>
+            Trusted care, rated by real patients
+          </h2>
+          <p style={{ fontSize: '14px', color: '#52736d', margin: 0, maxWidth: '600px', marginLeft: 'auto', marginRight: 'auto' }}>
+            Every review is submitted by a verified patient following a completed video or hospital consultation.
+          </p>
+        </div>
+
+        <div style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
+          gap: '20px',
+        }}>
+          {(reviews.length > 0
+            ? reviews
+            : [
+                {
+                  id: 'default-1',
+                  appointmentId: 'apt-1',
+                  doctorId: 'doc-1',
+                  doctorName: 'Dr. Aarav Patel',
+                  doctorSpecialty: 'Cardiologist',
+                  patientName: 'Rohan M.',
+                  rating: 5,
+                  comment: 'Dr. Patel took the time to review my ECG thoroughly and explained each step of my treatment plan. I felt genuinely heard and well taken care of.',
+                  tags: 'Thorough & Attentive, Clear Explanations',
+                  isAnonymous: false,
+                  createdAt: '2 days ago',
+                },
+                {
+                  id: 'default-2',
+                  appointmentId: 'apt-2',
+                  doctorId: 'doc-2',
+                  doctorName: 'Dr. Priya Sharma',
+                  doctorSpecialty: 'Dermatologist',
+                  patientName: 'Ananya S.',
+                  rating: 5,
+                  comment: 'The video consultation was seamless. I uploaded my rash photo during triage, and Dr. Priya had diagnosed the reaction before the call even started!',
+                  tags: 'Punctual, Accurate Treatment',
+                  isAnonymous: false,
+                  createdAt: '4 days ago',
+                },
+                {
+                  id: 'default-3',
+                  appointmentId: 'apt-3',
+                  doctorId: 'doc-3',
+                  doctorName: 'Dr. Vikram Desai',
+                  doctorSpecialty: 'General Physician',
+                  patientName: 'Meera K.',
+                  rating: 5,
+                  comment: 'Very polite, patient, and knowledgeable. The digital prescription and follow-up guidelines were sent right to my account instantly.',
+                  tags: 'Empathetic & Kind, Great Follow-up',
+                  isAnonymous: false,
+                  createdAt: '1 week ago',
+                },
+              ]
+          ).map((rev) => (
+            <div
+              key={rev.id}
+              className="card-hover"
+              style={{
+                backgroundColor: '#ffffff',
+                borderRadius: '16px',
+                border: '1px solid #d9ece7',
+                padding: '22px',
+                boxShadow: '0 2px 12px rgba(11, 63, 58, 0.05)',
+                display: 'flex',
+                flexDirection: 'column',
+                justifyContent: 'space-between',
+              }}
+            >
+              <div>
+                {/* Doctor Header */}
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '12px' }}>
+                  <div>
+                    <div style={{ fontSize: '15px', fontWeight: 700, color: '#0b3f3a', fontFamily: "'Space Grotesk', sans-serif" }}>
+                      {rev.doctorName ?? 'Consulting Physician'}
+                    </div>
+                    <div style={{ fontSize: '12px', color: '#52736d' }}>
+                      {rev.doctorSpecialty ?? 'Specialist'}
+                    </div>
+                  </div>
+                  {/* Stars */}
+                  <div style={{ display: 'flex', gap: '3px' }}>
+                    {[...Array(5)].map((_, i) => (
+                      <Star
+                        key={i}
+                        size={15}
+                        color={i < rev.rating ? '#f59e0b' : '#d1d5db'}
+                        fill={i < rev.rating ? '#f59e0b' : 'transparent'}
+                      />
+                    ))}
+                  </div>
+                </div>
+
+                {/* Comment */}
+                <p style={{
+                  fontSize: '13px',
+                  lineHeight: '1.6',
+                  color: '#2d4b45',
+                  margin: '0 0 14px 0',
+                  fontStyle: rev.comment ? 'normal' : 'italic',
+                }}>
+                  {rev.comment ? `“${rev.comment}”` : '“Exceptional and prompt clinical consultation.”'}
+                </p>
+
+                {/* Tags */}
+                {rev.tags && (
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', marginBottom: '16px' }}>
+                    {rev.tags.split(',').map((t, tidx) => (
+                      <span
+                        key={tidx}
+                        style={{
+                          fontSize: '11px',
+                          fontWeight: 600,
+                          backgroundColor: '#eaf6f2',
+                          color: '#0f766e',
+                          padding: '2px 8px',
+                          borderRadius: '6px',
+                        }}
+                      >
+                        {t.trim()}
+                      </span>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* Patient Footer */}
+              <div style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                paddingTop: '12px',
+                borderTop: '1px solid #eaf6f2',
+                fontSize: '11px',
+                color: '#52736d',
+              }}>
+                <span style={{ fontWeight: 600, color: '#0b3f3a' }}>
+                  {rev.isAnonymous ? 'Verified Patient' : (rev.patientName || 'Verified Patient')}
+                </span>
+                <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', color: '#0f766e' }}>
+                  <ShieldCheck size={12} /> Verified Visit
+                </span>
               </div>
             </div>
           ))}

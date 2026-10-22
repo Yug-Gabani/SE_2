@@ -31,7 +31,7 @@ public class DoctorService {
     public List<DoctorResponse> listDoctors(String specialtyQuery, UUID hospitalId) {
         String spec = (specialtyQuery == null || specialtyQuery.isBlank()) ? null : specialtyQuery;
         List<Doctor> doctors = (spec == null && hospitalId == null)
-                ? doctorRepository.findAllByOrderByRatingDescFullNameAsc()
+                ? doctorRepository.findApprovedOrderByRatingDescFullNameAsc()
                 : doctorRepository.searchByFilters(spec, hospitalId);
         OffsetDateTime now = OffsetDateTime.now();
         return doctors.stream().map(d -> toResponse(d, now, 3)).toList();
@@ -74,6 +74,7 @@ public class DoctorService {
                 d.getHospitalId(),
                 d.getAvatarUrl(),
                 d.getRating(),
+                d.getReviewCount() != null ? d.getReviewCount() : 0,
                 d.getBio(),
                 previews,
                 previews.size()

@@ -1,12 +1,19 @@
 import type {
   Appointment,
+  Attachment,
   ConsultationType,
   Doctor,
+  DoctorMe,
+  DoctorReview,
+  DoctorStatus,
   Hospital,
   PatientProfile,
+  PharmacyOrder,
+  PharmacyOrderStatus,
   Prescription,
   PrescriptionItem,
   Role,
+  ScheduleTemplate,
   Slot,
   TriageAssessment,
   User,
@@ -71,6 +78,11 @@ export const authApi = {
     fullName: string;
     phone?: string;
     role: Role;
+    // doctor-only
+    specialty?: string;
+    hospitalName?: string;
+    hospitalId?: string;
+    registrationNumber?: string;
   }): Promise<TokenResponseData> {
     return request<TokenResponseData>('/auth/register', {
       method: 'POST',
@@ -209,6 +221,7 @@ export interface BookAppointmentBody {
   slotId: string;
   assessmentId?: string;
   consultationType: ConsultationType;
+  attachmentIds?: string[];
 }
 
 export type DoctorAction =
@@ -274,3 +287,166 @@ export const prescriptionsApi = {
   get: (id: string): Promise<Prescription> => request<Prescription>(`/v1/prescriptions/${id}`),
   pdfUrl: (id: string): string => `/api/v1/prescriptions/${id}/pdf`,
 };
+
+// ---------- Doctor's own profile + schedule ----------
+
+export const doctorProfileApi = {
+  me: (): Promise<DoctorMe> => request<DoctorMe>('/v1/doctors/me'),
+  update: (body: {
+    fullName?: string;
+    specialty?: string;
+    hospitalName?: string;
+    hospitalId?: string;
+    registrationNumber?: string;
+    yearsExperience?: number;
+    consultationFee?: number;
+    languages?: string;
+    bio?: string;
+    avatarUrl?: string;
+  }): Promise<DoctorMe> =>
+    request<DoctorMe>('/v1/doctors/me', { method: 'PUT', body: JSON.stringify(body) }),
+  resubmit: (): Promise<DoctorMe> =>
+    request<DoctorMe>('/v1/doctors/me/resubmit', { method: 'POST' }),
+  replaceSchedule: (templates: Omit<ScheduleTemplate, 'id'>[]): Promise<DoctorMe> =>
+    request<DoctorMe>('/v1/doctors/me/schedule', {
+      method: 'PUT',
+      body: JSON.stringify({ templates }),
+    }),
+  addSlot: (slotAt: string): Promise<Slot> =>
+    request<Slot>('/v1/doctors/me/slots', { method: 'POST', body: JSON.stringify({ slotAt }) }),
+  deleteSlot: (slotId: string): Promise<void> =>
+    request<void>(`/v1/doctors/me/slots/${slotId}`, { method: 'DELETE' }),
+};
+
+// ---------- Admin — doctor verification ----------
+
+// ---------- Pharmacy orders ----------
+
+export const pharmacyApi = {
+  listByStatus: (status: PharmacyOrderStatus = 'NEW'): Promise<PharmacyOrder[]> =>
+    request<PharmacyOrder[]>(`/v1/pharmacy/orders?status=${status}`),
+  get: (id: string): Promise<PharmacyOrder> =>
+    request<PharmacyOrder>(`/v1/pharmacy/orders/${id}`),
+  dispense: (id: string): Promise<PharmacyOrder> =>
+    request<PharmacyOrder>(`/v1/pharmacy/orders/${id}/dispense`, { method: 'POST' }),
+  pickup: (id: string): Promise<PharmacyOrder> =>
+    request<PharmacyOrder>(`/v1/pharmacy/orders/${id}/pick-up`, { method: 'POST' }),
+  cancel: (id: string, reason?: string): Promise<PharmacyOrder> =>
+    request<PharmacyOrder>(`/v1/pharmacy/orders/${id}/cancel`, {
+      method: 'POST',
+      body: JSON.stringify({ reason: reason ?? null }),
+    }),
+};
+
+export const patientOrdersApi = {
+  listMine: (): Promise<PharmacyOrder[]> => request<PharmacyOrder[]>('/v1/me/orders'),
+  create: (prescriptionId: string): Promise<PharmacyOrder> =>
+    request<PharmacyOrder>('/v1/me/orders', {
+      method: 'POST',
+      body: JSON.stringify({ prescriptionId }),
+    }),
+  cancel: (orderId: string, reason?: string): Promise<PharmacyOrder> =>
+    request<PharmacyOrder>(`/v1/me/orders/${orderId}/cancel`, {
+      method: 'POST',
+      body: JSON.stringify({ reason: reason ?? null }),
+    }),
+};
+
+export const adminDoctorsApi = {
+  list: (status: DoctorStatus = 'PENDING'): Promise<DoctorMe[]> =>
+    request<DoctorMe[]>(`/v1/admin/doctors?status=${status}`),
+  approve: (id: string): Promise<DoctorMe> =>
+    request<DoctorMe>(`/v1/admin/doctors/${id}/approve`, { method: 'POST' }),
+  reject: (id: string, reason: string): Promise<DoctorMe> =>
+    request<DoctorMe>(`/v1/admin/doctors/${id}/reject`, {
+      method: 'POST',
+      body: JSON.stringify({ reason }),
+    }),
+};
+
+// ---------- Files & Medical Attachments ----------
+
+export const filesApi = {
+  upload: async (
+    file: File,
+    category: 'SYMPTOM_IMAGE' | 'PRIOR_PRESCRIPTION' | 'LAB_REPORT' | 'OTHER' = 'SYMPTOM_IMAGE',
+    assessmentId?: string,
+    appointmentId?: string
+  ): Promise<Attachment> => {
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('category', category);
+    if (assessmentId) formData.append('assessmentId', assessmentId);
+    if (appointmentId) formData.append('appointmentId', appointmentId);
+
+    const token = localStorage.getItem('pulsecare_token');
+    const headers: Record<string, string> = {};
+    if (token) headers['Authorization'] = `Bearer ${token}`;
+
+    const res = await fetch(`${API_BASE}/v1/files/upload`, {
+      method: 'POST',
+      headers,
+      body: formData,
+    });
+    if (!res.ok) {
+      let errMsg = 'File upload failed';
+      try {
+        const j = await res.json();
+        if (j.message) errMsg = j.message;
+      } catch {}
+      throw new Error(errMsg);
+    }
+    const json = await res.json();
+    return json.data as Attachment;
+  },
+  myAttachments: (): Promise<Attachment[]> => request<Attachment[]>('/v1/files/my'),
+};
+
+// ---------- Doctor Reviews & Ratings ----------
+
+export interface CreateReviewBody {
+  rating: number;
+  comment?: string;
+  tags?: string;
+  isAnonymous?: boolean;
+}
+
+export const reviewsApi = {
+  submit: (appointmentId: string, body: CreateReviewBody): Promise<DoctorReview> =>
+    request<DoctorReview>(`/v1/appointments/${appointmentId}/review`, {
+      method: 'POST',
+      body: JSON.stringify(body),
+    }),
+  getForAppointment: (appointmentId: string): Promise<DoctorReview | null> =>
+    request<DoctorReview | null>(`/v1/appointments/${appointmentId}/review`),
+  getForDoctor: (doctorId: string): Promise<DoctorReview[]> =>
+    request<DoctorReview[]>(`/v1/reviews/doctors/${doctorId}`),
+  landing: (limit: number = 6): Promise<DoctorReview[]> =>
+    request<DoctorReview[]>(`/v1/reviews/landing?limit=${limit}`),
+};
+
+// ---------- Privacy & Compliance (GDPR / HIPAA) ----------
+
+export const complianceApi = {
+  exportData: async (): Promise<void> => {
+    const token = localStorage.getItem('pulsecare_token');
+    const res = await fetch(`${API_BASE}/v1/compliance/export`, {
+      headers: {
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      },
+    });
+    if (!res.ok) throw new Error('Data export failed');
+    const blob = await res.blob();
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `pulsecare-health-data-export-${new Date().toISOString().slice(0, 10)}.json`;
+    document.body.appendChild(a);
+    a.click();
+    window.URL.revokeObjectURL(url);
+    document.body.removeChild(a);
+  },
+  deleteAccount: (): Promise<string> =>
+    request<string>('/v1/compliance/account', { method: 'DELETE' }),
+};
+

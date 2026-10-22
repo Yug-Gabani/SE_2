@@ -1,6 +1,7 @@
 package com.group6.healthcare.clinic.service;
 
 import com.group6.healthcare.clinic.dto.AppointmentResponse;
+import com.group6.healthcare.clinic.dto.AttachmentResponse;
 import com.group6.healthcare.clinic.dto.BookAppointmentRequest;
 import com.group6.healthcare.clinic.dto.PatchAppointmentRequest;
 import com.group6.healthcare.clinic.entity.Appointment;
@@ -33,17 +34,20 @@ public class AppointmentService {
     private final DoctorSlotRepository slotRepository;
     private final TriageAssessmentRepository triageRepository;
     private final UserRepository userRepository;
+    private final FileStorageService fileStorageService;
 
     public AppointmentService(AppointmentRepository appointmentRepository,
                               DoctorRepository doctorRepository,
                               DoctorSlotRepository slotRepository,
                               TriageAssessmentRepository triageRepository,
-                              UserRepository userRepository) {
+                              UserRepository userRepository,
+                              FileStorageService fileStorageService) {
         this.appointmentRepository = appointmentRepository;
         this.doctorRepository = doctorRepository;
         this.slotRepository = slotRepository;
         this.triageRepository = triageRepository;
         this.userRepository = userRepository;
+        this.fileStorageService = fileStorageService;
     }
 
     @Transactional
@@ -88,6 +92,10 @@ public class AppointmentService {
                 .chiefComplaint(complaint)
                 .build();
         appt = appointmentRepository.save(appt);
+
+        if (req.attachmentIds() != null && !req.attachmentIds().isEmpty()) {
+            fileStorageService.linkAttachmentsToAppointment(req.attachmentIds(), appt.getId());
+        }
 
         User patient = userRepository.findById(patientId).orElse(null);
         return toResponse(appt, doctor, slot, patient);
@@ -275,6 +283,7 @@ public class AppointmentService {
     }
 
     private AppointmentResponse toResponse(Appointment a, Doctor doctor, DoctorSlot slot, User patient) {
+        List<AttachmentResponse> attachments = fileStorageService.getAttachmentsForAppointment(a.getId());
         return new AppointmentResponse(
                 a.getId(),
                 a.getPatientId(),
@@ -293,7 +302,8 @@ public class AppointmentService {
                 a.getChiefComplaint(),
                 a.getNotes(),
                 a.getCreatedAt(),
-                a.getUpdatedAt()
+                a.getUpdatedAt(),
+                attachments
         );
     }
 }

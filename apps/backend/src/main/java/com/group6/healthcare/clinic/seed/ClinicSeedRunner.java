@@ -137,6 +137,7 @@ public class ClinicSeedRunner {
                             .hospitalId(hospitalId)
                             .avatarUrl(sd.avatarUrl())
                             .rating(sd.rating())
+                            .reviewCount(18)
                             .bio(sd.name() + " specialises in " + sd.specialty() + ".")
                             .build()));
 
@@ -147,6 +148,9 @@ public class ClinicSeedRunner {
             }
             if (doctor.getHospitalId() == null) {
                 doctor.setHospitalId(hospital.getId()); dirty = true;
+            }
+            if (doctor.getReviewCount() == null) {
+                doctor.setReviewCount(18); dirty = true;
             }
             // Also keep the human-readable hospital name in sync if the seed renamed it.
             if (!sd.hospital().equalsIgnoreCase(doctor.getHospital())) {
@@ -170,6 +174,10 @@ public class ClinicSeedRunner {
         ZoneId zone = ZoneId.systemDefault();
         for (int day = 0; day < 7; day++) {
             LocalDate date = today.plusDays(day);
+            // Saturday and Sunday are holidays by default — do not generate open slots
+            if (date.getDayOfWeek() == java.time.DayOfWeek.SATURDAY || date.getDayOfWeek() == java.time.DayOfWeek.SUNDAY) {
+                continue;
+            }
             for (LocalTime time : DAILY_SLOT_TIMES) {
                 OffsetDateTime slotAt = date.atTime(time).atZone(zone).toOffsetDateTime();
                 if (slotAt.isBefore(now)) continue;

@@ -18,7 +18,9 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ user, roles, chi
 
   if (roles && roles.length > 0 && !roles.includes(user.role)) {
     // Logged in but wrong role — send to the appropriate home.
-    if (user.role === 'DOCTOR') return <Navigate to="/doctor" replace />;
+    if (user.role === 'ADMIN')      return <Navigate to="/admin/doctors" replace />;
+    if (user.role === 'PHARMACIST') return <Navigate to="/pharmacy" replace />;
+    if (user.role === 'DOCTOR')     return <Navigate to="/doctor" replace />;
     return <Navigate to="/patient" replace />;
   }
 

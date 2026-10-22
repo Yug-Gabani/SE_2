@@ -2,6 +2,8 @@ package com.group6.healthcare.clinic.entity;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
@@ -54,8 +56,43 @@ public class Doctor {
     @Column(name = "rating", nullable = false, precision = 3, scale = 2)
     private BigDecimal rating;
 
+    @Column(name = "review_count", nullable = false)
+    private Integer reviewCount;
+
     @Column(name = "bio")
     private String bio;
+
+    // ---------- verification lifecycle (V12) ----------
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "status", nullable = false, length = 16)
+    private DoctorStatus status;
+
+    @Column(name = "registration_number", length = 64)
+    private String registrationNumber;
+
+    @Column(name = "years_experience")
+    private Integer yearsExperience;
+
+    @Column(name = "consultation_fee", precision = 10, scale = 2)
+    private BigDecimal consultationFee;
+
+    @Column(name = "languages", length = 256)
+    private String languages;
+
+    @Column(name = "rejection_reason")
+    private String rejectionReason;
+
+    @Column(name = "submitted_at")
+    private OffsetDateTime submittedAt;
+
+    @Column(name = "reviewed_at")
+    private OffsetDateTime reviewedAt;
+
+    @Column(name = "reviewed_by")
+    private UUID reviewedBy;
+
+    // ---------- audit ----------
 
     @Column(name = "created_at", nullable = false, updatable = false)
     private OffsetDateTime createdAt;
@@ -69,6 +106,8 @@ public class Doctor {
         if (createdAt == null) createdAt = now;
         updatedAt = now;
         if (rating == null) rating = new BigDecimal("4.80");
+        if (reviewCount == null) reviewCount = 0;
+        if (status == null) status = DoctorStatus.APPROVED;
     }
 
     @PreUpdate

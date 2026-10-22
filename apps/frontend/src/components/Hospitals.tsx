@@ -100,6 +100,9 @@ export const Hospitals: React.FC = () => {
           value={state}
           options={[{ value: '', label: 'All states' }, ...states.map(s => ({ value: s, label: s }))]}
           onChange={setState}
+          searchable={true}
+          searchPlaceholder="Type state (e.g. Gujarat)…"
+          placeholder="All states"
           variant="input"
         />
         <CustomSelect
@@ -107,6 +110,9 @@ export const Hospitals: React.FC = () => {
           options={[{ value: '', label: 'All cities' }, ...cities.map(c => ({ value: c, label: c }))]}
           onChange={setCity}
           disabled={!cities.length}
+          searchable={true}
+          searchPlaceholder="Type city (e.g. Ahmedabad)…"
+          placeholder={cities.length ? 'All cities' : 'Pick a state first'}
           variant="input"
         />
         <input

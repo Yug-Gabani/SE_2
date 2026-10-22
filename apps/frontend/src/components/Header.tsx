@@ -1,9 +1,11 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence, useReducedMotion, LayoutGroup, useScroll, useSpring } from 'framer-motion';
 import {
   Bell,
   ChevronDown,
+  User as UserIcon,
+  LogOut,
 } from 'lucide-react';
 import type { User } from '../types';
 
@@ -18,6 +20,13 @@ interface HeaderProps {
 
 const EASE_HEADER = [0.2, 0.65, 0.3, 0.9] as const;
 const CUBIC_BEZIER_STR = 'cubic-bezier(0.2, 0.65, 0.3, 0.9)';
+
+function getInitials(name?: string): string {
+  if (!name) return 'U';
+  const parts = name.trim().split(/\s+/);
+  if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
+  return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+}
 
 export const Header: React.FC<HeaderProps> = ({
   currentUser,
@@ -67,6 +76,30 @@ export const Header: React.FC<HeaderProps> = ({
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
+  // User dropdown menu state
+  const [userDropdownOpen, setUserDropdownOpen] = useState(false);
+  const userDropdownRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!userDropdownOpen) return;
+    const handleClickOutside = (e: MouseEvent) => {
+      if (userDropdownRef.current && !userDropdownRef.current.contains(e.target as Node)) {
+        setUserDropdownOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [userDropdownOpen]);
+
+  useEffect(() => {
+    if (!userDropdownOpen) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setUserDropdownOpen(false);
+    };
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [userDropdownOpen]);
+
   // Section-anchor active state tracking (Scroll Spy for Guest Landing)
   const [activeSection, setActiveSection] = useState<'home' | 'find-care' | 'specialties' | 'how-it-works' | 'for-hospitals'>('home');
 
@@ -113,7 +146,6 @@ export const Header: React.FC<HeaderProps> = ({
   const isMyAppointments = isPatient && location.pathname.startsWith('/appointments');
   const isPrescriptions  = isPatient && location.pathname.startsWith('/prescriptions');
   const isHospitals      = isPatient && location.pathname.startsWith('/hospitals');
-  const isProfile        = isPatient && location.pathname === '/profile';
 
   // Active tab detection for Doctor
   const doctorHash = location.hash;
@@ -432,7 +464,6 @@ export const Header: React.FC<HeaderProps> = ({
                   { id: 'appointments', label: 'My Appointments', href: '/appointments', active: isMyAppointments, onClick: () => navigate('/appointments') },
                   { id: 'prescriptions', label: 'Prescriptions', href: '/prescriptions', active: isPrescriptions, onClick: () => navigate('/prescriptions') },
                   { id: 'hospitals', label: 'Hospitals', href: '/hospitals', active: isHospitals, onClick: () => navigate('/hospitals') },
-                  { id: 'profile', label: 'Profile', href: '/profile', active: isProfile, onClick: () => navigate('/profile') },
                 ].map((item, idx) => (
                   <motion.div
                     key={item.id}
@@ -642,10 +673,18 @@ export const Header: React.FC<HeaderProps> = ({
               </>
             )}
 
-            {isPatient && (
-              <>
+            {currentUser && (
+              <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
                 {/* Notification Bell */}
-                <div className="icon-pop" style={{ position: 'relative', cursor: 'pointer', display: 'flex', alignItems: 'center' }}>
+                <div
+                  className="icon-pop"
+                  onClick={() => {
+                    if (isDoctor) navigate('/doctor#my-queue');
+                    else if (isPatient) navigate('/appointments');
+                  }}
+                  style={{ position: 'relative', cursor: 'pointer', display: 'flex', alignItems: 'center' }}
+                  title="Notifications"
+                >
                   <Bell size={isScrolled ? 17 : 19} color="#0b3f3a" style={{ transition: `all 220ms ${CUBIC_BEZIER_STR}` }} />
                   <span style={{
                     position: 'absolute',
@@ -662,110 +701,195 @@ export const Header: React.FC<HeaderProps> = ({
                     alignItems: 'center',
                     justifyContent: 'center',
                   }}>
-                    2
+                    {isDoctor ? 1 : 2}
                   </span>
                 </div>
 
-                {/* Patient Profile & Sign Out */}
-                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                  <div
-                    onClick={onOpenAuth}
+                {/* User Dropdown Trigger */}
+                <div ref={userDropdownRef} style={{ position: 'relative' }}>
+                  <button
+                    type="button"
+                    onClick={() => setUserDropdownOpen(prev => !prev)}
                     style={{
                       display: 'flex',
                       alignItems: 'center',
-                      gap: '6px',
-                      fontSize: isScrolled ? '13px' : '14px',
-                      fontWeight: 600,
-                      color: '#0b3f3a',
+                      gap: '8px',
+                      padding: isScrolled ? '4px 8px' : '5px 10px',
+                      borderRadius: '12px',
+                      border: userDropdownOpen ? '1px solid #0f766e' : '1px solid transparent',
+                      backgroundColor: userDropdownOpen ? '#eaf6f2' : 'transparent',
                       cursor: 'pointer',
                       fontFamily: "'Space Grotesk', sans-serif",
+                      transition: 'all 150ms ease',
+                      outline: 'none',
                     }}
-                    title="Switch profile"
-                  >
-                    <span>{currentUser.fullName || 'Avi Patel'}</span>
-                    <ChevronDown size={14} color="#0f766e" />
-                  </div>
-                  <button
-                    onClick={onLogout}
-                    style={{
-                      background: 'none',
-                      border: 'none',
-                      color: '#8aa39d',
-                      fontSize: '12px',
-                      cursor: 'pointer',
-                      textDecoration: 'underline',
-                      padding: '2px 4px',
-                      fontFamily: "'Space Grotesk', sans-serif",
+                    onMouseEnter={e => {
+                      if (!userDropdownOpen) e.currentTarget.style.backgroundColor = '#f0f9f6';
                     }}
-                    title="Sign Out"
+                    onMouseLeave={e => {
+                      if (!userDropdownOpen) e.currentTarget.style.backgroundColor = 'transparent';
+                    }}
+                    title="User account menu"
+                    aria-expanded={userDropdownOpen}
                   >
-                    Sign out
-                  </button>
-                </div>
-              </>
-            )}
-
-            {isDoctor && (
-              <>
-                {/* Notification Bell */}
-                <div className="icon-pop" style={{ position: 'relative', cursor: 'pointer', display: 'flex', alignItems: 'center' }}>
-                  <Bell size={isScrolled ? 16 : 18} color="#0b3f3a" style={{ transition: `all 220ms ${CUBIC_BEZIER_STR}` }} />
-                  <span style={{
-                    position: 'absolute',
-                    top: '-4px',
-                    right: '-6px',
-                    backgroundColor: '#ff6b5b',
-                    color: '#ffffff',
-                    fontSize: '10px',
-                    fontWeight: 700,
-                    width: '15px',
-                    height: '15px',
-                    borderRadius: '50%',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                  }}>
-                    1
-                  </span>
-                </div>
-
-                {/* Doctor Profile & Sign Out */}
-                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                  <div
-                    onClick={onOpenAuth}
-                    style={{
+                    {/* User Avatar Circle */}
+                    <div style={{
+                      width: isScrolled ? '26px' : '28px',
+                      height: isScrolled ? '26px' : '28px',
+                      borderRadius: '50%',
+                      backgroundColor: '#0f766e',
+                      color: '#ffffff',
                       display: 'flex',
                       alignItems: 'center',
-                      gap: '6px',
+                      justifyContent: 'center',
+                      fontSize: '11px',
+                      fontWeight: 700,
+                      flexShrink: 0,
+                    }}>
+                      {getInitials(currentUser.fullName)}
+                    </div>
+                    <span style={{
                       fontSize: isScrolled ? '13px' : '14px',
                       fontWeight: 600,
                       color: '#0b3f3a',
-                      cursor: 'pointer',
-                      fontFamily: "'Space Grotesk', sans-serif",
-                    }}
-                    title="Switch profile"
-                  >
-                    <span>{currentUser.fullName || 'Dr. Kavita Shah'}</span>
-                    <ChevronDown size={14} color="#0f766e" />
-                  </div>
-                  <button
-                    onClick={onLogout}
-                    style={{
-                      background: 'none',
-                      border: 'none',
-                      color: '#8aa39d',
-                      fontSize: '12px',
-                      cursor: 'pointer',
-                      textDecoration: 'underline',
-                      padding: '2px 4px',
-                      fontFamily: "'Space Grotesk', sans-serif",
-                    }}
-                    title="Sign Out"
-                  >
-                    Sign out
+                      maxWidth: '160px',
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
+                      whiteSpace: 'nowrap',
+                    }}>
+                      {currentUser.fullName || (isDoctor ? 'Doctor' : 'Patient')}
+                    </span>
+                    <motion.div
+                      animate={{ rotate: userDropdownOpen ? 180 : 0 }}
+                      transition={{ duration: 0.18, ease: 'easeOut' }}
+                      style={{ display: 'flex', alignItems: 'center' }}
+                    >
+                      <ChevronDown size={14} color="#0f766e" />
+                    </motion.div>
                   </button>
+
+                  {/* Dropdown Menu ("down scroll") */}
+                  <AnimatePresence>
+                    {userDropdownOpen && (
+                      <motion.div
+                        initial={{ opacity: 0, y: 6, scale: 0.96 }}
+                        animate={{ opacity: 1, y: 0, scale: 1 }}
+                        exit={{ opacity: 0, y: 6, scale: 0.96 }}
+                        transition={{ duration: 0.16, ease: [0.2, 0.65, 0.3, 0.9] }}
+                        style={{
+                          position: 'absolute',
+                          top: 'calc(100% + 8px)',
+                          right: 0,
+                          minWidth: '220px',
+                          backgroundColor: '#ffffff',
+                          borderRadius: '16px',
+                          border: '1px solid #d9ece7',
+                          boxShadow: '0 12px 32px rgba(11, 63, 58, 0.12), 0 2px 8px rgba(0, 0, 0, 0.04)',
+                          padding: '8px',
+                          zIndex: 1000,
+                          fontFamily: "'Space Grotesk', sans-serif",
+                        }}
+                      >
+                        {/* User Header Details */}
+                        <div style={{
+                          padding: '8px 10px 10px',
+                          borderBottom: '1px solid #eef5f3',
+                          marginBottom: '6px',
+                        }}>
+                          <div style={{ fontWeight: 700, fontSize: '14px', color: '#0b3f3a' }}>
+                            {currentUser.fullName}
+                          </div>
+                          {currentUser.email && (
+                            <div style={{ fontSize: '12px', color: '#52736d', marginTop: '2px', wordBreak: 'break-all' }}>
+                              {currentUser.email}
+                            </div>
+                          )}
+                          <div style={{ marginTop: '6px' }}>
+                            <span style={{
+                              fontSize: '10px',
+                              fontWeight: 700,
+                              textTransform: 'uppercase',
+                              letterSpacing: '0.04em',
+                              backgroundColor: isDoctor ? '#dcfce7' : '#eaf6f2',
+                              color: isDoctor ? '#15803d' : '#0f766e',
+                              padding: '2px 8px',
+                              borderRadius: '9999px',
+                              display: 'inline-block',
+                            }}>
+                              {currentUser.role || 'PATIENT'}
+                            </span>
+                          </div>
+                        </div>
+
+                        {/* Profile Button */}
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setUserDropdownOpen(false);
+                            navigate(isDoctor ? '/doctor/profile' : '/profile');
+                          }}
+                          style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '10px',
+                            width: '100%',
+                            padding: '9px 12px',
+                            borderRadius: '10px',
+                            border: 'none',
+                            backgroundColor: 'transparent',
+                            color: '#0b3f3a',
+                            fontSize: '13px',
+                            fontWeight: 500,
+                            cursor: 'pointer',
+                            fontFamily: "'Space Grotesk', sans-serif",
+                            textAlign: 'left',
+                            transition: 'background-color 140ms ease, color 140ms ease',
+                          }}
+                          onMouseEnter={e => e.currentTarget.style.backgroundColor = '#eaf6f2'}
+                          onMouseLeave={e => e.currentTarget.style.backgroundColor = 'transparent'}
+                        >
+                          <UserIcon size={15} color="#0f766e" />
+                          <span>Profile</span>
+                        </button>
+
+                        {/* Divider */}
+                        <div style={{ height: '1px', backgroundColor: '#eef5f3', margin: '6px 4px' }} />
+
+                        {/* Sign Out Button */}
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setUserDropdownOpen(false);
+                            onLogout();
+                          }}
+                          style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '10px',
+                            width: '100%',
+                            padding: '9px 12px',
+                            borderRadius: '10px',
+                            border: 'none',
+                            backgroundColor: 'transparent',
+                            color: '#dc2626',
+                            fontSize: '13px',
+                            fontWeight: 600,
+                            cursor: 'pointer',
+                            fontFamily: "'Space Grotesk', sans-serif",
+                            textAlign: 'left',
+                            transition: 'background-color 140ms ease, color 140ms ease',
+                          }}
+                          onMouseEnter={e => e.currentTarget.style.backgroundColor = 'rgba(220, 38, 38, 0.08)'}
+                          onMouseLeave={e => e.currentTarget.style.backgroundColor = 'transparent'}
+                        >
+                          <LogOut size={15} color="#dc2626" />
+                          <span>Sign out</span>
+                        </button>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
                 </div>
-              </>
+              </div>
             )}
 
             {/* Mobile Hamburger / Morphing X Button */}
@@ -870,6 +994,86 @@ export const Header: React.FC<HeaderProps> = ({
                   )}
                 </motion.a>
               ))}
+
+              {currentUser && (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px', paddingBottom: '12px', borderBottom: '1px solid #d9ece7' }}>
+                    <div style={{
+                      width: '36px',
+                      height: '36px',
+                      borderRadius: '50%',
+                      backgroundColor: '#0f766e',
+                      color: '#ffffff',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      fontWeight: 700,
+                      fontSize: '13px',
+                    }}>
+                      {getInitials(currentUser.fullName)}
+                    </div>
+                    <div>
+                      <div style={{ fontWeight: 700, fontSize: '15px', color: '#0b3f3a' }}>
+                        {currentUser.fullName || (isDoctor ? 'Doctor' : 'Patient')}
+                      </div>
+                      <div style={{ fontSize: '12px', color: '#52796f' }}>
+                        {currentUser.email}
+                      </div>
+                    </div>
+                  </div>
+
+                  <button
+                    onClick={() => {
+                      setMobileMenuOpen(false);
+                      if (isDoctor) navigate('/doctor/profile');
+                      else navigate('/profile');
+                    }}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '10px',
+                      padding: '10px 12px',
+                      borderRadius: '10px',
+                      border: '1px solid #d9ece7',
+                      backgroundColor: '#ffffff',
+                      color: '#0b3f3a',
+                      fontWeight: 600,
+                      fontSize: '14px',
+                      cursor: 'pointer',
+                      fontFamily: "'Space Grotesk', sans-serif",
+                    }}
+                  >
+                    <UserIcon size={16} color="#0f766e" />
+                    <span>My Profile</span>
+                  </button>
+
+
+                  <button
+                    onClick={() => {
+                      setMobileMenuOpen(false);
+                      onLogout();
+                    }}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '10px',
+                      padding: '10px 12px',
+                      borderRadius: '10px',
+                      border: '1px solid rgba(220, 38, 38, 0.2)',
+                      backgroundColor: 'rgba(220, 38, 38, 0.04)',
+                      color: '#dc2626',
+                      fontWeight: 600,
+                      fontSize: '14px',
+                      cursor: 'pointer',
+                      fontFamily: "'Space Grotesk', sans-serif",
+                      marginTop: '6px',
+                    }}
+                  >
+                    <LogOut size={16} color="#dc2626" />
+                    <span>Sign out</span>
+                  </button>
+                </div>
+              )}
 
               {!currentUser && (
                 <div style={{ display: 'flex', gap: '12px', marginTop: '12px', paddingTop: '16px', borderTop: '1px solid #d9ece7' }}>

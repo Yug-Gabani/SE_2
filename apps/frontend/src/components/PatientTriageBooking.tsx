@@ -14,15 +14,22 @@ import {
   ShieldAlert,
   ArrowRight,
   Loader2,
+  Clock,
+  Upload,
+  FileText,
+  Trash2,
+  Paperclip,
 } from 'lucide-react';
 import type {
   Appointment,
+  Attachment,
   ConsultationType,
   Doctor,
+  Slot,
   TriageAssessment,
   User,
 } from '../types';
-import { appointmentsApi, doctorsApi, triageApi } from '../services/api';
+import { appointmentsApi, doctorsApi, triageApi, filesApi } from '../services/api';
 import { PageTransition } from '../motion/PageTransition';
 import { CustomCheckbox } from './CustomCheckbox';
 
@@ -66,6 +73,22 @@ function formatSlot(iso: string): string {
   if (sameDay) return `Today ${time}`;
   if (isTomorrow) return `Tomorrow ${time}`;
   return `${d.toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' })} ${time}`;
+}
+
+function normalizeSlotTime(d: Date): string {
+  let hours = d.getHours();
+  const minutes = String(d.getMinutes()).padStart(2, '0');
+  const ampm = hours >= 12 ? 'PM' : 'AM';
+  hours = hours % 12;
+  if (hours === 0) hours = 12;
+  return `${String(hours).padStart(2, '0')}:${minutes} ${ampm}`;
+}
+
+function getSlotDateISO(d: Date): string {
+  const year = d.getFullYear();
+  const month = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
 }
 
 export interface SpotIntakePreset {
@@ -362,6 +385,72 @@ export const PatientTriageBooking: React.FC<PatientTriageBookingProps> = ({ curr
   const [chestPain, setChestPain] = useState<boolean>(initialPreset.chestPain);
   const [shortnessOfBreath, setShortnessOfBreath] = useState<boolean>(initialPreset.shortnessOfBreath);
 
+  // Step 1 Attachments (symptom images, prior prescriptions)
+  const [uploadedAttachments, setUploadedAttachments] = useState<Attachment[]>([]);
+  const [uploadCategory, setUploadCategory] = useState<'SYMPTOM_IMAGE' | 'PRIOR_PRESCRIPTION' | 'LAB_REPORT'>('SYMPTOM_IMAGE');
+  const [uploadingFile, setUploadingFile] = useState<boolean>(false);
+  const [uploadError, setUploadError] = useState<string | null>(null);
+  const [isDragging, setIsDragging] = useState<boolean>(false);
+  const fileInputRef = React.useRef<HTMLInputElement>(null);
+
+  const processFiles = async (files: FileList | File[]) => {
+    if (!files || files.length === 0) return;
+    setUploadingFile(true);
+    setUploadError(null);
+    try {
+      for (let i = 0; i < files.length; i++) {
+        const file = files[i];
+        if (file.size > 10 * 1024 * 1024) {
+          throw new Error(`File ${file.name} exceeds 10MB limit.`);
+        }
+        const uploaded = await filesApi.upload(file, uploadCategory);
+        setUploadedAttachments(prev => [...prev, uploaded]);
+      }
+    } catch (err: any) {
+      setUploadError(err.message || 'Failed to upload attachment');
+    } finally {
+      setUploadingFile(false);
+      if (fileInputRef.current) fileInputRef.current.value = '';
+    }
+  };
+
+  const handleFileInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files) {
+      processFiles(e.target.files);
+    }
+  };
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(true);
+  };
+
+  const handleDragEnter = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(true);
+  };
+
+  const handleDragLeave = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(false);
+  };
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(false);
+    if (e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+      processFiles(e.dataTransfer.files);
+    }
+  };
+
+  const removeAttachment = (id: string) => {
+    setUploadedAttachments(prev => prev.filter(a => a.id !== id));
+  };
+
   useEffect(() => {
     const rawSpot = searchParams.get('hotspot');
     const rawComplaint = searchParams.get('complaint');
@@ -404,6 +493,29 @@ export const PatientTriageBooking: React.FC<PatientTriageBookingProps> = ({ curr
   const [doctorsError, setDoctorsError] = useState<string | null>(null);
   const [selectedDoctorId, setSelectedDoctorId] = useState<string>('');
   const [selectedSlotId, setSelectedSlotId] = useState<string>('');
+  const [doctorSlots, setDoctorSlots] = useState<Slot[]>([]);
+  const [slotsLoading, setSlotsLoading] = useState<boolean>(false);
+  const [selectedDayISO, setSelectedDayISO] = useState<string>('');
+  const [slotOverrides, setSlotOverrides] = useState<Record<string, 'OPEN' | 'CLOSED'>>(() => {
+    try {
+      const saved = localStorage.getItem('pulsecare_doctor_slots_overrides');
+      if (saved) return JSON.parse(saved);
+    } catch {}
+    return {};
+  });
+
+  useEffect(() => {
+    const onStorage = (e: StorageEvent) => {
+      if (e.key === 'pulsecare_doctor_slots_overrides') {
+        try {
+          setSlotOverrides(e.newValue ? JSON.parse(e.newValue) : {});
+        } catch {}
+      }
+    };
+    window.addEventListener('storage', onStorage);
+    return () => window.removeEventListener('storage', onStorage);
+  }, []);
+
   const [consultationType, setConsultationType] = useState<ConsultationType>('VIDEO');
   const [booking, setBooking] = useState<boolean>(false);
   const [bookingError, setBookingError] = useState<string | null>(null);
@@ -434,7 +546,6 @@ export const PatientTriageBooking: React.FC<PatientTriageBookingProps> = ({ curr
         if (list.length > 0) {
           const first = list[0];
           setSelectedDoctorId(first.id);
-          setSelectedSlotId(first.nextSlots[0]?.id ?? '');
         }
       })
       .catch(err => setDoctorsError(err.message || 'Failed to load doctors'))
@@ -445,6 +556,190 @@ export const PatientTriageBooking: React.FC<PatientTriageBookingProps> = ({ curr
     () => doctors.find(d => d.id === selectedDoctorId) || null,
     [doctors, selectedDoctorId]
   );
+
+  // Fetch all open forward slots for the selected doctor
+  useEffect(() => {
+    if (!selectedDoctorId) {
+      setDoctorSlots([]);
+      return;
+    }
+    setSlotsLoading(true);
+    doctorsApi.slots(selectedDoctorId)
+      .then(slots => {
+        if (Array.isArray(slots) && slots.length > 0) {
+          setDoctorSlots(slots);
+        } else {
+          const doc = doctors.find(d => d.id === selectedDoctorId);
+          if (doc?.nextSlots && doc.nextSlots.length > 0) {
+            setDoctorSlots(doc.nextSlots.map(s => ({
+              id: s.id,
+              doctorId: selectedDoctorId,
+              slotAt: s.slotAt,
+              booked: false,
+            })));
+          } else {
+            setDoctorSlots([]);
+          }
+        }
+      })
+      .catch(() => {
+        const doc = doctors.find(d => d.id === selectedDoctorId);
+        if (doc?.nextSlots) {
+          setDoctorSlots(doc.nextSlots.map(s => ({
+            id: s.id,
+            doctorId: selectedDoctorId,
+            slotAt: s.slotAt,
+            booked: false,
+          })));
+        } else {
+          setDoctorSlots([]);
+        }
+      })
+      .finally(() => setSlotsLoading(false));
+  }, [selectedDoctorId, doctors]);
+
+  // Strictly filter out booked, past, doctor-closed, or weekend holiday slots so patient NEVER sees closed slots
+  const availableSlots = useMemo(() => {
+    const now = new Date();
+    return doctorSlots.filter(slot => {
+      if (slot.booked) return false;
+      const d = new Date(slot.slotAt);
+      if (isNaN(d.getTime()) || d < now) return false;
+
+      const dateISO = getSlotDateISO(d);
+      const timeStr = normalizeSlotTime(d);
+      let hours = d.getHours();
+      const minutes = String(d.getMinutes()).padStart(2, '0');
+      const ampm = hours >= 12 ? 'PM' : 'AM';
+      hours = hours % 12;
+      if (hours === 0) hours = 12;
+      const unpaddedTime = `${hours}:${minutes} ${ampm}`;
+
+      const dayOfWeek = d.getDay(); // 0 is Sunday, 6 is Saturday
+      const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
+
+      const hasExplicitOpen =
+        slotOverrides[`${dateISO}_${timeStr}`] === 'OPEN' ||
+        slotOverrides[`${dateISO}_${unpaddedTime}`] === 'OPEN' ||
+        slotOverrides[`${slot.doctorId}_${dateISO}_${timeStr}`] === 'OPEN' ||
+        slotOverrides[`${slot.doctorId}_${dateISO}_${unpaddedTime}`] === 'OPEN' ||
+        slotOverrides[`${selectedDoctorId}_${dateISO}_${timeStr}`] === 'OPEN' ||
+        slotOverrides[`${selectedDoctorId}_${dateISO}_${unpaddedTime}`] === 'OPEN';
+
+      const hasExplicitClosed =
+        slotOverrides[`${dateISO}_${timeStr}`] === 'CLOSED' ||
+        slotOverrides[`${dateISO}_${unpaddedTime}`] === 'CLOSED' ||
+        slotOverrides[`${slot.doctorId}_${dateISO}_${timeStr}`] === 'CLOSED' ||
+        slotOverrides[`${slot.doctorId}_${dateISO}_${unpaddedTime}`] === 'CLOSED' ||
+        slotOverrides[`${selectedDoctorId}_${dateISO}_${timeStr}`] === 'CLOSED' ||
+        slotOverrides[`${selectedDoctorId}_${dateISO}_${unpaddedTime}`] === 'CLOSED';
+
+      if (hasExplicitClosed) return false;
+      if (hasExplicitOpen) return true;
+
+      // By default: Saturday & Sunday are holidays (closed)
+      if (isWeekend) return false;
+
+      return true;
+    });
+  }, [doctorSlots, slotOverrides, selectedDoctorId]);
+
+  // Group open slots across the rolling 7-day schedule (and any additional days)
+  const scheduleDays = useMemo(() => {
+    const daysMap = new Map<string, {
+      dateISO: string;
+      dayName: string;
+      dateFormatted: string;
+      weekday: string;
+      isWeekend: boolean;
+      slots: Slot[];
+    }>();
+
+    const today = new Date();
+    for (let i = 0; i < 7; i++) {
+      const d = new Date(today);
+      d.setDate(today.getDate() + i);
+      const dateISO = getSlotDateISO(d);
+      const dayName = i === 0 ? 'Today' : i === 1 ? 'Tomorrow' : d.toLocaleDateString(undefined, { weekday: 'short' });
+      const dateFormatted = d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+      const weekday = d.toLocaleDateString(undefined, { weekday: 'long' });
+      const isWeekend = d.getDay() === 0 || d.getDay() === 6;
+      daysMap.set(dateISO, {
+        dateISO,
+        dayName,
+        dateFormatted,
+        weekday,
+        isWeekend,
+        slots: [],
+      });
+    }
+
+    availableSlots.forEach(slot => {
+      const d = new Date(slot.slotAt);
+      const dateISO = getSlotDateISO(d);
+      const isWeekend = d.getDay() === 0 || d.getDay() === 6;
+      if (!daysMap.has(dateISO)) {
+        daysMap.set(dateISO, {
+          dateISO,
+          dayName: d.toLocaleDateString(undefined, { weekday: 'short' }),
+          dateFormatted: d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' }),
+          weekday: d.toLocaleDateString(undefined, { weekday: 'long' }),
+          isWeekend,
+          slots: [slot],
+        });
+      } else {
+        daysMap.get(dateISO)!.slots.push(slot);
+      }
+    });
+
+    daysMap.forEach(dayObj => {
+      dayObj.slots.sort((a, b) => new Date(a.slotAt).getTime() - new Date(b.slotAt).getTime());
+    });
+
+    return Array.from(daysMap.values()).sort((a, b) => a.dateISO.localeCompare(b.dateISO));
+  }, [availableSlots]);
+
+  // Auto-select first available day and slot when schedule changes
+  useEffect(() => {
+    if (scheduleDays.length === 0) return;
+    const currentDayObj = scheduleDays.find(d => d.dateISO === selectedDayISO);
+    if (!selectedDayISO || !currentDayObj || currentDayObj.slots.length === 0) {
+      const firstWithSlots = scheduleDays.find(d => d.slots.length > 0) || scheduleDays[0];
+      if (firstWithSlots) {
+        setSelectedDayISO(firstWithSlots.dateISO);
+        if (firstWithSlots.slots.length > 0) {
+          setSelectedSlotId(firstWithSlots.slots[0].id);
+        } else {
+          setSelectedSlotId('');
+        }
+      }
+    } else {
+      if (!currentDayObj.slots.some(s => s.id === selectedSlotId)) {
+        setSelectedSlotId(currentDayObj.slots[0]?.id ?? '');
+      }
+    }
+  }, [scheduleDays, selectedDayISO, selectedSlotId]);
+
+  const handleDayClick = (dayISO: string) => {
+    setSelectedDayISO(dayISO);
+    const dayObj = scheduleDays.find(d => d.dateISO === dayISO);
+    if (dayObj && dayObj.slots.length > 0) {
+      const hasSelected = dayObj.slots.some(s => s.id === selectedSlotId);
+      if (!hasSelected) {
+        setSelectedSlotId(dayObj.slots[0].id);
+      }
+    } else {
+      setSelectedSlotId('');
+    }
+  };
+
+  const currentDaySlots = useMemo(() => {
+    return scheduleDays.find(d => d.dateISO === selectedDayISO)?.slots ?? [];
+  }, [scheduleDays, selectedDayISO]);
+
+  const selectedSlot = useMemo(() => {
+    return availableSlots.find(s => s.id === selectedSlotId) || null;
+  }, [availableSlots, selectedSlotId]);
 
   const handleAssess = async () => {
     setAssessing(true);
@@ -482,6 +777,7 @@ export const PatientTriageBooking: React.FC<PatientTriageBookingProps> = ({ curr
         slotId: selectedSlotId,
         assessmentId: assessment?.id,
         consultationType,
+        attachmentIds: uploadedAttachments.map(a => a.id),
       });
       setConfirmed(booked);
     } catch (err: any) {
@@ -928,7 +1224,6 @@ export const PatientTriageBooking: React.FC<PatientTriageBookingProps> = ({ curr
                         key={doc.id}
                         onClick={() => {
                           setSelectedDoctorId(doc.id);
-                          setSelectedSlotId(doc.nextSlots[0]?.id ?? '');
                         }}
                         className="card-hover"
                         style={{
@@ -966,7 +1261,7 @@ export const PatientTriageBooking: React.FC<PatientTriageBookingProps> = ({ curr
                         <div style={{ textAlign: 'right', fontSize: '13px' }}>
                           <div style={{ color: '#f59e0b', fontWeight: 600 }}>★ {Number(doc.rating).toFixed(2)}</div>
                           <div style={{ color: 'var(--muted)', fontSize: '12px' }}>
-                            {doc.openSlotCount} open slot{doc.openSlotCount === 1 ? '' : 's'}
+                            {active ? `${availableSlots.length} available slot${availableSlots.length === 1 ? '' : 's'}` : `${doc.openSlotCount} open slot${doc.openSlotCount === 1 ? '' : 's'}`}
                           </div>
                         </div>
                       </div>
@@ -975,34 +1270,185 @@ export const PatientTriageBooking: React.FC<PatientTriageBookingProps> = ({ curr
                 </div>
               </div>
 
-              <div className="form-group" style={{ marginTop: '20px' }}>
-                <label className="form-label">Select Slot Time</label>
-                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px', marginTop: '6px' }}>
-                  {(selectedDoctor?.nextSlots ?? []).length === 0 && (
-                    <div style={{ color: 'var(--muted)', fontSize: '13px' }}>
-                      No open slots for this doctor in the next 7 days.
-                    </div>
-                  )}
-                  {(selectedDoctor?.nextSlots ?? []).map(slot => {
-                    const active = selectedSlotId === slot.id;
+              {/* Day & Slot Selection Section */}
+              <div className="form-group" style={{ marginTop: '24px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px', flexWrap: 'wrap', gap: '6px' }}>
+                  <label className="form-label" style={{ margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <Calendar size={16} color="var(--primary)" />
+                    <span>Select Appointment Date & Time</span>
+                  </label>
+                  <span style={{ fontSize: '12px', color: 'var(--primary)', fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                    <CheckCircle2 size={13} /> Only open available slots displayed
+                  </span>
+                </div>
+
+                {/* Day Selector Pill Bar (Flexible booking on any day) */}
+                <div style={{
+                  display: 'flex',
+                  gap: '8px',
+                  overflowX: 'auto',
+                  padding: '6px 2px 10px',
+                  scrollbarWidth: 'thin',
+                }}>
+                  {scheduleDays.map(day => {
+                    const isSelected = selectedDayISO === day.dateISO;
+                    const hasSlots = day.slots.length > 0;
                     return (
                       <button
-                        key={slot.id}
+                        key={day.dateISO}
                         type="button"
-                        onClick={() => setSelectedSlotId(slot.id)}
-                        className="chip"
+                        onClick={() => handleDayClick(day.dateISO)}
                         style={{
-                          padding: '8px 20px', borderRadius: '9999px',
-                          border: active ? '1px solid var(--primary)' : '1px solid var(--border)',
-                          backgroundColor: active ? 'var(--primary)' : 'var(--surface)',
-                          color: active ? '#ffffff' : 'var(--ink)',
-                          fontWeight: active ? 600 : 400, fontSize: '13px', cursor: 'pointer',
+                          flex: '0 0 auto',
+                          minWidth: '108px',
+                          padding: '10px 14px',
+                          borderRadius: '14px',
+                          border: isSelected ? '2px solid var(--primary)' : '1px solid var(--border)',
+                          backgroundColor: isSelected ? 'var(--info)' : 'var(--surface)',
+                          cursor: 'pointer',
+                          textAlign: 'center',
+                          transition: 'all 0.15s ease',
+                          boxShadow: isSelected ? '0 2px 8px rgba(15, 118, 110, 0.12)' : 'none',
                         }}
                       >
-                        {formatSlot(slot.slotAt)}
+                        <div style={{
+                          fontSize: '12px',
+                          fontWeight: 700,
+                          color: isSelected ? 'var(--primary)' : 'var(--ink)',
+                          textTransform: 'uppercase',
+                          letterSpacing: '0.04em',
+                        }}>
+                          {day.dayName}
+                        </div>
+                        <div style={{
+                          fontSize: '13px',
+                          fontWeight: 600,
+                          color: isSelected ? 'var(--primary)' : 'var(--muted)',
+                          marginTop: '2px',
+                        }}>
+                          {day.dateFormatted}
+                        </div>
+                        <div style={{
+                          marginTop: '6px',
+                          fontSize: '11px',
+                          fontWeight: 600,
+                          display: 'inline-block',
+                          padding: '2px 8px',
+                          borderRadius: '9999px',
+                          backgroundColor: hasSlots
+                            ? (isSelected ? 'var(--primary)' : 'rgba(15, 118, 110, 0.1)')
+                            : day.isWeekend
+                              ? 'rgba(239, 68, 68, 0.12)'
+                              : 'rgba(148, 163, 184, 0.15)',
+                          color: hasSlots
+                            ? (isSelected ? '#ffffff' : 'var(--primary)')
+                            : day.isWeekend
+                              ? '#dc2626'
+                              : 'var(--muted)',
+                        }}>
+                          {hasSlots ? `${day.slots.length} open` : day.isWeekend ? 'Holiday' : 'No slots'}
+                        </div>
                       </button>
                     );
                   })}
+                </div>
+
+                {/* Available Slots for the Selected Day */}
+                <div style={{
+                  marginTop: '10px',
+                  padding: '16px 20px',
+                  borderRadius: '16px',
+                  backgroundColor: 'var(--canvas)',
+                  border: '1px solid var(--border)',
+                }}>
+                  <div style={{
+                    fontSize: '13px',
+                    fontWeight: 600,
+                    color: 'var(--ink)',
+                    marginBottom: '12px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                  }}>
+                    <span>
+                      Available slots for{' '}
+                      <strong style={{ color: 'var(--primary)' }}>
+                        {scheduleDays.find(d => d.dateISO === selectedDayISO)?.weekday ?? 'Selected Date'},{' '}
+                        {scheduleDays.find(d => d.dateISO === selectedDayISO)?.dateFormatted}
+                      </strong>
+                    </span>
+                    {slotsLoading && (
+                      <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', color: 'var(--muted)', fontSize: '12px' }}>
+                        <Loader2 size={12} className="animate-spin" /> Updating slots…
+                      </span>
+                    )}
+                  </div>
+
+                  {currentDaySlots.length === 0 ? (
+                    <div style={{
+                      padding: '22px 16px',
+                      borderRadius: '12px',
+                      backgroundColor: 'var(--surface)',
+                      border: '1px dashed var(--border)',
+                      textAlign: 'center',
+                      color: 'var(--muted)',
+                      fontSize: '13px',
+                    }}>
+                      {scheduleDays.find(d => d.dateISO === selectedDayISO)?.isWeekend ? (
+                        <>
+                          <div style={{ fontWeight: 700, color: '#dc2626', marginBottom: '4px', fontSize: '14px' }}>
+                            Weekend Clinic Holiday
+                          </div>
+                          Clinics are closed on Saturdays and Sundays. All regular appointment slots are closed on weekends.
+                          <div style={{ marginTop: '8px', color: 'var(--primary)', fontWeight: 600 }}>
+                            Please select a weekday (Monday to Friday) from the calendar above to view available appointments.
+                          </div>
+                        </>
+                      ) : (
+                        <>
+                          No available slots on this day. The doctor is currently unavailable or all slots are booked/closed.
+                          <div style={{ marginTop: '6px', color: 'var(--primary)', fontWeight: 600 }}>
+                            Please select another date from the schedule above.
+                          </div>
+                        </>
+                      )}
+                    </div>
+                  ) : (
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px' }}>
+                      {currentDaySlots.map(slot => {
+                        const active = selectedSlotId === slot.id;
+                        const slotDate = new Date(slot.slotAt);
+                        const timeStr = normalizeSlotTime(slotDate);
+                        return (
+                          <button
+                            key={slot.id}
+                            type="button"
+                            onClick={() => setSelectedSlotId(slot.id)}
+                            className="chip"
+                            style={{
+                              padding: '9px 18px',
+                              borderRadius: '9999px',
+                              border: active ? '1px solid var(--primary)' : '1px solid var(--border)',
+                              backgroundColor: active ? 'var(--primary)' : 'var(--surface)',
+                              color: active ? '#ffffff' : 'var(--ink)',
+                              fontWeight: active ? 600 : 500,
+                              fontSize: '13px',
+                              cursor: 'pointer',
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              gap: '6px',
+                              transition: 'all 0.15s ease',
+                              boxShadow: active ? '0 2px 6px rgba(15, 118, 110, 0.25)' : 'none',
+                            }}
+                          >
+                            <Clock size={13} color={active ? '#ffffff' : 'var(--primary)'} />
+                            <span>{timeStr}</span>
+                            {active && <CheckCircle2 size={13} color="#ffffff" style={{ marginLeft: 2 }} />}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  )}
                 </div>
               </div>
 
@@ -1039,16 +1485,17 @@ export const PatientTriageBooking: React.FC<PatientTriageBookingProps> = ({ curr
           )}
         </div>
 
-        {/* Live summary */}
-        <div>
-          <div className="card card-hover" style={{ padding: '28px', position: 'sticky', top: '96px' }}>
+        {/* Right Column: Live summary & Medical Attachments */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '20px', position: 'sticky', top: '96px' }}>
+          {/* Triage Live Summary */}
+          <div className="card card-hover" style={{ padding: '24px' }}>
             <div style={{
               display: 'flex', alignItems: 'center', justifyContent: 'space-between',
               borderBottom: '1px solid var(--border)', paddingBottom: '16px', marginBottom: '20px',
             }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                 <Activity size={20} color="var(--primary)" />
-                <h3 style={{ fontSize: '16px', fontWeight: 600 }}>Triage Live Summary</h3>
+                <h3 style={{ fontSize: '16px', fontWeight: 600, margin: 0 }}>Triage Live Summary</h3>
               </div>
               {assessment && (
                 <span style={{
@@ -1059,7 +1506,7 @@ export const PatientTriageBooking: React.FC<PatientTriageBookingProps> = ({ curr
             </div>
 
             {!assessment ? (
-              <p style={{ fontSize: '14px', color: 'var(--muted)', lineHeight: 1.6 }}>
+              <p style={{ fontSize: '14px', color: 'var(--muted)', lineHeight: 1.6, margin: 0 }}>
                 Fill out the intake on the left. Once you run advisory triage the server classifies urgency
                 and suggests a specialty for your booking.
               </p>
@@ -1110,6 +1557,12 @@ export const PatientTriageBooking: React.FC<PatientTriageBookingProps> = ({ curr
                       </div>
                     </>
                   )}
+                  {selectedSlot && (
+                    <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                      <span style={{ color: 'var(--muted)' }}>Selected slot:</span>
+                      <strong style={{ color: 'var(--primary)' }}>{formatSlot(selectedSlot.slotAt)}</strong>
+                    </div>
+                  )}
                   <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                     <span style={{ color: 'var(--muted)' }}>Mode:</span>
                     <span>{consultationType === 'VIDEO' ? 'Telehealth Video' : 'In-Person'}</span>
@@ -1119,7 +1572,7 @@ export const PatientTriageBooking: React.FC<PatientTriageBookingProps> = ({ curr
             )}
 
             <div style={{
-              marginTop: '20px', padding: '12px 16px',
+              marginTop: '16px', padding: '12px 14px',
               backgroundColor: 'var(--info)', borderRadius: '10px',
               fontSize: '12px', color: 'var(--ink)', lineHeight: '1.5',
               display: 'flex', gap: '10px',
@@ -1129,6 +1582,201 @@ export const PatientTriageBooking: React.FC<PatientTriageBookingProps> = ({ curr
                 <strong>AI Clinical Advisory (DR-15):</strong> Scores are advisory. A doctor reviews every booking.
               </div>
             </div>
+          </div>
+
+          {/* Medical Attachments & Prior Records (Right Column Empty Space) */}
+          <div className="card card-hover" style={{ padding: '22px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '14px', flexWrap: 'wrap', gap: '8px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <div style={{
+                  width: '30px', height: '30px', borderRadius: '8px',
+                  backgroundColor: '#eaf6f2', color: '#0f766e',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                }}>
+                  <Paperclip size={16} />
+                </div>
+                <div>
+                  <div style={{ fontSize: '14px', fontWeight: 700, color: '#0b3f3a' }}>
+                    Upload Medical Records
+                  </div>
+                  <div style={{ fontSize: '11px', color: '#52736d' }}>
+                    Symptom images, prior Rx, or lab reports
+                  </div>
+                </div>
+              </div>
+
+              {/* Attachment Category Switcher */}
+              <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap' }}>
+                {[
+                  { id: 'SYMPTOM_IMAGE', label: 'Photo' },
+                  { id: 'PRIOR_PRESCRIPTION', label: 'Prior Rx' },
+                  { id: 'LAB_REPORT', label: 'Report' },
+                ].map(cat => (
+                  <button
+                    key={cat.id}
+                    type="button"
+                    onClick={() => setUploadCategory(cat.id as any)}
+                    style={{
+                      padding: '4px 8px',
+                      borderRadius: '6px',
+                      border: 'none',
+                      fontSize: '11px',
+                      fontWeight: 600,
+                      cursor: 'pointer',
+                      backgroundColor: uploadCategory === cat.id ? '#0f766e' : '#eaf6f2',
+                      color: uploadCategory === cat.id ? '#ffffff' : '#0b3f3a',
+                      transition: 'all 0.15s ease',
+                    }}
+                  >
+                    {cat.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <input
+              ref={fileInputRef}
+              type="file"
+              multiple
+              accept="image/*,application/pdf"
+              onChange={handleFileInputChange}
+              style={{ display: 'none' }}
+            />
+
+            {/* Drag & Drop zone */}
+            <div
+              onClick={() => fileInputRef.current?.click()}
+              onDragOver={handleDragOver}
+              onDragEnter={handleDragEnter}
+              onDragLeave={handleDragLeave}
+              onDrop={handleDrop}
+              style={{
+                border: isDragging ? '2px solid #0f766e' : '1.5px dashed #0f766e',
+                borderRadius: '12px',
+                padding: '20px 14px',
+                textAlign: 'center',
+                backgroundColor: isDragging ? '#d9ece7' : '#f8faf9',
+                cursor: uploadingFile ? 'wait' : 'pointer',
+                transition: 'all 0.15s ease',
+                transform: isDragging ? 'scale(1.02)' : 'none',
+                boxShadow: isDragging ? '0 4px 12px rgba(15, 118, 110, 0.15)' : 'none',
+              }}
+              onMouseEnter={e => { if (!isDragging) e.currentTarget.style.backgroundColor = '#eaf6f2'; }}
+              onMouseLeave={e => { if (!isDragging) e.currentTarget.style.backgroundColor = '#f8faf9'; }}
+            >
+              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '6px' }}>
+                {uploadingFile ? (
+                  <Loader2 size={24} className="animate-spin" color="#0f766e" />
+                ) : (
+                  <Upload size={24} color="#0f766e" />
+                )}
+                <span style={{ fontSize: '13px', fontWeight: 600, color: '#0b3f3a' }}>
+                  {uploadingFile
+                    ? 'Uploading file to secure server…'
+                    : isDragging
+                      ? 'Drop file here to upload!'
+                      : 'Drag & drop file or click to browse'}
+                </span>
+                <span style={{ fontSize: '11px', color: '#52736d' }}>
+                  Supports JPEG, PNG, WebP photos & PDF (up to 10MB)
+                </span>
+              </div>
+            </div>
+
+            {uploadError && (
+              <div style={{
+                marginTop: '10px', padding: '8px 12px', borderRadius: '8px',
+                backgroundColor: 'rgba(220, 38, 38, 0.08)', color: '#dc2626', fontSize: '12px',
+              }}>
+                {uploadError}
+              </div>
+            )}
+
+            {/* Uploaded attachments cards */}
+            {uploadedAttachments.length > 0 && (
+              <div style={{ marginTop: '12px', display: 'grid', gap: '8px' }}>
+                {uploadedAttachments.map(att => {
+                  const isImg = att.mimeType.startsWith('image/') || att.fileUrl.match(/\.(jpg|jpeg|png|webp)$/i);
+                  return (
+                    <div
+                      key={att.id}
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        padding: '8px 12px',
+                        borderRadius: '10px',
+                        border: '1px solid #d9ece7',
+                        backgroundColor: '#ffffff',
+                      }}
+                    >
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', overflow: 'hidden' }}>
+                        {isImg ? (
+                          <img
+                            src={att.fileUrl}
+                            alt={att.fileName}
+                            style={{ width: '34px', height: '34px', borderRadius: '6px', objectFit: 'cover', flexShrink: 0 }}
+                          />
+                        ) : (
+                          <div style={{
+                            width: '34px', height: '34px', borderRadius: '6px',
+                            backgroundColor: '#eaf6f2', color: '#0f766e',
+                            display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
+                          }}>
+                            <FileText size={16} />
+                          </div>
+                        )}
+                        <div style={{ overflow: 'hidden' }}>
+                          <div style={{
+                            fontSize: '12px', fontWeight: 600, color: '#0b3f3a',
+                            whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '170px',
+                          }} title={att.fileName}>
+                            {att.fileName}
+                          </div>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '10px', color: '#52736d', marginTop: '1px' }}>
+                            <span style={{
+                              backgroundColor: '#eaf6f2', color: '#0f766e',
+                              padding: '1px 5px', borderRadius: '4px', fontWeight: 600,
+                            }}>
+                              {att.fileCategory === 'SYMPTOM_IMAGE' ? 'Photo'
+                                : att.fileCategory === 'PRIOR_PRESCRIPTION' ? 'Rx'
+                                : 'Report'}
+                            </span>
+                            <span>{(att.fileSizeBytes / 1024).toFixed(0)} KB</span>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexShrink: 0 }}>
+                        <a
+                          href={att.fileUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          style={{
+                            fontSize: '11px', color: '#0f766e', fontWeight: 600,
+                            textDecoration: 'none', padding: '3px 6px', borderRadius: '4px',
+                            backgroundColor: '#f0f9f6',
+                          }}
+                        >
+                          View
+                        </a>
+                        <button
+                          type="button"
+                          onClick={() => removeAttachment(att.id)}
+                          style={{
+                            background: 'none', border: 'none', color: '#dc2626',
+                            cursor: 'pointer', padding: '2px', display: 'flex', alignItems: 'center',
+                          }}
+                          title="Remove attachment"
+                        >
+                          <Trash2 size={14} />
+                        </button>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
           </div>
         </div>
       </div>

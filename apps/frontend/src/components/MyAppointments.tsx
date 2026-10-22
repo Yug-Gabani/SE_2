@@ -3,9 +3,10 @@ import { useNavigate } from 'react-router-dom';
 import { AnimatePresence, motion } from 'framer-motion';
 import { PageTransition } from '../motion/PageTransition';
 import { listItem } from '../motion/presets';
-import { Calendar, Clock, Loader2, MapPin, Video, FileText, XCircle } from 'lucide-react';
+import { Calendar, Clock, Loader2, MapPin, Video, FileText, XCircle, Star } from 'lucide-react';
 import type { Appointment, AppointmentStatus } from '../types';
 import { appointmentsApi } from '../services/api';
+import { DoctorReviewModal } from './DoctorReviewModal';
 
 type Tab = 'upcoming' | 'past' | 'cancelled';
 
@@ -57,6 +58,7 @@ export const MyAppointments: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [cancellingId, setCancellingId] = useState<string | null>(null);
+  const [reviewingAppt, setReviewingAppt] = useState<Appointment | null>(null);
 
   const reload = useCallback(() => {
     setLoading(true);
@@ -292,6 +294,22 @@ export const MyAppointments: React.FC = () => {
                     >
                       View details
                     </button>
+                    {appt.status === 'COMPLETED' && (
+                      <button
+                        onClick={() => setReviewingAppt(appt)}
+                        className="btn btn-secondary hover-lift"
+                        style={{
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '6px',
+                          color: '#b45309',
+                          borderColor: 'rgba(217, 119, 6, 0.35)',
+                          backgroundColor: 'rgba(254, 243, 199, 0.4)',
+                        }}
+                      >
+                        <Star size={14} fill="#f59e0b" color="#d97706" /> Rate Doctor
+                      </button>
+                    )}
                     {canCancel && (
                       <button
                         onClick={() => handleCancel(appt.id)}
@@ -316,6 +334,20 @@ export const MyAppointments: React.FC = () => {
             })}
           </AnimatePresence>
         </div>
+      )}
+
+      {/* Post-appointment Review Modal */}
+      {reviewingAppt && (
+        <DoctorReviewModal
+          isOpen={!!reviewingAppt}
+          onClose={() => setReviewingAppt(null)}
+          appointmentId={reviewingAppt.id}
+          doctorId={reviewingAppt.doctorId}
+          doctorName={reviewingAppt.doctorName}
+          doctorSpecialty={reviewingAppt.doctorSpecialty}
+          doctorAvatarUrl={reviewingAppt.doctorAvatarUrl}
+          onSuccess={() => reload()}
+        />
       )}
     </PageTransition>
   );

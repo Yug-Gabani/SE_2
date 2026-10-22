@@ -31,6 +31,7 @@ export interface Doctor {
   hospital: string;
   avatarUrl?: string;
   rating: number;
+  reviewCount?: number;
   bio?: string;
   nextSlots: SlotSummary[];
   openSlotCount: number;
@@ -39,6 +40,30 @@ export interface Doctor {
   avatar?: string;
   availableDays?: string[];
   slots?: string[];
+}
+
+export interface Attachment {
+  id: string;
+  fileName: string;
+  fileUrl: string;
+  fileCategory: 'SYMPTOM_IMAGE' | 'PRIOR_PRESCRIPTION' | 'LAB_REPORT' | 'OTHER';
+  mimeType: string;
+  fileSizeBytes: number;
+  createdAt: string;
+}
+
+export interface DoctorReview {
+  id: string;
+  appointmentId: string;
+  doctorId: string;
+  doctorName?: string;
+  doctorSpecialty?: string;
+  patientName: string;
+  rating: number;
+  comment?: string;
+  tags?: string;
+  isAnonymous: boolean;
+  createdAt: string;
 }
 
 export interface Slot {
@@ -81,6 +106,7 @@ export interface Appointment {
   status: AppointmentStatus;
   chiefComplaint?: string;
   notes?: string;
+  attachments?: Attachment[];
   createdAt: string;
   updatedAt: string;
 }
@@ -233,4 +259,92 @@ export interface AuthState {
   refreshToken: string | null;
   user: User | null;
   isAuthenticated: boolean;
+}
+
+// ---------- Doctor verification + profile ----------
+
+export type DoctorStatus = 'PENDING' | 'APPROVED' | 'REJECTED';
+
+export interface ScheduleTemplate {
+  id?: string;
+  dayOfWeek: number;              // 1 = Mon ... 7 = Sun (ISO)
+  startTime: string;              // "09:00:00"
+  endTime: string;                // "12:30:00"
+  slotDurationMinutes: number;    // 15 | 20 | 30 | 45 | 60
+}
+
+export interface DoctorMe {
+  id: string;
+  userId: string;
+  fullName: string;
+  specialty: string;
+  hospital: string;
+  hospitalId?: string;
+  avatarUrl?: string;
+  rating: number;
+  bio?: string;
+  status: DoctorStatus;
+  registrationNumber?: string;
+  yearsExperience?: number;
+  consultationFee?: number;
+  languages?: string;
+  rejectionReason?: string;
+  submittedAt?: string;
+  reviewedAt?: string;
+  scheduleTemplate: ScheduleTemplate[];
+}
+
+export const COMMON_SPECIALTIES = [
+  'General Medicine',
+  'Cardiology',
+  'Pediatrics',
+  'Dermatology',
+  'Orthopedics',
+  'Gynecology',
+  'Psychiatry',
+  'Neurology',
+  'ENT',
+  'Pulmonology',
+  'Gastroenterology',
+  'Urology',
+  'Ophthalmology',
+  'Dentistry',
+  'Oncology',
+] as const;
+
+export const DAY_LABELS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'] as const;
+
+// ---------- Pharmacy orders ----------
+
+export type PharmacyOrderStatus = 'NEW' | 'DISPENSED' | 'PICKED_UP' | 'CANCELLED';
+
+export interface PharmacyOrderItem {
+  id?: string;
+  drugName: string;
+  dose: string;
+  frequency: string;
+  duration: string;
+  instructions?: string;
+  mealTimings?: MealTiming[];
+}
+
+export interface PharmacyOrder {
+  id: string;
+  prescriptionId: string;
+  patientId: string;
+  patientName?: string;
+  pharmacistId?: string;
+  pharmacistName?: string;
+  status: PharmacyOrderStatus;
+  doctorName?: string;
+  doctorSpecialty?: string;
+  items: PharmacyOrderItem[];
+  prescriptionNotes?: string;
+  dispensedAt?: string;
+  pickedUpAt?: string;
+  cancelledAt?: string;
+  cancelledReason?: string;
+  notes?: string;
+  createdAt: string;
+  updatedAt: string;
 }

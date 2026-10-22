@@ -12,6 +12,7 @@ import org.springframework.security.access.AccessDeniedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.multipart.MaxUploadSizeExceededException;
 import org.springframework.web.servlet.resource.NoResourceFoundException;
 
 import java.time.Instant;
@@ -68,6 +69,22 @@ public class GlobalExceptionHandler {
                 .map(fe -> new ErrorResponse.FieldError(fe.getField(), fe.getDefaultMessage()))
                 .toList();
         return build(HttpStatus.BAD_REQUEST, "Validation failed", req, fieldErrors);
+    }
+
+    @ExceptionHandler(MaxUploadSizeExceededException.class)
+    public ResponseEntity<ErrorResponse> handleUploadTooLarge(MaxUploadSizeExceededException ex,
+                                                               HttpServletRequest req) {
+        long limitBytes = ex.getMaxUploadSize();
+        String human = limitBytes > 0 ? (limitBytes / (1024 * 1024)) + " MB" : "the server limit";
+        return build(HttpStatus.PAYLOAD_TOO_LARGE,
+                "File is too large. Maximum allowed size is " + human + " per file.",
+                req, null);
+    }
+
+    @ExceptionHandler(IllegalArgumentException.class)
+    public ResponseEntity<ErrorResponse> handleIllegalArgument(IllegalArgumentException ex,
+                                                                HttpServletRequest req) {
+        return build(HttpStatus.BAD_REQUEST, ex.getMessage(), req, null);
     }
 
     @ExceptionHandler(Exception.class)

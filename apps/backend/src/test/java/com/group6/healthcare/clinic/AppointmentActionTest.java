@@ -229,7 +229,7 @@ class AppointmentActionTest {
                 .slotAt(OffsetDateTime.now().plusDays(1))
                 .booked(false).build());
         var booked = appointmentService.book(patient.getId(),
-                new BookAppointmentRequest(doctor.getId(), slot2.getId(), null, ConsultationType.VIDEO));
+                new BookAppointmentRequest(doctor.getId(), slot2.getId(), null, ConsultationType.VIDEO, null));
         assertThat(booked.status()).isEqualTo(AppointmentStatus.BOOKED);
         var confirmed = appointmentService.doctorAction(
                 doctorUser.getId(),
