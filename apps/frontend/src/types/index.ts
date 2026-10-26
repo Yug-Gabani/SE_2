@@ -348,3 +348,44 @@ export interface PharmacyOrder {
   createdAt: string;
   updatedAt: string;
 }
+
+// ---------- Video Consultations & Summaries ----------
+
+export type ConsultationSessionStatus = 'SCHEDULED' | 'WAITING' | 'IN_PROGRESS' | 'COMPLETED';
+
+export interface ConsultationSession {
+  id: string;
+  appointmentId: string;
+  roomId: string;
+  status: ConsultationSessionStatus;
+  canJoin: boolean;
+  joinMessage: string;
+  slotAt?: string;
+  doctorName?: string;
+  patientName?: string;
+  startedAt?: string;
+  endedAt?: string;
+  transcript?: string;
+  summaryChiefComplaint?: string;
+  summaryObservations?: string;
+  summaryDoctorAdvice?: string;
+  summaryPrescribedActions?: string;
+  summaryFollowUp?: string;
+  createdAt: string;
+}
+
+export interface ConsultationSignalMessage {
+  type: string;
+  senderId: string;
+  senderRole?: string;
+  payload: string;
+  timestamp: number;
+}
+
+export interface ConsultationEndRequest {
+  transcript?: string;
+  doctorNotes?: string;
+  observations?: string;
+  prescribedActions?: string;
+  followUp?: string;
+}

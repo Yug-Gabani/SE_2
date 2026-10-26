@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { PageTransition } from '../motion/PageTransition';
-import { ArrowLeft, Calendar, Clock, Loader2, MapPin, Video, XCircle } from 'lucide-react';
+import { ArrowLeft, Calendar, Clock, Loader2, MapPin, Video, XCircle, FileText } from 'lucide-react';
 import type { Appointment } from '../types';
 import { appointmentsApi } from '../services/api';
 
@@ -168,9 +168,25 @@ export const AppointmentDetail: React.FC = () => {
           )}
 
           <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
-            {appt.consultationType === 'VIDEO' && appt.status !== 'CANCELLED' && (
-              <button className="btn btn-primary hover-lift">
-                <Video size={16} /> Join Video (coming soon)
+            {appt.consultationType === 'VIDEO' && appt.status !== 'CANCELLED' && appt.status !== 'COMPLETED' && (
+              <button
+                onClick={() => navigate(`/consultation/${appt.id}`)}
+                className="btn btn-primary hover-lift"
+                style={{
+                  backgroundColor: '#10b981', borderColor: '#10b981',
+                  display: 'inline-flex', alignItems: 'center', gap: '8px',
+                }}
+              >
+                <Video size={16} /> Enter Video Consultation
+              </button>
+            )}
+            {appt.consultationType === 'VIDEO' && appt.status === 'COMPLETED' && (
+              <button
+                onClick={() => navigate(`/consultation/${appt.id}`)}
+                className="btn btn-primary hover-lift"
+                style={{ display: 'inline-flex', alignItems: 'center', gap: '8px' }}
+              >
+                <FileText size={16} /> View Consultation Summary
               </button>
             )}
             <button

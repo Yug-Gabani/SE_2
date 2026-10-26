@@ -15,6 +15,7 @@ import { DoctorProfile } from './components/DoctorProfile';
 import { AdminDoctors } from './components/AdminDoctors';
 import { PharmacyDashboard } from './components/PharmacyDashboard';
 import { PatientOrders } from './components/PatientOrders';
+import { VideoConsultationRoom } from './components/VideoConsultationRoom';
 import { AuthPage } from './components/AuthPage';
 import { ProtectedRoute } from './components/ProtectedRoute';
 import { authApi } from './services/api';
@@ -271,6 +272,18 @@ export const App: React.FC = () => {
               sessionReady ? (
                 <ProtectedRoute user={currentUser} roles={['PATIENT']}>
                   <PatientOrders />
+                </ProtectedRoute>
+              ) : null
+            }
+          />
+
+          {/* Telehealth Video Consultation Room */}
+          <Route
+            path="/consultation/:appointmentId"
+            element={
+              sessionReady ? (
+                <ProtectedRoute user={currentUser} roles={['PATIENT', 'DOCTOR']}>
+                  <VideoConsultationRoom currentUser={currentUser} />
                 </ProtectedRoute>
               ) : null
             }

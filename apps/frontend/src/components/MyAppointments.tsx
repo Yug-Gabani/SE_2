@@ -288,6 +288,27 @@ export const MyAppointments: React.FC = () => {
                   )}
 
                   <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
+                    {appt.consultationType === 'VIDEO' && appt.status !== 'CANCELLED' && appt.status !== 'COMPLETED' && (
+                      <button
+                        onClick={() => navigate(`/consultation/${appt.id}`)}
+                        className="btn btn-primary hover-lift"
+                        style={{
+                          backgroundColor: '#10b981', borderColor: '#10b981',
+                          display: 'inline-flex', alignItems: 'center', gap: '6px',
+                        }}
+                      >
+                        <Video size={14} /> Join Video
+                      </button>
+                    )}
+                    {appt.consultationType === 'VIDEO' && appt.status === 'COMPLETED' && (
+                      <button
+                        onClick={() => navigate(`/consultation/${appt.id}`)}
+                        className="btn btn-secondary hover-lift"
+                        style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}
+                      >
+                        <FileText size={14} /> Visit Summary
+                      </button>
+                    )}
                     <button
                       onClick={() => navigate(`/appointments/${appt.id}`)}
                       className="btn btn-secondary hover-lift"

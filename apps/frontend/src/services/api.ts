@@ -12,6 +12,9 @@ import type {
   PharmacyOrderStatus,
   Prescription,
   PrescriptionItem,
+  ConsultationSession,
+  ConsultationSignalMessage,
+  ConsultationEndRequest,
   Role,
   ScheduleTemplate,
   Slot,
@@ -448,5 +451,40 @@ export const complianceApi = {
   },
   deleteAccount: (): Promise<string> =>
     request<string>('/v1/compliance/account', { method: 'DELETE' }),
+};
+
+// ---------- Video Consultations & WebRTC Signaling ----------
+
+export const consultationsApi = {
+  getSession: (appointmentId: string): Promise<ConsultationSession> =>
+    request<ConsultationSession>(`/v1/consultations/appointments/${appointmentId}`),
+
+  start: (appointmentId: string): Promise<ConsultationSession> =>
+    request<ConsultationSession>(`/v1/consultations/appointments/${appointmentId}/start`, {
+      method: 'POST',
+    }),
+
+  end: (appointmentId: string, data?: ConsultationEndRequest): Promise<ConsultationSession> =>
+    request<ConsultationSession>(`/v1/consultations/appointments/${appointmentId}/end`, {
+      method: 'POST',
+      body: JSON.stringify(data ?? {}),
+    }),
+
+  sendSignal: (
+    appointmentId: string,
+    message: { type: string; payload: string }
+  ): Promise<string> =>
+    request<string>(`/v1/consultations/appointments/${appointmentId}/signal`, {
+      method: 'POST',
+      body: JSON.stringify(message),
+    }),
+
+  pollSignals: (
+    appointmentId: string,
+    since: number = 0
+  ): Promise<ConsultationSignalMessage[]> =>
+    request<ConsultationSignalMessage[]>(
+      `/v1/consultations/appointments/${appointmentId}/signals?since=${since}`
+    ),
 };
 
