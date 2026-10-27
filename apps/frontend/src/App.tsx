@@ -78,6 +78,7 @@ export const App: React.FC = () => {
   };
 
   const isAuthRoute = location.pathname === '/login' || location.pathname === '/signup';
+  const isConsultationRoute = location.pathname.startsWith('/consultation');
 
   return (
     <div
@@ -85,6 +86,8 @@ export const App: React.FC = () => {
       data-theme="light"
       style={{
         minHeight: '100vh',
+        height: isConsultationRoute ? '100vh' : undefined,
+        overflow: isConsultationRoute ? 'hidden' : undefined,
         display: 'flex',
         flexDirection: 'column',
         backgroundColor: '#eaf6f2',
@@ -92,7 +95,7 @@ export const App: React.FC = () => {
         fontFamily: "'Space Grotesk', ui-sans-serif, system-ui, sans-serif",
       }}
     >
-      {!isAuthRoute && (
+      {!isAuthRoute && !isConsultationRoute && (
         <Header
           currentUser={currentUser}
           onOpenAuth={() => navigate('/login')}
@@ -103,7 +106,7 @@ export const App: React.FC = () => {
         />
       )}
 
-      <main style={{ flex: 1 }}>
+      <main style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: isConsultationRoute ? 'hidden' : undefined }}>
         <Routes>
           {/* Root: dashboard for signed-in users, landing otherwise */}
           <Route

@@ -596,8 +596,9 @@ export const VideoConsultationRoom: React.FC<VideoConsultationRoomProps> = ({ cu
   // Active Live Video Consultation Suite
   return (
     <div style={{
-      maxWidth: '1400px', margin: '0 auto', padding: '16px 20px',
-      height: 'calc(100vh - 84px)', display: 'flex', flexDirection: 'column', gap: '16px',
+      maxWidth: '1500px', margin: '0 auto', padding: '12px 18px',
+      height: '100vh', maxHeight: '100vh', overflow: 'hidden', display: 'flex', flexDirection: 'column', gap: '12px',
+      boxSizing: 'border-box',
     }}>
       {/* Top Header Bar */}
       <header style={{
