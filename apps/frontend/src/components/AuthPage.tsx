@@ -173,6 +173,8 @@ export const AuthPage: React.FC<AuthPageProps> = ({ onLoginSuccess, currentUser 
       <div
         style={{
           minHeight: '100vh',
+          maxHeight: isLogin ? '100vh' : undefined,
+          overflowY: 'auto',
           backgroundColor: '#eaf6f2',
           display: 'flex',
           flexDirection: 'column',
@@ -183,7 +185,7 @@ export const AuthPage: React.FC<AuthPageProps> = ({ onLoginSuccess, currentUser 
         {/* Top mini-bar with Back to Home only */}
         <div
           style={{
-            padding: '20px 32px 0 32px',
+            padding: '14px 24px 0 24px',
             display: 'flex',
             justifyContent: 'flex-start',
             alignItems: 'center',
@@ -204,7 +206,7 @@ export const AuthPage: React.FC<AuthPageProps> = ({ onLoginSuccess, currentUser 
               textDecoration: 'none',
               fontSize: '14px',
               fontWeight: 600,
-              padding: '8px 16px',
+              padding: '6px 14px',
               borderRadius: '9999px',
               backgroundColor: '#ffffff',
               border: '1px solid #d9ece7',
@@ -230,23 +232,24 @@ export const AuthPage: React.FC<AuthPageProps> = ({ onLoginSuccess, currentUser 
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            padding: '24px 20px 60px 20px',
+            padding: isLogin ? '8px 16px 14px 16px' : '20px 20px 48px 20px',
+            boxSizing: 'border-box',
           }}
         >
           <div
             style={{
-              maxWidth: '480px',
+              maxWidth: '460px',
               width: '100%',
               backgroundColor: '#ffffff',
               borderRadius: '20px',
               boxShadow: '0 10px 24px rgba(20, 60, 55, 0.10)',
               border: '1px solid #d9ece7',
-              padding: '40px 36px',
+              padding: isLogin ? '26px 32px 20px 32px' : '36px 32px',
               boxSizing: 'border-box',
             }}
           >
             {/* Logo & Header */}
-            <div style={{ textAlign: 'center', marginBottom: '28px' }}>
+            <div style={{ textAlign: 'center', marginBottom: isLogin ? '18px' : '24px' }}>
               <div
                 style={{
                   display: 'inline-flex',

@@ -23,10 +23,11 @@ RUN --mount=type=cache,target=/root/.m2 \
 FROM eclipse-temurin:21-jre
 WORKDIR /app
 
-RUN groupadd --system app && useradd --system --gid app --no-create-home app
+RUN groupadd --system app && useradd --system --gid app --no-create-home app \
+    && mkdir -p /app/uploads \
+    && chown -R app:app /app
 
-COPY --from=build /workspace/target/*.jar /app/app.jar
-RUN chown app:app /app/app.jar
+COPY --from=build --chown=app:app /workspace/target/*.jar /app/app.jar
 USER app
 
 EXPOSE 8080

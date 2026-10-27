@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { PageTransition } from '../motion/PageTransition';
-import { ArrowLeft, Calendar, Clock, Loader2, MapPin, Video, XCircle } from 'lucide-react';
+import { ArrowLeft, Calendar, Clock, Loader2, MapPin, Video, XCircle, FileText } from 'lucide-react';
 import type { Appointment } from '../types';
 import { appointmentsApi } from '../services/api';
 
@@ -66,14 +66,14 @@ export const AppointmentDetail: React.FC = () => {
   };
 
   return (
-    <PageTransition style={{ maxWidth: '720px', margin: '48px auto', padding: '0 24px' }}>
+    <PageTransition style={{ maxWidth: '720px', margin: '20px auto 28px', padding: '0 20px' }}>
       <button
         onClick={() => navigate(-1)}
         className="hover-lift"
         style={{
           background: 'transparent', border: 'none', color: '#0f766e',
           fontSize: '14px', fontWeight: 600, cursor: 'pointer',
-          padding: '6px 0', marginBottom: '16px',
+          padding: '4px 0', marginBottom: '12px',
           display: 'inline-flex', alignItems: 'center', gap: '6px',
         }}
       >
@@ -99,8 +99,8 @@ export const AppointmentDetail: React.FC = () => {
       )}
 
       {appt && (
-        <div className="card card-hover" style={{ padding: '32px' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '16px', marginBottom: '24px' }}>
+        <div className="card card-hover" style={{ padding: '24px 28px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '16px', marginBottom: '18px' }}>
             {appt.doctorAvatarUrl ? (
               <img
                 src={appt.doctorAvatarUrl}
@@ -135,10 +135,10 @@ export const AppointmentDetail: React.FC = () => {
           </div>
 
           <div style={{
-            display: 'grid', gap: '12px',
+            display: 'grid', gap: '10px',
             backgroundColor: '#eaf6f2', borderRadius: '14px',
-            padding: '18px 20px', border: '1px solid #d9ece7',
-            fontSize: '14px', marginBottom: '20px',
+            padding: '14px 18px', border: '1px solid #d9ece7',
+            fontSize: '14px', marginBottom: '16px',
           }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
               <Calendar size={16} color="#0f766e" />
@@ -159,18 +159,34 @@ export const AppointmentDetail: React.FC = () => {
           </div>
 
           {appt.chiefComplaint && (
-            <div style={{ marginBottom: '20px' }}>
-              <div style={{ fontSize: '12px', fontWeight: 700, color: '#52736d', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '6px' }}>
+            <div style={{ marginBottom: '16px' }}>
+              <div style={{ fontSize: '12px', fontWeight: 700, color: '#52736d', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '4px' }}>
                 Reported concern
               </div>
-              <div style={{ fontSize: '14px', color: '#0b3f3a', lineHeight: 1.6 }}>{appt.chiefComplaint}</div>
+              <div style={{ fontSize: '14px', color: '#0b3f3a', lineHeight: 1.5 }}>{appt.chiefComplaint}</div>
             </div>
           )}
 
           <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
-            {appt.consultationType === 'VIDEO' && appt.status !== 'CANCELLED' && (
-              <button className="btn btn-primary hover-lift">
-                <Video size={16} /> Join Video (coming soon)
+            {appt.consultationType === 'VIDEO' && appt.status !== 'CANCELLED' && appt.status !== 'COMPLETED' && (
+              <button
+                onClick={() => navigate(`/consultation/${appt.id}`)}
+                className="btn btn-primary hover-lift"
+                style={{
+                  backgroundColor: '#10b981', borderColor: '#10b981',
+                  display: 'inline-flex', alignItems: 'center', gap: '8px',
+                }}
+              >
+                <Video size={16} /> Enter Video Consultation
+              </button>
+            )}
+            {appt.consultationType === 'VIDEO' && appt.status === 'COMPLETED' && (
+              <button
+                onClick={() => navigate(`/consultation/${appt.id}`)}
+                className="btn btn-primary hover-lift"
+                style={{ display: 'inline-flex', alignItems: 'center', gap: '8px' }}
+              >
+                <FileText size={16} /> View Consultation Summary
               </button>
             )}
             <button

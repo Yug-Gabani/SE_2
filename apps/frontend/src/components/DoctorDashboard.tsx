@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { useLocation, Navigate } from 'react-router-dom';
+import { useLocation, Navigate, useNavigate } from 'react-router-dom';
 import { AnimatePresence, motion } from 'framer-motion';
 import { PageTransition } from '../motion/PageTransition';
 import { listItem, slideInRight, EASE_ENTER, EASE_EXIT } from '../motion/presets';
@@ -16,6 +16,7 @@ import {
   ShieldCheck,
   FileText,
   ExternalLink,
+  Video,
 } from 'lucide-react';
 import type { Appointment, DoctorStatus, Attachment } from '../types';
 import { appointmentsApi, doctorProfileApi } from '../services/api';
@@ -78,6 +79,7 @@ interface QueueItem {
 type ViewTab = 'active' | 'past';
 
 export const DoctorDashboard: React.FC = () => {
+  const navigate = useNavigate();
   // Guard: unapproved doctors cannot access the clinical dashboard. We fetch the status
   // once and redirect to /doctor/profile if PENDING or REJECTED.
   const [verifiedStatus, setVerifiedStatus] = useState<DoctorStatus | null>(null);
@@ -1762,6 +1764,20 @@ export const DoctorDashboard: React.FC = () => {
                     <strong style={{ color: '#0b3f3a' }}>{queueStatus[selectedItem.id] ?? '—'}</strong>
                   </div>
                   <div style={{ display: 'flex', gap: '10px' }}>
+                    {selectedItem.mode === 'VID' && (
+                      <button
+                        onClick={() => navigate(`/consultation/${selectedItem.id}`)}
+                        className="hover-lift"
+                        style={{
+                          backgroundColor: '#0f766e', color: '#ffffff',
+                          border: 'none', borderRadius: '9999px',
+                          padding: '8px 18px', fontSize: '13px', fontWeight: 600,
+                          cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: '6px',
+                        }}
+                      >
+                        <FileText size={14} /> Visit Summary
+                      </button>
+                    )}
                     <button
                       onClick={() => setRxEditorFor(selectedItem)}
                       className="hover-lift"
@@ -1795,6 +1811,25 @@ export const DoctorDashboard: React.FC = () => {
                 gap: '10px',
                 flexWrap: 'wrap',
               }}>
+                {selectedItem.mode === 'VID' && (
+                  <button
+                    onClick={() => navigate(`/consultation/${selectedItem.id}`)}
+                    className="hover-lift"
+                    style={{
+                      width: '100%',
+                      backgroundColor: '#10b981', color: '#ffffff',
+                      border: 'none', borderRadius: '9999px',
+                      padding: '11px 0', fontSize: '13px', fontWeight: 700,
+                      cursor: 'pointer', display: 'flex', alignItems: 'center',
+                      justifyContent: 'center', gap: '8px',
+                      boxShadow: '0 4px 14px rgba(16, 185, 129, 0.35)',
+                      marginBottom: '4px',
+                    }}
+                    title="Enter live video consultation room with patient"
+                  >
+                    <Video size={16} /> Start Video Consult
+                  </button>
+                )}
                 <button
                   onClick={() => runAction('ACCEPT')}
                   disabled={!!actionBusy}

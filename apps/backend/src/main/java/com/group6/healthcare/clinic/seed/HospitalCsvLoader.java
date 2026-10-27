@@ -33,6 +33,7 @@ public class HospitalCsvLoader {
     private static final int BATCH_SIZE = 1000;
 
     @Bean
+    @org.springframework.core.annotation.Order(1)
     ApplicationRunner hospitalCsvRunner(HospitalRepository hospitalRepository) {
         return args -> load(hospitalRepository);
     }

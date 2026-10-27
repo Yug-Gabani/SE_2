@@ -137,11 +137,11 @@ export const DoctorReviewModal: React.FC<DoctorReviewModalProps> = ({
           borderRadius: '18px',
           maxWidth: '520px',
           width: '100%',
-          padding: '28px',
+          padding: '20px 24px',
           boxShadow: '0 20px 40px rgba(11, 63, 58, 0.2)',
           border: '1px solid #d9ece7',
           position: 'relative',
-          maxHeight: '90vh',
+          maxHeight: '92vh',
           overflowY: 'auto',
         }}
       >
@@ -267,8 +267,8 @@ export const DoctorReviewModal: React.FC<DoctorReviewModalProps> = ({
 
             <form onSubmit={handleSubmit}>
               {/* Star Rating */}
-              <div style={{ textAlign: 'center', margin: '14px 0 20px 0' }}>
-                <div style={{ fontSize: '13px', fontWeight: 600, color: '#52736d', marginBottom: '8px' }}>
+              <div style={{ textAlign: 'center', margin: '8px 0 14px 0' }}>
+                <div style={{ fontSize: '13px', fontWeight: 600, color: '#52736d', marginBottom: '6px' }}>
                   How was your consultation experience?
                 </div>
                 <div style={{ display: 'flex', justifyContent: 'center', gap: '8px' }}>
@@ -283,30 +283,30 @@ export const DoctorReviewModal: React.FC<DoctorReviewModalProps> = ({
                         background: 'transparent',
                         border: 'none',
                         cursor: 'pointer',
-                        padding: '4px',
+                        padding: '2px',
                         transform: activeRating >= star ? 'scale(1.15)' : 'scale(1)',
                         transition: 'transform 0.15s ease',
                       }}
                     >
                       <Star
-                        size={32}
+                        size={28}
                         color={activeRating >= star ? '#f59e0b' : '#d1d5db'}
                         fill={activeRating >= star ? '#f59e0b' : 'transparent'}
                       />
                     </button>
                   ))}
                 </div>
-                <div style={{ fontSize: '13px', fontWeight: 700, color: '#0f766e', marginTop: '6px', minHeight: '18px' }}>
+                <div style={{ fontSize: '12px', fontWeight: 700, color: '#0f766e', marginTop: '4px', minHeight: '16px' }}>
                   {RATING_LABELS[activeRating] || ''}
                 </div>
               </div>
 
               {/* Tags */}
-              <div style={{ marginBottom: '18px' }}>
-                <div style={{ fontSize: '12px', fontWeight: 700, color: '#0b3f3a', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '8px' }}>
+              <div style={{ marginBottom: '14px' }}>
+                <div style={{ fontSize: '11px', fontWeight: 700, color: '#0b3f3a', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '6px' }}>
                   What went well?
                 </div>
-                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
                   {REVIEW_TAGS.map((tag) => {
                     const isSelected = selectedTags.includes(tag);
                     return (
@@ -315,9 +315,9 @@ export const DoctorReviewModal: React.FC<DoctorReviewModalProps> = ({
                         type="button"
                         onClick={() => toggleTag(tag)}
                         style={{
-                          padding: '6px 12px',
+                          padding: '5px 10px',
                           borderRadius: '9999px',
-                          fontSize: '12px',
+                          fontSize: '11px',
                           fontWeight: 600,
                           cursor: 'pointer',
                           border: isSelected ? '1px solid #0f766e' : '1px solid #d9ece7',
@@ -334,22 +334,22 @@ export const DoctorReviewModal: React.FC<DoctorReviewModalProps> = ({
               </div>
 
               {/* Comment */}
-              <div style={{ marginBottom: '16px' }}>
-                <label style={{ display: 'block', fontSize: '12px', fontWeight: 700, color: '#0b3f3a', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '6px' }}>
+              <div style={{ marginBottom: '12px' }}>
+                <label style={{ display: 'block', fontSize: '11px', fontWeight: 700, color: '#0b3f3a', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '4px' }}>
                   Additional Comments (Optional)
                 </label>
                 <textarea
                   value={comment}
                   onChange={(e) => setComment(e.target.value)}
                   placeholder="Share details about your appointment, clarity of doctor advice, or overall satisfaction..."
-                  rows={3}
+                  rows={2}
                   style={{
                     width: '100%',
                     boxSizing: 'border-box',
-                    padding: '10px 12px',
-                    borderRadius: '10px',
+                    padding: '8px 10px',
+                    borderRadius: '8px',
                     border: '1px solid #d9ece7',
-                    fontSize: '13px',
+                    fontSize: '12px',
                     color: '#0b3f3a',
                     fontFamily: 'inherit',
                     resize: 'vertical',
@@ -364,17 +364,17 @@ export const DoctorReviewModal: React.FC<DoctorReviewModalProps> = ({
                   display: 'flex',
                   alignItems: 'center',
                   gap: '8px',
-                  fontSize: '13px',
+                  fontSize: '12px',
                   color: '#52736d',
                   cursor: 'pointer',
-                  marginBottom: '22px',
+                  marginBottom: '16px',
                 }}
               >
                 <input
                   type="checkbox"
                   checked={isAnonymous}
                   onChange={(e) => setIsAnonymous(e.target.checked)}
-                  style={{ accentColor: '#0f766e', width: '16px', height: '16px', cursor: 'pointer' }}
+                  style={{ accentColor: '#0f766e', width: '15px', height: '15px', cursor: 'pointer' }}
                 />
                 Post review anonymously (hides your name on public reviews)
               </label>

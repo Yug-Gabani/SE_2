@@ -87,6 +87,7 @@ public class ClinicSeedRunner {
     );
 
     @Bean
+    @org.springframework.core.annotation.Order(2)
     ApplicationRunner clinicSeed(DoctorRepository doctorRepository,
                                  DoctorSlotRepository slotRepository,
                                  UserRepository userRepository,
@@ -103,12 +104,17 @@ public class ClinicSeedRunner {
               PasswordEncoder passwordEncoder) {
         int demoUsers = 0;
         for (SeedDoctor sd : DOCTORS) {
-            // Strict rule: a Hospital row MUST exist that matches the seed doctor's hospital name.
             Hospital hospital = hospitalRepository.findFirstByNameIgnoreCase(sd.hospital())
-                    .orElseThrow(() -> new IllegalStateException(
-                            "Seed doctor '" + sd.name() + "' references hospital '" + sd.hospital()
-                                    + "' which does not exist in the Hospital directory. "
-                                    + "Fix the seed list or import the hospitals CSV first."));
+                    .orElseGet(() -> {
+                        log.info("Hospital '{}' not yet in DB; creating seed entry.", sd.hospital());
+                        return hospitalRepository.save(Hospital.builder()
+                                .name(sd.hospital())
+                                .city("Metro")
+                                .state("National")
+                                .address("Healthcare Complex")
+                                .pincode("110001")
+                                .build());
+                    });
 
             // Ensure the login user exists first.
             User doctorUser = null;

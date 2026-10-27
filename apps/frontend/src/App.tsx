@@ -15,6 +15,7 @@ import { DoctorProfile } from './components/DoctorProfile';
 import { AdminDoctors } from './components/AdminDoctors';
 import { PharmacyDashboard } from './components/PharmacyDashboard';
 import { PatientOrders } from './components/PatientOrders';
+import { VideoConsultationRoom } from './components/VideoConsultationRoom';
 import { AuthPage } from './components/AuthPage';
 import { ProtectedRoute } from './components/ProtectedRoute';
 import { authApi } from './services/api';
@@ -77,6 +78,7 @@ export const App: React.FC = () => {
   };
 
   const isAuthRoute = location.pathname === '/login' || location.pathname === '/signup';
+  const isConsultationRoute = location.pathname.startsWith('/consultation');
 
   return (
     <div
@@ -84,6 +86,8 @@ export const App: React.FC = () => {
       data-theme="light"
       style={{
         minHeight: '100vh',
+        height: isConsultationRoute ? '100vh' : undefined,
+        overflow: isConsultationRoute ? 'hidden' : undefined,
         display: 'flex',
         flexDirection: 'column',
         backgroundColor: '#eaf6f2',
@@ -91,7 +95,7 @@ export const App: React.FC = () => {
         fontFamily: "'Space Grotesk', ui-sans-serif, system-ui, sans-serif",
       }}
     >
-      {!isAuthRoute && (
+      {!isAuthRoute && !isConsultationRoute && (
         <Header
           currentUser={currentUser}
           onOpenAuth={() => navigate('/login')}
@@ -102,7 +106,7 @@ export const App: React.FC = () => {
         />
       )}
 
-      <main style={{ flex: 1 }}>
+      <main style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: isConsultationRoute ? 'hidden' : undefined }}>
         <Routes>
           {/* Root: dashboard for signed-in users, landing otherwise */}
           <Route
@@ -271,6 +275,18 @@ export const App: React.FC = () => {
               sessionReady ? (
                 <ProtectedRoute user={currentUser} roles={['PATIENT']}>
                   <PatientOrders />
+                </ProtectedRoute>
+              ) : null
+            }
+          />
+
+          {/* Telehealth Video Consultation Room */}
+          <Route
+            path="/consultation/:appointmentId"
+            element={
+              sessionReady ? (
+                <ProtectedRoute user={currentUser} roles={['PATIENT', 'DOCTOR']}>
+                  <VideoConsultationRoom currentUser={currentUser} />
                 </ProtectedRoute>
               ) : null
             }
