@@ -3,6 +3,12 @@ import { User, Meeting, ClinicalSummary, Appointment } from '../types';
 import { meetingApi, summaryApi, appointmentApi, transcriptApi } from '../services/api';
 import { ClinicalSummaryModal } from '../components/ClinicalSummaryModal';
 import {
+  getAppointmentTimeStatus,
+  formatDateTime,
+  toDateTimeLocalString,
+  EARLY_JOIN_MINUTES,
+} from '../utils/timeUtils';
+import {
   Video,
   PlusCircle,
   LogIn,
@@ -18,6 +24,7 @@ import {
   UserCheck,
   Activity,
   AlertCircle,
+  Lock,
   X,
 } from 'lucide-react';
 
@@ -39,10 +46,17 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
   const [meetingTitle, setMeetingTitle] = useState('');
   const [isCreating, setIsCreating] = useState(false);
 
+  // Live Clock to update join-window countdowns in real-time
+  const [currentTime, setCurrentTime] = useState<Date>(new Date());
+  useEffect(() => {
+    const timer = setInterval(() => setCurrentTime(new Date()), 1000);
+    return () => clearInterval(timer);
+  }, []);
+
   // Booking Modal State
   const [showBookModal, setShowBookModal] = useState(false);
   const [selectedDoctorId, setSelectedDoctorId] = useState('');
-  const [selectedTimeSlot, setSelectedTimeSlot] = useState('Today at 5:30 PM');
+  const [selectedTimeSlot, setSelectedTimeSlot] = useState(new Date().toISOString());
   const [reasonInput, setReasonInput] = useState('');
   const [isBooking, setIsBooking] = useState(false);
 
@@ -83,6 +97,7 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
   // Dynamically refresh doctor list whenever booking modal opens
   const openBookingModal = async () => {
     setShowBookModal(true);
+    setSelectedTimeSlot(new Date().toISOString());
     try {
       const docList = await appointmentApi.listDoctors();
       setDoctors(docList);
@@ -154,8 +169,13 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
       setReasonInput('');
       await loadData();
 
-      if (confirm(`Appointment successfully scheduled with ${newApp.doctor_name}!\n\nRoom Code: ${newApp.room_code}\n\nWould you like to enter the video room now?`)) {
-        onJoinMeeting(newApp.room_code);
+      const timeStatus = getAppointmentTimeStatus(selectedTimeSlot, false, new Date());
+      if (timeStatus.canJoin) {
+        if (confirm(`Appointment successfully scheduled with ${newApp.doctor_name}!\n\nRoom Code: ${newApp.room_code}\n\nThe consultation room is open now. Would you like to enter the video room now?`)) {
+          onJoinMeeting(newApp.room_code);
+        }
+      } else {
+        alert(`✅ Appointment Successfully Scheduled!\n\nPhysician: ${newApp.doctor_name}\nScheduled For: ${timeStatus.scheduledFormatted}\n\n🔒 Join Window: The video consultation room unlocks 15 minutes prior to the start time (at ${timeStatus.opensAtFormatted}).\n\nRoom Code: ${newApp.room_code}`);
       }
     } catch (err: any) {
       alert(err.response?.data?.detail || 'Failed to book appointment. Please check connection.');
@@ -601,10 +621,48 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
                         )}
                       </div>
 
-                      <div style={{ fontSize: '0.78rem', color: '#64748b', display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
-                        <span>🕒 {app.scheduled_time}</span>
-                        <span>🔑 Room: <code style={{ color: '#38bdf8', background: 'rgba(15, 23, 42, 0.6)', padding: '1px 6px', borderRadius: '4px' }}>{app.room_code}</code></span>
-                      </div>
+                      {/* Time slot and join-window status */}
+                      {(() => {
+                        const timeStatus = getAppointmentTimeStatus(app.scheduled_time, app.has_summary, currentTime);
+                        return (
+                          <div style={{ fontSize: '0.78rem', color: '#64748b', display: 'flex', gap: '0.75rem', flexWrap: 'wrap', alignItems: 'center' }}>
+                            <span style={{ color: '#cbd5e1', fontWeight: 500 }}>🕒 {timeStatus.scheduledFormatted}</span>
+                            
+                            <span style={{
+                              fontSize: '0.72rem',
+                              fontWeight: 600,
+                              padding: '2px 8px',
+                              borderRadius: '9999px',
+                              background: timeStatus.status === 'OPEN_NOW'
+                                ? 'rgba(16, 185, 129, 0.2)'
+                                : timeStatus.status === 'FUTURE_LOCKED'
+                                ? 'rgba(245, 158, 11, 0.15)'
+                                : 'rgba(100, 116, 139, 0.2)',
+                              border: `1px solid ${
+                                timeStatus.status === 'OPEN_NOW'
+                                  ? 'rgba(16, 185, 129, 0.4)'
+                                  : timeStatus.status === 'FUTURE_LOCKED'
+                                  ? 'rgba(245, 158, 11, 0.35)'
+                                  : 'rgba(100, 116, 139, 0.4)'
+                              }`,
+                              color: timeStatus.badgeColor,
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              gap: '4px',
+                            }}>
+                              {timeStatus.badgeLabel}
+                            </span>
+
+                            {timeStatus.status === 'FUTURE_LOCKED' && (
+                              <span style={{ fontSize: '0.72rem', color: '#f59e0b', fontWeight: 600 }}>
+                                ({timeStatus.timeRemainingText})
+                              </span>
+                            )}
+
+                            <span>🔑 Room: <code style={{ color: '#38bdf8', background: 'rgba(15, 23, 42, 0.6)', padding: '1px 6px', borderRadius: '4px' }}>{app.room_code}</code></span>
+                          </div>
+                        );
+                      })()}
                     </div>
                   </div>
 
@@ -637,26 +695,82 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
                       </span>
                     </button>
 
-                    <button
-                      onClick={() => onJoinMeeting(app.room_code)}
-                      style={{
-                        background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
-                        color: '#ffffff',
-                        border: 'none',
-                        borderRadius: '10px',
-                        padding: '0.65rem 1.25rem',
-                        fontSize: '0.88rem',
-                        fontWeight: 700,
-                        cursor: 'pointer',
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '6px',
-                        boxShadow: '0 4px 14px rgba(16, 185, 129, 0.4)',
-                      }}
-                    >
-                      <Video size={16} />
-                      <span>Join Consultation</span>
-                    </button>
+                    {(() => {
+                      const timeStatus = getAppointmentTimeStatus(app.scheduled_time, app.has_summary, currentTime);
+                      if (timeStatus.canJoin) {
+                        return (
+                          <button
+                            onClick={() => onJoinMeeting(app.room_code)}
+                            style={{
+                              background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
+                              color: '#ffffff',
+                              border: 'none',
+                              borderRadius: '10px',
+                              padding: '0.65rem 1.25rem',
+                              fontSize: '0.88rem',
+                              fontWeight: 700,
+                              cursor: 'pointer',
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: '6px',
+                              boxShadow: '0 4px 14px rgba(16, 185, 129, 0.4)',
+                              animation: 'pulse 2s infinite',
+                            }}
+                          >
+                            <Video size={16} />
+                            <span>Join Consultation</span>
+                          </button>
+                        );
+                      } else if (timeStatus.status === 'FUTURE_LOCKED') {
+                        return (
+                          <button
+                            onClick={() => {
+                              alert(`🔒 Consultation Room Locked\n\nConsultation With: ${isDoctor ? app.patient_name : app.doctor_name}\nScheduled For: ${timeStatus.scheduledFormatted}\n\nJoin Window: The consultation room automatically unlocks 15 minutes before the scheduled time (at ${timeStatus.opensAtFormatted}).\n\nCountdown: ${timeStatus.timeRemainingText}`);
+                            }}
+                            style={{
+                              background: 'rgba(30, 41, 59, 0.7)',
+                              color: '#94a3b8',
+                              border: '1px solid rgba(255, 255, 255, 0.12)',
+                              borderRadius: '10px',
+                              padding: '0.65rem 1.15rem',
+                              fontSize: '0.84rem',
+                              fontWeight: 600,
+                              cursor: 'pointer',
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: '6px',
+                              transition: 'all 0.2s',
+                            }}
+                            title={`Consultation room unlocks at ${timeStatus.opensAtFormatted} (15m prior to appointment)`}
+                          >
+                            <Lock size={15} color="#f59e0b" />
+                            <span>{timeStatus.timeRemainingText}</span>
+                          </button>
+                        );
+                      } else {
+                        return (
+                          <button
+                            onClick={() => openSummary(app.room_code, app)}
+                            style={{
+                              background: 'rgba(16, 185, 129, 0.12)',
+                              color: '#6ee7b7',
+                              border: '1px solid rgba(16, 185, 129, 0.3)',
+                              borderRadius: '10px',
+                              padding: '0.65rem 1.1rem',
+                              fontSize: '0.84rem',
+                              fontWeight: 600,
+                              cursor: 'pointer',
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: '6px',
+                            }}
+                          >
+                            <CheckCircle size={15} />
+                            <span>Concluded • Summary Ready</span>
+                          </button>
+                        );
+                      }
+                    })()}
                   </div>
                 </div>
               ))}
@@ -861,20 +975,106 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
                 </select>
               </div>
 
-              {/* Consultation Time Slot */}
+              {/* Consultation Time Slot & Join Window Selection */}
               <div>
                 <label style={{ fontSize: '0.82rem', fontWeight: 600, color: '#cbd5e1', display: 'block', marginBottom: '6px' }}>
-                  Preferred Time Slot:
+                  Preferred Consultation Time:
                 </label>
+
+                {/* Quick Timing Preset Chips */}
+                <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap', marginBottom: '8px' }}>
+                  <button
+                    type="button"
+                    onClick={() => setSelectedTimeSlot(new Date().toISOString())}
+                    style={{
+                      background: 'rgba(16, 185, 129, 0.15)',
+                      border: '1px solid rgba(16, 185, 129, 0.35)',
+                      color: '#6ee7b7',
+                      fontSize: '0.74rem',
+                      fontWeight: 600,
+                      borderRadius: '6px',
+                      padding: '4px 10px',
+                      cursor: 'pointer',
+                    }}
+                  >
+                    🟢 Start Now (Join Immediately)
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setSelectedTimeSlot(new Date(Date.now() + 15 * 60 * 1000).toISOString())}
+                    style={{
+                      background: 'rgba(59, 130, 246, 0.15)',
+                      border: '1px solid rgba(59, 130, 246, 0.35)',
+                      color: '#93c5fd',
+                      fontSize: '0.74rem',
+                      fontWeight: 600,
+                      borderRadius: '6px',
+                      padding: '4px 10px',
+                      cursor: 'pointer',
+                    }}
+                  >
+                    ⏱ In 15 Mins
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setSelectedTimeSlot(new Date(Date.now() + 60 * 60 * 1000).toISOString())}
+                    style={{
+                      background: 'rgba(245, 158, 11, 0.15)',
+                      border: '1px solid rgba(245, 158, 11, 0.35)',
+                      color: '#fcd34d',
+                      fontSize: '0.74rem',
+                      fontWeight: 600,
+                      borderRadius: '6px',
+                      padding: '4px 10px',
+                      cursor: 'pointer',
+                    }}
+                  >
+                    🔒 In 1 Hour
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const tm = new Date();
+                      tm.setDate(tm.getDate() + 1);
+                      tm.setHours(10, 0, 0, 0);
+                      setSelectedTimeSlot(tm.toISOString());
+                    }}
+                    style={{
+                      background: 'rgba(168, 85, 247, 0.15)',
+                      border: '1px solid rgba(168, 85, 247, 0.35)',
+                      color: '#d8b4fe',
+                      fontSize: '0.74rem',
+                      fontWeight: 600,
+                      borderRadius: '6px',
+                      padding: '4px 10px',
+                      cursor: 'pointer',
+                    }}
+                  >
+                    📅 Tomorrow 10:00 AM
+                  </button>
+                </div>
+
+                {/* Exact Datetime Picker */}
                 <input
-                  type="text"
-                  value={selectedTimeSlot}
-                  onChange={(e) => setSelectedTimeSlot(e.target.value)}
-                  placeholder="e.g. Today at 5:00 PM or Tomorrow 11:00 AM"
+                  type="datetime-local"
+                  required
+                  value={(() => {
+                    try {
+                      return toDateTimeLocalString(new Date(selectedTimeSlot));
+                    } catch {
+                      return toDateTimeLocalString(new Date());
+                    }
+                  })()}
+                  onChange={(e) => {
+                    if (e.target.value) {
+                      const d = new Date(e.target.value);
+                      setSelectedTimeSlot(d.toISOString());
+                    }
+                  }}
                   style={{
                     width: '100%',
                     background: 'rgba(30, 41, 59, 0.8)',
-                    border: '1px solid rgba(255, 255, 255, 0.12)',
+                    border: '1px solid rgba(255, 255, 255, 0.15)',
                     borderRadius: '10px',
                     padding: '0.75rem',
                     color: '#f8fafc',
@@ -882,6 +1082,31 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
                     outline: 'none',
                   }}
                 />
+
+                {/* Joinability Policy Preview Card */}
+                {(() => {
+                  const preview = getAppointmentTimeStatus(selectedTimeSlot, false, currentTime);
+                  return (
+                    <div style={{
+                      marginTop: '8px',
+                      padding: '8px 12px',
+                      borderRadius: '8px',
+                      background: preview.canJoin ? 'rgba(16, 185, 129, 0.1)' : 'rgba(245, 158, 11, 0.1)',
+                      border: `1px solid ${preview.canJoin ? 'rgba(16, 185, 129, 0.25)' : 'rgba(245, 158, 11, 0.25)'}`,
+                      fontSize: '0.78rem',
+                      lineHeight: 1.45,
+                    }}>
+                      <div style={{ fontWeight: 600, color: preview.badgeColor, marginBottom: '2px' }}>
+                        {preview.canJoin ? '🟢 Immediate Join Window Active' : '🔒 Scheduled For Future'}
+                      </div>
+                      <div style={{ color: '#cbd5e1' }}>
+                        {preview.canJoin
+                          ? `The consultation room will be OPEN immediately upon booking (${preview.timeRemainingText}).`
+                          : `The video room will remain locked until 15 minutes before the appointment (unlocks at ${preview.opensAtFormatted}).`}
+                      </div>
+                    </div>
+                  );
+                })()}
               </div>
 
               {/* Symptoms / Chief Complaint */}
@@ -1097,31 +1322,62 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
               >
                 Close
               </button>
-              <button
-                onClick={() => {
-                  setShowPendingModal(false);
-                  onJoinMeeting(pendingAppointment.room_code);
-                }}
-                style={{
-                  flex: 2,
-                  background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
-                  border: 'none',
-                  color: '#ffffff',
-                  borderRadius: '10px',
-                  padding: '0.75rem',
-                  fontSize: '0.88rem',
-                  fontWeight: 700,
-                  cursor: 'pointer',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  gap: '8px',
-                  boxShadow: '0 4px 15px rgba(16, 185, 129, 0.4)',
-                }}
-              >
-                <Video size={16} />
-                <span>Join Consultation Now</span>
-              </button>
+              {(() => {
+                const timeStatus = getAppointmentTimeStatus(pendingAppointment.scheduled_time, pendingAppointment.has_summary, currentTime);
+                if (timeStatus.canJoin) {
+                  return (
+                    <button
+                      onClick={() => {
+                        setShowPendingModal(false);
+                        onJoinMeeting(pendingAppointment.room_code);
+                      }}
+                      style={{
+                        flex: 2,
+                        background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
+                        border: 'none',
+                        color: '#ffffff',
+                        borderRadius: '10px',
+                        padding: '0.75rem',
+                        fontSize: '0.88rem',
+                        fontWeight: 700,
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: '8px',
+                        boxShadow: '0 4px 15px rgba(16, 185, 129, 0.4)',
+                      }}
+                    >
+                      <Video size={16} />
+                      <span>Join Consultation Now</span>
+                    </button>
+                  );
+                } else {
+                  return (
+                    <button
+                      disabled
+                      style={{
+                        flex: 2,
+                        background: 'rgba(30, 41, 59, 0.7)',
+                        border: '1px solid rgba(255, 255, 255, 0.12)',
+                        color: '#94a3b8',
+                        borderRadius: '10px',
+                        padding: '0.75rem',
+                        fontSize: '0.82rem',
+                        fontWeight: 600,
+                        cursor: 'not-allowed',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: '8px',
+                      }}
+                    >
+                      <Lock size={15} color="#f59e0b" />
+                      <span>Opens at {timeStatus.opensAtFormatted} ({timeStatus.timeRemainingText})</span>
+                    </button>
+                  );
+                }
+              })()}
             </div>
           </div>
         </div>

@@ -64,6 +64,15 @@ export const MeetingRoom: React.FC<MeetingRoomProps> = ({
     { id: currentUser.id, name: currentUser.full_name, role: currentUser.role },
   ]);
 
+  // Real-time WebRTC connection state
+  const [connectionState, setConnectionState] = useState<string>('connecting');
+
+  // Mic state ref to keep speech recognition synchronized
+  const micEnabledRef = useRef(micEnabled);
+  useEffect(() => {
+    micEnabledRef.current = micEnabled;
+  }, [micEnabled]);
+
   // Live captions overlay state
   const [activeCaption, setActiveCaption] = useState({ speaker: '', role: '', text: '' });
   const captionTimerRef = useRef<any>(null);
@@ -92,6 +101,9 @@ export const MeetingRoom: React.FC<MeetingRoomProps> = ({
     setTimeout(() => setCopiedLink(false), 2000);
   };
 
+  // User role politeness: Doctors act as impolite offerers; Patients act as polite answerers/negotiators
+  const isPolite = currentUser.role !== 'DOCTOR';
+
   // Initialize WebRTC and WebSockets
   useEffect(() => {
     let isMounted = true;
@@ -111,17 +123,24 @@ export const MeetingRoom: React.FC<MeetingRoomProps> = ({
     const ws = new WebSocket(wsUrl);
     wsRef.current = ws;
 
-    // 2. Initialize WebRTC Manager
+    // 2. Initialize WebRTC Manager with Perfect Negotiation & Connection State Listener
     const rtc = new WebRTCManager(
       (remoteStream) => {
         if (remoteVideoRef.current) {
           remoteVideoRef.current.srcObject = remoteStream;
+          remoteVideoRef.current.play().catch((e) => {
+            console.log('Autoplay deferred until user click:', e);
+          });
         }
       },
       (signal) => {
         if (ws.readyState === WebSocket.OPEN) {
           ws.send(JSON.stringify(signal));
         }
+      },
+      isPolite,
+      (state) => {
+        if (isMounted) setConnectionState(state);
       }
     );
     webrtcRef.current = rtc;
@@ -133,7 +152,7 @@ export const MeetingRoom: React.FC<MeetingRoomProps> = ({
       }
       rtc.createPeerConnection();
 
-      // Trigger call if ready
+      // Signal ready state to counterpart
       if (ws.readyState === WebSocket.OPEN) {
         ws.send(JSON.stringify({ type: 'ready-for-call' }));
       }
@@ -151,38 +170,35 @@ export const MeetingRoom: React.FC<MeetingRoomProps> = ({
           }
         }
 
-        // When a new participant joins, the existing peer initiates the WebRTC offer
-        if (msg.type === 'participant-joined') {
-          try {
-            const offer = await rtc.createOffer();
-            ws.send(JSON.stringify(offer));
-          } catch (e) {
-            console.warn('Error creating WebRTC offer on participant joined:', e);
+        // When a new participant joins or is ready, initiate negotiation cleanly
+        if (msg.type === 'participant-joined' || msg.type === 'ready-for-call') {
+          // If we are the designated offerer (Doctor or impolite peer)
+          if (!isPolite) {
+            try {
+              const offer = await rtc.createOffer();
+              if (offer && ws.readyState === WebSocket.OPEN) {
+                ws.send(JSON.stringify(offer));
+              }
+            } catch (e) {
+              console.warn('Error creating WebRTC offer:', e);
+            }
           }
         }
 
-        // Signaling: ready
-        if (msg.type === 'ready-for-call') {
-          try {
-            const offer = await rtc.createOffer();
-            ws.send(JSON.stringify(offer));
-          } catch (e) {
-            console.warn('Error creating WebRTC offer on ready-for-call:', e);
-          }
-        }
-
-        // Signaling: offer
+        // WebRTC Signaling: offer
         if (msg.type === 'offer') {
           const answer = await rtc.handleOffer(msg);
-          ws.send(JSON.stringify(answer));
+          if (answer && ws.readyState === WebSocket.OPEN) {
+            ws.send(JSON.stringify(answer));
+          }
         }
 
-        // Signaling: answer
+        // WebRTC Signaling: answer
         if (msg.type === 'answer') {
           await rtc.handleAnswer(msg);
         }
 
-        // Signaling: ice-candidate
+        // WebRTC Signaling: ice-candidate
         if (msg.type === 'ice-candidate') {
           await rtc.handleIceCandidate(msg.candidate);
         }
@@ -238,7 +254,7 @@ export const MeetingRoom: React.FC<MeetingRoomProps> = ({
     if (speechRecognizer.isSupported()) {
       speechRecognizer.start({
         onInterim: (interim) => {
-          if (captionsEnabled) {
+          if (captionsEnabled && micEnabledRef.current) {
             setActiveCaption({
               speaker: currentUser.full_name,
               role: currentUser.role,
@@ -247,7 +263,8 @@ export const MeetingRoom: React.FC<MeetingRoomProps> = ({
           }
         },
         onFinal: (finalText) => {
-          if (ws.readyState === WebSocket.OPEN) {
+          // Only emit transcripts if microphone is actually unmuted
+          if (micEnabledRef.current && ws.readyState === WebSocket.OPEN) {
             ws.send(JSON.stringify({
               type: 'transcript-chunk',
               speaker_name: currentUser.full_name,
@@ -353,15 +370,21 @@ export const MeetingRoom: React.FC<MeetingRoomProps> = ({
   };
 
   return (
-    <div style={{
-      width: '100vw',
-      height: '100vh',
-      display: 'flex',
-      flexDirection: 'column',
-      background: '#090d16',
-      overflow: 'hidden',
-      position: 'relative',
-    }}>
+    <div 
+      onClick={() => {
+        if (remoteVideoRef.current && remoteVideoRef.current.paused) {
+          remoteVideoRef.current.play().catch(() => {});
+        }
+      }}
+      style={{
+        width: '100vw',
+        height: '100vh',
+        display: 'flex',
+        flexDirection: 'column',
+        background: '#090d16',
+        overflow: 'hidden',
+        position: 'relative',
+      }}>
       {/* 1. Top Header Bar */}
       <div style={{
         height: '60px',
@@ -388,6 +411,28 @@ export const MeetingRoom: React.FC<MeetingRoomProps> = ({
           <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: '#94a3b8', fontSize: '0.85rem' }}>
             <Clock size={15} />
             <span>{formatTime(elapsedSeconds)}</span>
+          </div>
+
+          {/* WebRTC Connection State Badge */}
+          <div style={{
+            background: connectionState === 'connected' ? 'rgba(16, 185, 129, 0.15)' : 'rgba(245, 158, 11, 0.15)',
+            border: `1px solid ${connectionState === 'connected' ? 'rgba(16, 185, 129, 0.35)' : 'rgba(245, 158, 11, 0.35)'}`,
+            borderRadius: '6px',
+            padding: '2px 8px',
+            fontSize: '0.72rem',
+            color: connectionState === 'connected' ? '#34d399' : '#fbbf24',
+            fontWeight: 500,
+            display: 'flex',
+            alignItems: 'center',
+            gap: '5px',
+          }}>
+            <span style={{
+              width: '6px',
+              height: '6px',
+              borderRadius: '50%',
+              background: connectionState === 'connected' ? '#10b981' : '#f59e0b'
+            }} />
+            {connectionState === 'connected' ? 'Audio/Video Connected' : connectionState === 'connecting' ? 'Connecting Media...' : 'Reconnecting...'}
           </div>
 
           <div style={{
