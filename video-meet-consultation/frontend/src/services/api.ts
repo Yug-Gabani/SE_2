@@ -1,17 +1,36 @@
 import axios from 'axios';
 import { User, Meeting, TranscriptRecord, ClinicalSummary, Appointment } from '../types';
 
-const getBaseUrl = (): string => {
-  if ((import.meta as any).env?.VITE_API_URL) {
-    return (import.meta as any).env.VITE_API_URL;
+export const getBaseUrl = (): string => {
+  const envUrl = (import.meta as any).env?.VITE_API_URL;
+  if (envUrl) {
+    return envUrl.replace(/\/+$/, '');
   }
   if (typeof window !== 'undefined' && window.location.hostname) {
-    return `http://${window.location.hostname}:8000`;
+    const isHttps = window.location.protocol === 'https:';
+    const proto = isHttps ? 'https' : 'http';
+
+    // Local development
+    if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+      return `${proto}://${window.location.hostname}:8000`;
+    }
+    // Deployed host (Render, Vercel, Railway, or custom domain)
+    return `${proto}://${window.location.host}`;
   }
   return 'http://localhost:8000';
 };
 
-const API_BASE_URL = getBaseUrl();
+export const API_BASE_URL = getBaseUrl();
+
+export const getWsBaseUrl = (): string => {
+  const envWs = (import.meta as any).env?.VITE_WS_URL;
+  if (envWs) {
+    return envWs.replace(/\/+$/, '');
+  }
+  return API_BASE_URL.replace(/^http:/, 'ws:').replace(/^https:/, 'wss:');
+};
+
+export const WS_BASE_URL = getWsBaseUrl();
 
 const client = axios.create({
   baseURL: API_BASE_URL,
@@ -142,6 +161,4 @@ export const appointmentApi = {
     return res.data;
   },
 };
-
-export const WS_BASE_URL = API_BASE_URL.replace(/^http/, 'ws');
 
