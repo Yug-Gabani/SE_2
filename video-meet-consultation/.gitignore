@@ -1,0 +1,36 @@
+# Python virtual environments & bytecode
+backend/venv/
+backend/.venv/
+venv/
+.venv/
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.pytest_cache/
+
+# Node dependencies & builds
+frontend/node_modules/
+node_modules/
+frontend/dist/
+dist/
+.vite/
+
+# Environment files & Secrets
+.env
+backend/.env
+*.env.local
+
+# SQLite & databases
+*.db
+*.sqlite
+*.sqlite3
+telemeet.db
+backend/telemeet.db
+
+# OS & Editor
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+*.log
