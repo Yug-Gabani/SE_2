@@ -247,6 +247,12 @@ async def end_meeting(room_code: str, db: Session = Depends(get_db)):
     
     meeting.status = MeetingStatus.ENDED
     meeting.ended_at = datetime.now(timezone.utc)
+
+    # Mark linked appointments as COMPLETED
+    appts = db.query(Appointment).filter(Appointment.room_code == room_code).all()
+    for appt in appts:
+        appt.status = "COMPLETED"
+
     db.commit()
     db.refresh(meeting)
 
@@ -325,6 +331,11 @@ async def generate_summary(room_code: str, db: Session = Depends(get_db)):
     summary.red_flags_and_warnings = summary_schema.red_flags_and_warnings
     summary.raw_summary_json = summary_schema.model_dump()
     summary.ai_model_used = model_used
+
+    # Mark linked appointment as COMPLETED
+    appts = db.query(Appointment).filter(Appointment.room_code == room_code).all()
+    for appt in appts:
+        appt.status = "COMPLETED"
 
     db.commit()
     db.refresh(summary)

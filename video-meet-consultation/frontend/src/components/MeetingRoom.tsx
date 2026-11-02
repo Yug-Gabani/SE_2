@@ -49,6 +49,7 @@ export const MeetingRoom: React.FC<MeetingRoomProps> = ({
   const [showSummaryModal, setShowSummaryModal] = useState(false);
   const [clinicalSummary, setClinicalSummary] = useState<ClinicalSummary | null>(null);
   const [isGeneratingSummary, setIsGeneratingSummary] = useState(false);
+  const [meetingEnded, setMeetingEnded] = useState(false);
 
   // Real-time streams and states
   const localVideoRef = useRef<HTMLVideoElement>(null);
@@ -314,8 +315,13 @@ export const MeetingRoom: React.FC<MeetingRoomProps> = ({
 
         // Meeting ended
         if (msg.type === 'meeting-ended') {
-          alert('This consultation has concluded. The clinical summary has been generated.');
-          onLeave();
+          setMeetingEnded(true);
+          summaryApi.getSummary(roomCode).then((s) => {
+            setClinicalSummary(s);
+            setShowSummaryModal(true);
+          }).catch(() => {
+            // Summary will be loaded on summary-ready
+          });
         }
       } catch (err) {
         console.warn('Error handling WS message:', err);
@@ -445,11 +451,24 @@ export const MeetingRoom: React.FC<MeetingRoomProps> = ({
   // End consultation
   const handleEndCall = async () => {
     if (confirm('End this video consultation for all participants? The LangChain pipeline will automatically finalize the clinical report.')) {
+      setMeetingEnded(true);
+      setIsGeneratingSummary(true);
       try {
         await meetingApi.endMeeting(roomCode);
-        await handleGenerateSummary();
-      } catch {
-        onLeave();
+        const summary = await summaryApi.generateSummary(roomCode);
+        setClinicalSummary(summary);
+        setShowSummaryModal(true);
+      } catch (err: any) {
+        console.warn('Error ending meeting or generating summary:', err);
+        // Try to fetch existing summary if already created
+        summaryApi.getSummary(roomCode).then((s) => {
+          setClinicalSummary(s);
+          setShowSummaryModal(true);
+        }).catch(() => {
+          onLeave();
+        });
+      } finally {
+        setIsGeneratingSummary(false);
       }
     }
   };
@@ -1066,7 +1085,12 @@ export const MeetingRoom: React.FC<MeetingRoomProps> = ({
       <ClinicalSummaryModal
         summary={clinicalSummary}
         isOpen={showSummaryModal}
-        onClose={() => setShowSummaryModal(false)}
+        onClose={() => {
+          setShowSummaryModal(false);
+          if (meetingEnded) {
+            onLeave();
+          }
+        }}
         roomCode={roomCode}
       />
     </div>

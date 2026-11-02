@@ -24,9 +24,9 @@ class MeetingRoomManager:
 
         # Prune any previous stale connections for the exact same user_id in this room
         current_user_id = user_info.get("id")
-        if current_user_id:
+        if current_user_id and room_code in self.rooms:
             stale_connections = [
-                ws for ws in self.rooms[room_code]
+                ws for ws in list(self.rooms.get(room_code, []))
                 if self.participants.get(ws, {}).get("id") == current_user_id
             ]
             for stale_ws in stale_connections:
@@ -34,10 +34,12 @@ class MeetingRoomManager:
                     await stale_ws.close()
                 except Exception:
                     pass
-                if stale_ws in self.rooms[room_code]:
+                if room_code in self.rooms and stale_ws in self.rooms[room_code]:
                     self.rooms[room_code].remove(stale_ws)
                 self.participants.pop(stale_ws, None)
 
+        if room_code not in self.rooms:
+            self.rooms[room_code] = []
         self.rooms[room_code].append(websocket)
         self.participants[websocket] = user_info
 

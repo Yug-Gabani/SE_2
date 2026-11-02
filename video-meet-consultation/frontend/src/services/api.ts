@@ -48,6 +48,23 @@ client.interceptors.request.use((config) => {
   return config;
 });
 
+// Automatically handle 401 Unauthorized sessions
+client.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error.response && error.response.status === 401) {
+      const url = error.config?.url || '';
+      if (!url.includes('/api/auth/login') && !url.includes('/api/auth/register')) {
+        console.warn('[Auth] Session invalid or expired (401). Resetting credentials.');
+        localStorage.removeItem('telemeet_token');
+        localStorage.removeItem('telemeet_user');
+        window.dispatchEvent(new Event('telemeet-unauthorized'));
+      }
+    }
+    return Promise.reject(error);
+  }
+);
+
 export const authApi = {
   login: async (email: string, password: string) => {
     const res = await client.post<{ access_token: string; user: User }>('/api/auth/login', { email, password });
@@ -81,8 +98,14 @@ export const authApi = {
   },
 
   getCurrentUser: (): User | null => {
+    const token = localStorage.getItem('telemeet_token');
     const stored = localStorage.getItem('telemeet_user');
-    return stored ? JSON.parse(stored) : null;
+    if (!token || !stored) return null;
+    try {
+      return JSON.parse(stored);
+    } catch {
+      return null;
+    }
   },
 };
 

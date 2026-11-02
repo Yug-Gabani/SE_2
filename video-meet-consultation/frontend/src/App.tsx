@@ -18,6 +18,17 @@ export function App() {
     }
   }, []);
 
+  // Gracefully handle session expiry / 401 Unauthorized events
+  useEffect(() => {
+    const handleUnauthorized = () => {
+      authApi.logout();
+      setCurrentUser(null);
+      setActiveRoomCode(null);
+    };
+    window.addEventListener('telemeet-unauthorized', handleUnauthorized);
+    return () => window.removeEventListener('telemeet-unauthorized', handleUnauthorized);
+  }, []);
+
   const handleLoginSuccess = (user: User) => {
     setCurrentUser(user);
   };
