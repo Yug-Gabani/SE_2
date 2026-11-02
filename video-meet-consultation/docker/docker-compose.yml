@@ -1,0 +1,23 @@
+name: telemeet-system
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: telemeet-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: telemeet_db
+      POSTGRES_USER: telemeet_user
+      POSTGRES_PASSWORD: telemeet_password
+    ports:
+      - "5433:5432"
+    volumes:
+      - telemeet_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U telemeet_user -d telemeet_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  telemeet_pgdata:
