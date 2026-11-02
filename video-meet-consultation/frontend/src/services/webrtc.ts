@@ -174,18 +174,22 @@ export class WebRTCManager {
 
     // Remote Track Listener
     this.pc.ontrack = (event) => {
-      if (event.track) {
+      console.log(`[WebRTC] Remote track received: ${event.track.kind}, id=${event.track.id}`);
+      if (event.streams && event.streams[0]) {
+        this.remoteStream = event.streams[0];
+      } else {
         if (!this.remoteStream.getTracks().some((t) => t.id === event.track.id)) {
           this.remoteStream.addTrack(event.track);
         }
       }
-      if (event.streams && event.streams[0]) {
-        event.streams[0].getTracks().forEach((track) => {
-          if (!this.remoteStream.getTracks().some((t) => t.id === track.id)) {
-            this.remoteStream.addTrack(track);
-          }
-        });
-      }
+
+      event.track.onunmute = () => {
+        console.log(`[WebRTC] Remote track unmuted: ${event.track.kind}`);
+        if (this.onRemoteStreamCallback) {
+          this.onRemoteStreamCallback(this.remoteStream);
+        }
+      };
+
       if (this.onRemoteStreamCallback) {
         this.onRemoteStreamCallback(this.remoteStream);
       }
@@ -221,6 +225,10 @@ export class WebRTCManager {
     return this.pc;
   }
 
+  public getRemoteStream(): MediaStream {
+    return this.remoteStream;
+  }
+
   /**
    * Creates and dispatches an Offer (initiated by caller or on participant join).
    */
@@ -242,6 +250,7 @@ export class WebRTCManager {
 
       // Avoid setting if closed or wrong state
       if (this.pc!.signalingState !== 'stable') {
+        console.log(`[WebRTC] createOffer skipping setLocalDescription in state: ${this.pc!.signalingState}`);
         return null;
       }
 

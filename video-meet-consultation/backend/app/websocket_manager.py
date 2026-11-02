@@ -1,5 +1,7 @@
 import json
 import logging
+import uuid
+from datetime import datetime, timezone
 from typing import Dict, List, Any
 from fastapi import WebSocket
 from sqlalchemy.orm import Session
@@ -19,6 +21,23 @@ class MeetingRoomManager:
         await websocket.accept()
         if room_code not in self.rooms:
             self.rooms[room_code] = []
+
+        # Prune any previous stale connections for the exact same user_id in this room
+        current_user_id = user_info.get("id")
+        if current_user_id:
+            stale_connections = [
+                ws for ws in self.rooms[room_code]
+                if self.participants.get(ws, {}).get("id") == current_user_id
+            ]
+            for stale_ws in stale_connections:
+                try:
+                    await stale_ws.close()
+                except Exception:
+                    pass
+                if stale_ws in self.rooms[room_code]:
+                    self.rooms[room_code].remove(stale_ws)
+                self.participants.pop(stale_ws, None)
+
         self.rooms[room_code].append(websocket)
         self.participants[websocket] = user_info
 
@@ -37,8 +56,7 @@ class MeetingRoomManager:
         except Exception as e:
             logger.warning(f"Could not check/create room in DB: {e}")
 
-
-        # Broadcast participant-joined event
+        # Broadcast participant-joined event to others
         await self.broadcast(
             room_code,
             {
@@ -60,7 +78,14 @@ class MeetingRoomManager:
             self.rooms[room_code].remove(websocket)
             user_info = self.participants.pop(websocket, None)
 
-            if user_info:
+            # Check if user has any other active connection in this room
+            user_id = user_info.get("id") if user_info else None
+            user_still_present = any(
+                self.participants.get(ws, {}).get("id") == user_id
+                for ws in self.rooms[room_code]
+            )
+
+            if user_info and not user_still_present:
                 await self.broadcast(
                     room_code,
                     {
@@ -76,13 +101,26 @@ class MeetingRoomManager:
     def get_room_participants(self, room_code: str) -> List[Dict[str, Any]]:
         if room_code not in self.rooms:
             return []
-        return [self.participants[ws] for ws in self.rooms[room_code] if ws in self.participants]
+        seen_ids = set()
+        unique_participants = []
+        for ws in self.rooms[room_code]:
+            info = self.participants.get(ws)
+            if info:
+                pid = info.get("id")
+                if pid and pid not in seen_ids:
+                    seen_ids.add(pid)
+                    unique_participants.append(info)
+                elif not pid:
+                    unique_participants.append(info)
+        return unique_participants
 
     async def broadcast(self, room_code: str, message: dict, exclude: WebSocket = None):
         if room_code not in self.rooms:
             return
         payload = json.dumps(message)
-        for connection in self.rooms[room_code]:
+        # Create shallow copy of room connections to avoid mutation errors during loop
+        active_connections = list(self.rooms[room_code])
+        for connection in active_connections:
             if connection != exclude:
                 try:
                     await connection.send_text(payload)
@@ -92,20 +130,23 @@ class MeetingRoomManager:
     async def handle_message(self, room_code: str, websocket: WebSocket, data: dict):
         msg_type = data.get("type")
 
-        # 1. WebRTC Signaling: offer, answer, ice-candidate
+        # 1. WebRTC Signaling: offer, answer, ice-candidate, ready-for-call
         if msg_type in ["offer", "answer", "ice-candidate", "ready-for-call"]:
             await self.broadcast(room_code, data, exclude=websocket)
 
         # 2. In-Call Chat Messages
         elif msg_type == "chat":
             user_info = self.participants.get(websocket, {})
+            msg_id = data.get("id") or str(uuid.uuid4())
+            timestamp = data.get("timestamp") or datetime.now(timezone.utc).isoformat()
             chat_payload = {
                 "type": "chat",
+                "id": msg_id,
                 "sender_id": user_info.get("id"),
                 "sender_name": user_info.get("name", "Participant"),
                 "sender_role": user_info.get("role", "GUEST"),
                 "text": data.get("text", ""),
-                "timestamp": data.get("timestamp")
+                "timestamp": timestamp
             }
             # Broadcast to all participants including sender
             await self.broadcast(room_code, chat_payload)

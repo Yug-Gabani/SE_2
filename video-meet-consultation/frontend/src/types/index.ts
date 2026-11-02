@@ -55,6 +55,7 @@ export interface ClinicalSummary {
 }
 
 export interface ChatMessage {
+  id?: string;
   sender_id?: string;
   sender_name: string;
   sender_role: string;

@@ -64,8 +64,26 @@ export const MeetingRoom: React.FC<MeetingRoomProps> = ({
     { id: currentUser.id, name: currentUser.full_name, role: currentUser.role },
   ]);
 
-  // Real-time WebRTC connection state
+  // Real-time WebRTC connection state & remote video status
   const [connectionState, setConnectionState] = useState<string>('connecting');
+  const [hasRemoteVideo, setHasRemoteVideo] = useState(false);
+  const [remoteStream, setRemoteStream] = useState<MediaStream | null>(null);
+  const [playbackNeedsGesture, setPlaybackNeedsGesture] = useState(false);
+
+  // Sync remote video element whenever remoteStream or participants change
+  useEffect(() => {
+    if (remoteVideoRef.current && remoteStream) {
+      if (remoteVideoRef.current.srcObject !== remoteStream) {
+        remoteVideoRef.current.srcObject = remoteStream;
+      }
+      remoteVideoRef.current.play().then(() => {
+        setPlaybackNeedsGesture(false);
+      }).catch((e) => {
+        console.log('Autoplay deferred:', e);
+        setPlaybackNeedsGesture(true);
+      });
+    }
+  }, [remoteStream, participants.length]);
 
   // Mic state ref to keep speech recognition synchronized
   const micEnabledRef = useRef(micEnabled);
@@ -123,13 +141,38 @@ export const MeetingRoom: React.FC<MeetingRoomProps> = ({
     const ws = new WebSocket(wsUrl);
     wsRef.current = ws;
 
+    // WebRTC Offer Creator helper
+    const initiateOffer = async () => {
+      try {
+        console.log('[MeetingRoom] Creating WebRTC offer...');
+        const offer = await rtc.createOffer();
+        if (offer && ws.readyState === WebSocket.OPEN) {
+          console.log('[MeetingRoom] Sending WebRTC offer to counterpart');
+          ws.send(JSON.stringify(offer));
+        }
+      } catch (e) {
+        console.warn('[MeetingRoom] Error creating WebRTC offer:', e);
+      }
+    };
+
     // 2. Initialize WebRTC Manager with Perfect Negotiation & Connection State Listener
     const rtc = new WebRTCManager(
-      (remoteStream) => {
+      (stream) => {
+        if (!isMounted) return;
+        setRemoteStream(stream);
+        const videoTracks = stream.getVideoTracks();
+        const hasLiveVideo = videoTracks.length > 0 && videoTracks.some((t) => t.readyState === 'live');
+        setHasRemoteVideo(hasLiveVideo);
+
         if (remoteVideoRef.current) {
-          remoteVideoRef.current.srcObject = remoteStream;
-          remoteVideoRef.current.play().catch((e) => {
+          if (remoteVideoRef.current.srcObject !== stream) {
+            remoteVideoRef.current.srcObject = stream;
+          }
+          remoteVideoRef.current.play().then(() => {
+            setPlaybackNeedsGesture(false);
+          }).catch((e) => {
             console.log('Autoplay deferred until user click:', e);
+            setPlaybackNeedsGesture(true);
           });
         }
       },
@@ -146,7 +189,8 @@ export const MeetingRoom: React.FC<MeetingRoomProps> = ({
     webrtcRef.current = rtc;
 
     // Acquire camera & mic
-    rtc.getLocalMedia(true, true).then((stream) => {
+    rtc.getLocalMedia(true, true).then(async (stream) => {
+      if (!isMounted) return;
       if (localVideoRef.current) {
         localVideoRef.current.srcObject = stream;
       }
@@ -155,6 +199,11 @@ export const MeetingRoom: React.FC<MeetingRoomProps> = ({
       // Signal ready state to counterpart
       if (ws.readyState === WebSocket.OPEN) {
         ws.send(JSON.stringify({ type: 'ready-for-call' }));
+      }
+
+      // If we are Doctor and counterpart is already in the room, send offer now!
+      if (!isPolite && participants.length > 1) {
+        await initiateOffer();
       }
     });
 
@@ -170,31 +219,43 @@ export const MeetingRoom: React.FC<MeetingRoomProps> = ({
           }
         }
 
-        // When a new participant joins or is ready, initiate negotiation cleanly
-        if (msg.type === 'participant-joined' || msg.type === 'ready-for-call') {
-          // If we are the designated offerer (Doctor or impolite peer)
+        // When a new participant joins: Doctor initiates offer immediately
+        if (msg.type === 'participant-joined') {
+          console.log('[MeetingRoom] Participant joined event:', msg.participant);
           if (!isPolite) {
-            try {
-              const offer = await rtc.createOffer();
-              if (offer && ws.readyState === WebSocket.OPEN) {
-                ws.send(JSON.stringify(offer));
-              }
-            } catch (e) {
-              console.warn('Error creating WebRTC offer:', e);
-            }
+            await initiateOffer();
+          }
+        }
+
+        // When room state is received: if we are Doctor joining existing patient
+        if (msg.type === 'room-state') {
+          console.log('[MeetingRoom] Received room-state. Total participants:', msg.participants?.length);
+          if (!isPolite && msg.participants && msg.participants.length > 1) {
+            await initiateOffer();
+          }
+        }
+
+        // When counterpart is ready for call
+        if (msg.type === 'ready-for-call') {
+          console.log('[MeetingRoom] Counterpart ready for call');
+          if (!isPolite) {
+            await initiateOffer();
           }
         }
 
         // WebRTC Signaling: offer
         if (msg.type === 'offer') {
+          console.log('[MeetingRoom] Handling incoming offer');
           const answer = await rtc.handleOffer(msg);
           if (answer && ws.readyState === WebSocket.OPEN) {
+            console.log('[MeetingRoom] Sending answer to counterpart');
             ws.send(JSON.stringify(answer));
           }
         }
 
         // WebRTC Signaling: answer
         if (msg.type === 'answer') {
+          console.log('[MeetingRoom] Handling incoming answer');
           await rtc.handleAnswer(msg);
         }
 
@@ -203,9 +264,20 @@ export const MeetingRoom: React.FC<MeetingRoomProps> = ({
           await rtc.handleIceCandidate(msg.candidate);
         }
 
-        // In-call chat
+        // In-call chat with rigorous deduplication
         if (msg.type === 'chat') {
-          setChatMessages((prev) => [...prev, msg]);
+          setChatMessages((prev) => {
+            if (msg.id && prev.some((m) => m.id === msg.id)) {
+              return prev;
+            }
+            const isDuplicate = prev.some((m) =>
+              m.sender_id === msg.sender_id &&
+              m.text === msg.text &&
+              Math.abs(new Date(m.timestamp).getTime() - new Date(msg.timestamp).getTime()) < 2000
+            );
+            if (isDuplicate) return prev;
+            return [...prev, msg];
+          });
         }
 
         // Live Captions & Transcripts
@@ -276,11 +348,21 @@ export const MeetingRoom: React.FC<MeetingRoomProps> = ({
       });
     }
 
+    // Fallback: polite peer initiates offer if counterpart present and no connection established after 4s
+    const politeFallbackTimer = setTimeout(async () => {
+      if (!isMounted) return;
+      if (participants.length > 1 && connectionState !== 'connected' && ws.readyState === WebSocket.OPEN) {
+        console.log('[MeetingRoom] Polite peer initiating fallback offer to ensure connection');
+        await initiateOffer();
+      }
+    }, 4000);
+
     return () => {
       isMounted = false;
       speechRecognizer.stop();
       rtc.cleanup();
-      if (ws.readyState === WebSocket.OPEN) {
+      clearTimeout(politeFallbackTimer);
+      if (ws.readyState === WebSocket.OPEN || ws.readyState === WebSocket.CONNECTING) {
         ws.close();
       }
       if (captionTimerRef.current) clearTimeout(captionTimerRef.current);
@@ -315,10 +397,13 @@ export const MeetingRoom: React.FC<MeetingRoomProps> = ({
   // Send in-call chat
   const sendChatMessage = (e: React.FormEvent) => {
     e.preventDefault();
-    if (chatInput.trim() && wsRef.current?.readyState === WebSocket.OPEN) {
+    const trimmed = chatInput.trim();
+    if (trimmed && wsRef.current?.readyState === WebSocket.OPEN) {
+      const msgId = `${currentUser.id}-${Date.now()}-${Math.random().toString(36).substr(2, 6)}`;
       wsRef.current.send(JSON.stringify({
         type: 'chat',
-        text: chatInput.trim(),
+        id: msgId,
+        text: trimmed,
         timestamp: new Date().toISOString(),
       }));
       setChatInput('');
@@ -521,7 +606,7 @@ export const MeetingRoom: React.FC<MeetingRoomProps> = ({
           {/* Google Meet / Zoom Grid Layout */}
           <div style={{
             display: 'grid',
-            gridTemplateColumns: participants.length > 1 ? '1fr 1fr' : '1fr',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(360px, 1fr))',
             gap: '1rem',
             width: '100%',
             height: '100%',
@@ -584,16 +669,51 @@ export const MeetingRoom: React.FC<MeetingRoomProps> = ({
               </div>
             </div>
 
-            {/* Cell 2: Remote Video Stream (or Waiting Placeholder) */}
-            <div className="video-cell">
+            {/* Cell 2: Remote Video Stream (or Waiting / Connecting Placeholder) */}
+            <div className="video-cell" style={{ position: 'relative' }}>
               <video
                 ref={remoteVideoRef}
                 autoPlay
                 playsInline
                 className="video-element unmirrored"
-                style={{ display: participants.length > 1 ? 'block' : 'none' }}
+                style={{
+                  display: participants.length > 1 && hasRemoteVideo ? 'block' : 'none',
+                  width: '100%',
+                  height: '100%',
+                  objectFit: 'cover',
+                }}
               />
 
+              {/* Autoplay blocked gesture button */}
+              {participants.length > 1 && playbackNeedsGesture && (
+                <button
+                  onClick={() => {
+                    if (remoteVideoRef.current) {
+                      remoteVideoRef.current.play().then(() => setPlaybackNeedsGesture(false)).catch(() => {});
+                    }
+                  }}
+                  style={{
+                    position: 'absolute',
+                    zIndex: 10,
+                    top: '50%',
+                    left: '50%',
+                    transform: 'translate(-50%, -50%)',
+                    background: '#3b82f6',
+                    color: '#ffffff',
+                    border: 'none',
+                    borderRadius: '8px',
+                    padding: '0.75rem 1.25rem',
+                    fontSize: '0.9rem',
+                    fontWeight: 600,
+                    cursor: 'pointer',
+                    boxShadow: '0 8px 24px rgba(0, 0, 0, 0.5)',
+                  }}
+                >
+                  Click to Unmute & Play Video
+                </button>
+              )}
+
+              {/* Waiting for other participant */}
               {participants.length <= 1 && (
                 <div style={{
                   display: 'flex',
@@ -643,6 +763,38 @@ export const MeetingRoom: React.FC<MeetingRoomProps> = ({
                 </div>
               )}
 
+              {/* Other participant present but camera stream connecting or off */}
+              {participants.length > 1 && !hasRemoteVideo && (
+                <div style={{
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  gap: '0.75rem',
+                  color: '#94a3b8',
+                }}>
+                  <div style={{
+                    width: '72px',
+                    height: '72px',
+                    borderRadius: '50%',
+                    background: participants.find(p => p.id !== currentUser.id)?.role === 'DOCTOR' ? '#059669' : '#2563eb',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    fontSize: '1.75rem',
+                    fontWeight: 700,
+                    color: '#ffffff',
+                  }}>
+                    {(participants.find(p => p.id !== currentUser.id)?.name || 'C').charAt(0)}
+                  </div>
+                  <span style={{ fontSize: '0.95rem', fontWeight: 600, color: '#f8fafc' }}>
+                    {participants.find(p => p.id !== currentUser.id)?.name || 'Participant'}
+                  </span>
+                  <span style={{ fontSize: '0.78rem', color: '#94a3b8' }}>
+                    {connectionState === 'connected' ? 'Live video loading...' : 'Connecting secure video stream...'}
+                  </span>
+                </div>
+              )}
+
               {/* Remote Participant Badge */}
               {participants.length > 1 && (
                 <div style={{
@@ -656,6 +808,7 @@ export const MeetingRoom: React.FC<MeetingRoomProps> = ({
                   padding: '4px 10px',
                   fontSize: '0.78rem',
                   color: '#f8fafc',
+                  zIndex: 5,
                 }}>
                   {participants.find(p => p.id !== currentUser.id)?.name || 'Consultation Partner'}
                 </div>

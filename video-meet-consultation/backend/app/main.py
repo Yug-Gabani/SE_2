@@ -395,7 +395,9 @@ async def websocket_endpoint(
                 await room_manager.handle_message(room_code, websocket, data)
             except json.JSONDecodeError:
                 pass
-    except WebSocketDisconnect:
+    except (WebSocketDisconnect, Exception):
+        pass
+    finally:
         await room_manager.disconnect(room_code, websocket)
 
 # ----------------- Helper Functions -----------------
